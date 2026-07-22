@@ -31,8 +31,8 @@ export const customerSnapshotDemoData: CustomerSnapshotData = {
     {
       id: "primary-vehicle",
       label: "Primary Vehicle",
-      value: "2026 Honda CR-V Hybrid Sport-L",
-      detail: "Canyon River Blue · Stock H26418",
+      value: "2026 Honda CR-V Hybrid Touring",
+      detail: "Platinum White Pearl · Stock H26418",
       kind: "confirmed",
     },
     {
