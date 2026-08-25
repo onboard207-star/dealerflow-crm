@@ -1,24 +1,20 @@
 "use client";
 
+import { useEffect,useMemo,useState } from "react";
+import Link from "next/link";
 import * as Dialog from "@radix-ui/react-dialog";
-import { Search } from "lucide-react";
+import { CarFront,CircleDollarSign,Search,UserRoundSearch,Users } from "lucide-react";
+import type { NavigationGroup } from "@/components/app-shell/navigation";
+import { filterNavigationCommands } from "@/components/command-palette-filter";
+import type { GlobalSearchResult } from "@/lib/server/search";
 
-export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
-  return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm data-[state=closed]:animate-out data-[state=open]:animate-in" />
-        <Dialog.Content className="fixed left-1/2 top-[18%] z-50 w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 overflow-hidden rounded-xl border bg-popover text-popover-foreground shadow-2xl focus:outline-none">
-          <Dialog.Title className="sr-only">Command palette</Dialog.Title>
-          <Dialog.Description className="sr-only">Search and quickly access DealerFlow commands.</Dialog.Description>
-          <div className="flex items-center gap-3 border-b px-4">
-            <Search className="size-4 text-muted-foreground" aria-hidden="true" />
-            <input autoFocus className="h-12 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground" placeholder="Search commands…" aria-label="Search commands" />
-            <kbd className="rounded border bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">ESC</kbd>
-          </div>
-          <div className="flex min-h-40 items-center justify-center p-6 text-sm text-muted-foreground">Command actions will appear here.</div>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
-  );
+export function CommandPalette({open,onOpenChange,navigation=[],organizationId}:{open:boolean;onOpenChange:(open:boolean)=>void;navigation?:NavigationGroup[];organizationId?:string}){
+  const[query,setQuery]=useState("");const[records,setRecords]=useState<readonly GlobalSearchResult[]>([]);const[state,setState]=useState<"idle"|"loading"|"ready"|"error">("idle");const commands=useMemo(()=>filterNavigationCommands(navigation,query),[navigation,query]);
+  useEffect(()=>{const value=query.trim();if(!open||!organizationId||value.length<2){setRecords([]);setState("idle");return;}const controller=new AbortController();setState("loading");const timer=window.setTimeout(()=>{void fetch(`/api/organizations/${organizationId}/search?q=${encodeURIComponent(value)}&limit=5`,{signal:controller.signal,headers:{accept:"application/json"}}).then(async response=>{if(!response.ok)throw new Error("Search failed");const payload=await response.json()as{results?:unknown};if(!Array.isArray(payload.results))throw new Error("Search response invalid");setRecords(payload.results as GlobalSearchResult[]);setState("ready");}).catch(error=>{if(error instanceof DOMException&&error.name==="AbortError")return;setRecords([]);setState("error");});},250);return()=>{window.clearTimeout(timer);controller.abort();};},[open,organizationId,query]);
+  const close=()=>onOpenChange(false);const hasResults=commands.length>0||records.length>0;
+  return <Dialog.Root open={open} onOpenChange={(next)=>{onOpenChange(next);if(!next){setQuery("");setRecords([]);setState("idle");}}}><Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm data-[state=closed]:animate-out data-[state=open]:animate-in"/><Dialog.Content className="fixed left-1/2 top-[10%] z-50 w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 overflow-hidden rounded-xl border bg-popover text-popover-foreground shadow-2xl focus:outline-none sm:top-[18%]"><Dialog.Title className="sr-only">Global search</Dialog.Title><Dialog.Description className="sr-only">Search accessible dealership records and workspaces. Use Tab to move through results and Escape to close.</Dialog.Description><div className="flex items-center gap-3 border-b px-4"><Search aria-hidden="true" className="size-4 text-muted-foreground"/><input aria-controls="global-search-results" aria-label="Search dealership records and workspaces" autoComplete="off" autoFocus className="h-12 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground" onChange={(event)=>setQuery(event.target.value)} placeholder={organizationId?"Search customers, Leads, inventory, Deals…":"Search workspaces…"} type="search" value={query}/><kbd className="rounded border bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">ESC</kbd></div><div className="max-h-[65dvh] overflow-y-auto" id="global-search-results">{commands.length?<ResultGroup label="Workspaces">{commands.map(({group,href,icon:Icon,label})=><ResultLink description={group} href={href} icon={Icon} key={`${group}:${href}`} label={label} onSelect={close}/>)}</ResultGroup>:null}{records.length?<ResultGroup label="Records">{records.map(item=><ResultLink description={item.description} href={item.href} icon={recordIcons[item.kind]} key={`${item.kind}:${item.id}`} label={item.label} onSelect={close} type={item.kind}/>)}</ResultGroup>:null}{state==="loading"?<p aria-live="polite" className="p-6 text-center text-sm text-muted-foreground" role="status">Searching authorized records…</p>:null}{state==="error"?<p aria-live="polite" className="p-6 text-center text-sm text-destructive" role="alert">Search is temporarily unavailable.</p>:null}{!hasResults&&state!=="loading"&&state!=="error"?<p className="p-8 text-center text-sm text-muted-foreground">{query.trim().length<2?"Enter at least two characters to search records.":"No accessible records or workspaces match this search."}</p>:null}</div></Dialog.Content></Dialog.Portal></Dialog.Root>;
 }
+
+const recordIcons={customer:UserRoundSearch,lead:Users,inventory:CarFront,deal:CircleDollarSign}as const;
+function ResultGroup({children,label}:{children:React.ReactNode;label:string}){return <section aria-label={label} className="border-b p-2 last:border-b-0"><h2 className="px-3 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</h2><ul role="list">{children}</ul></section>}
+function ResultLink({description,href,icon:Icon,label,onSelect,type}:{description:string;href:string;icon:typeof Search;label:string;onSelect:()=>void;type?:string}){return <li><Link className="focus-ring flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground" href={href} onClick={onSelect}><Icon aria-hidden="true" className="size-4 shrink-0 text-muted-foreground"/><span className="min-w-0 flex-1"><span className="block truncate font-medium">{label}</span><span className="block truncate text-xs text-muted-foreground">{type?<span className="capitalize">{type} · </span>:null}{description}</span></span></Link></li>}

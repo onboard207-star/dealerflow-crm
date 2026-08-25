@@ -1,0 +1,159 @@
+# DealerFlow AI Build Status
+
+## COMPLETED
+
+- Responsive Next.js application shell with desktop and mobile navigation.
+- Light/dark theme foundation and semantic design tokens.
+- Product guide and component-focused design-system documentation.
+- Reusable CustomerHeader with documented operational states.
+- Reusable AICommandCenter with explainable recommendation states and demo fixtures.
+- Reusable CustomerSnapshot with evidence-aware context states and demo fixtures.
+- Composed CustomerWorkspace demo at `/demo/customer-workspace`.
+- Strict TypeScript baseline validation.
+- Optimized production-build baseline validation.
+- Initial repository and connected Airtable structural reconnaissance.
+- Tracked-source credential-pattern inspection; no embedded credential was identified.
+- Deterministic ESLint configuration with a clean baseline result.
+- Reproducible `pnpm validate` command covering lint, strict typecheck, and production build.
+- GitHub Actions quality workflow for pull requests and pushes to `main`.
+- Vitest unit-test runner integrated into local and CI validation.
+- Validated tenant configuration contracts for immutable organization identity, vertical terminology, branding, and feature flags.
+- Initial white-label architecture documentation and ten passing tenant-isolation/configuration tests.
+- Deny-by-default organization, location, and capability authorization contracts with cross-tenant tests.
+- Provider-neutral CRM data boundary with explicit tenant scope, cursor pagination, audit metadata, and correlation context.
+- Architecture documentation covering authority layers, application layering, tenant isolation, and provider requirements.
+- PostgreSQL/Drizzle foundational schema and checked-in migration chain for organizations, locations, users, memberships, roles, capabilities, customers, leads, external mappings, and audit history.
+- Composite organization-aware foreign keys preventing cross-tenant relationships at the database layer.
+- Forced PostgreSQL row-level security policies and transaction-local tenant context wrapper with migration and rollback tests.
+- Validated server environment contract, safe `.env.example`, and PostgreSQL pool factory with production SSL enforcement.
+- Initial deployment documentation covering explicit migrations, quality gates, blockers, and rollback requirements.
+- Non-cached liveness and database readiness endpoints with sanitized dependency reporting.
+- Transactional, provider-neutral lead-intake application service with tenant authorization, identity normalization, customer reuse, idempotency, and realistic unit coverage.
+- Thirty-nine passing unit and architecture tests, including lead creation, duplicate-submission protection, permission denial, and cross-tenant denial.
+- PostgreSQL CRM adapter with transaction-local RLS context, organization-scoped reads, audited customer/lead writes, fail-closed identity collision handling, and cursor pagination.
+- Forty-four passing tests across tenant configuration, authorization, migrations, environment validation, health checks, lead intake, and PostgreSQL data behavior.
+- Better Auth mounted at `/api/auth/[...all]` with unified platform user IDs, secure production cookies, dedicated auth persistence, and verified-email/password policy.
+- Session-to-membership resolution that loads active organization, location, and capability grants from PostgreSQL and discards unknown capabilities.
+- Authenticated, idempotent `POST /api/organizations/[organizationId]/leads/intake` endpoint with sanitized errors and audited transactional persistence.
+- Forty-eight passing tests and a production build containing the auth and lead-intake API routes.
+- Tenant-isolated appointment and task tables with composite organization foreign keys, forced RLS, audit fields, and organization-scoped idempotency constraints.
+- Atomic appointment scheduling application service that verifies customer/lead ownership and creates a linked follow-up task.
+- Transaction advisory locks protecting lead and appointment idempotency during concurrent requests.
+- Authenticated `POST /api/organizations/[organizationId]/appointments` endpoint with permission enforcement and sanitized failures.
+- Fifty-five passing tests across ten files, plus a clean migration check, lint, strict typecheck, and production build.
+- Accessible email/password sign-in, functional sign-out, and session-aware root routing.
+- RLS-safe organization discovery showing only active memberships, with automatic routing for single-organization users.
+- Protected organization workspace shell using live session identity, current membership capabilities, and tenant-specific navigation.
+- Removed nonfunctional profile, preference, support, and hash-navigation controls from the active shell path.
+- Tenant-isolated communication history with channel, direction, delivery status, provider identifiers, audit data, forced RLS, and concurrent idempotency protection.
+- Authenticated communication-recording API that records verified outcomes without presenting a fake provider delivery integration.
+- Live customer workspace route backed by authoritative customer, lead, appointment, task, and communication queries.
+- Capability-aware unified timeline and location filtering applied before any related customer activity is read.
+- Explicit unknown customer temperature and insufficient-evidence AI states instead of fabricated scores or recommendations.
+- Indexed, bounded, cursor-paginated customer and lead directory queries with location restrictions embedded in SQL.
+- Responsive customer search and operational lead queue linked directly to authoritative customer workspaces.
+- Authenticated customer and lead read APIs with capability enforcement, private no-store responses, validated filters, and opaque cursors.
+- Tenant navigation now exposes functional Overview, Leads, Customers, and workspace-switch routes.
+- Tenant-scoped integration accounts with external credential references, hashed one-time webhook keys, canonical HTTPS origins, and audited administrator provisioning.
+- Twilio webhook validation through the official SDK using the exact configured public URL and all evolving form parameters.
+- Durable integration event inbox with provider-event uniqueness, replay acknowledgement, unmatched-event retention, and forced RLS.
+- Inbound SMS customer matching and monotonic outbound delivery-status updates that cannot downgrade terminal states.
+- Provider-neutral outbound messaging boundary and functional Twilio adapter requiring explicit consent evidence.
+- Immutable, tenant-isolated communication consent and revocation history with exact-address evidence, purpose, basis, actor, and idempotency controls.
+- Durable outbound SMS attempts with local quiet-hour scheduling, single-claim dispatch, ambiguous-result quarantine, and provider-neutral orchestration.
+- Authenticated consent and message endpoints backed by live Twilio credential resolution; accepted sends create canonical timeline communications and delivery callbacks reconcile both records.
+- Canonical tenant-scoped vehicle identity, repeatable location inventory cycles, and lead vehicle-interest relationships with composite lead/customer integrity.
+- Authenticated inventory registration, location-filtered inventory discovery, and idempotent vehicle-interest APIs.
+- Responsive, capability-aware inventory directory and authoritative vehicle context in CustomerHeader, CustomerSnapshot, and CustomerTimeline.
+- Tenant-isolated deal records with composite customer/lead/inventory integrity and insert-only status history.
+- Controlled draft-to-delivery transitions with separate approval capability, location enforcement, idempotency, and audited cancellation reasons.
+- Atomic contracted inventory holds and delivery outcomes that mark inventory sold, close the buying-cycle Lead, preserve the Customer, and resolve active vehicle interests.
+- Responsive, capability-aware deal directory plus live deal state and events in the customer workspace.
+- Immutable, versioned Deal quotes with typed line items, integer-cent arithmetic, database-verified totals, expiry, and one accepted version per Deal.
+- Authenticated quote creation and transition APIs with concurrency locks, location enforcement, idempotency, and atomic accepted-price synchronization.
+- Live quote summary and chronological quote events in the customer workspace.
+- Versioned trade appraisals with constrained equity, controlled decisions, single acceptance, and atomic contracted trade acquisition into Inventory.
+- Delivery scheduling and status history with location integrity, timezone validation, cancellation evidence, and mandatory completion before terminal Deal delivery.
+- Authenticated trade and delivery APIs plus live appraisal, delivery, and chronological event context in the customer workspace.
+- Protected, bounded deferred-message worker with constant-time bearer authentication, least-privilege due-item discovery, tenant-context dispatch, consent revalidation, concurrent claim safety, and aggregate observability.
+- Capability- and location-scoped ambiguous-delivery queue with administrator UI, provider-evidence requirements, audited resolution, and canonical communication recovery without automatic resend.
+- Durable, idempotent account-email outbox for Better Auth verification and password recovery, with provider-neutral contracts and accessible text/HTML templates.
+- Protected transactional-email worker with bounded claims, concurrent-worker safety, retry backoff, sanitized failure evidence, Resend delivery, and provider idempotency keys.
+- Accessible, enumeration-resistant password recovery and reset screens backed by Better Auth, including token failure handling, password confirmation, and session revocation.
+- Tenant-scoped organization invitation issuance with staff capability enforcement, same-tenant role/location validation, seven-day expiry, hashed 256-bit tokens, and invitation-plus-email-outbox atomicity.
+- Invitation-aware account creation and acceptance that requires a verified session matching the invited address before atomically activating membership, roles, and location grants.
+- Capability-aware team administration with a tenant invitation directory, real role/location selection, revocation, token-rotating resend, hourly issuance limits, resend cooldowns, and bounded resend counts.
+- Tenant-linked invitation delivery telemetry, privacy-safe global queue metrics, stale-worker claim recovery, and readiness enforcement for auth, scheduler, and email configuration.
+- Verified-email sign-in guidance with a non-enumerating resend path for users who have already supplied valid credentials.
+- Portable non-root Next.js standalone container, dedicated migration target, OCI health check, global browser security headers, CI image build, and read-only deployment smoke suite.
+- Local standalone production-server runtime verification returned HTTP 200 with the expected liveness payload, no-store policy, and configured security headers.
+- Privacy-safe structured JSON telemetry with validated correlation IDs, sensitive-key removal, aggregate background-job outcomes, and signed provider-neutral alert webhooks.
+- Controlled, tenant-isolated AI recommendation runs with server-authoritative evidence, versioned prompts, strict structured output, citation validation, durable refusals/failures, model usage telemetry, and one-time human review.
+- Live Customer Workspace recommendation generation, refresh, evidence rendering, and accept/dismiss controls; unimplemented downstream action execution is explicitly disabled rather than presented as functional.
+- Latest repository gate: Drizzle migration validation, strict TypeScript, lint, 270 tests across 67 files, optimized Next.js production build, provisioner syntax, and whitespace validation all pass. Test worker concurrency is bounded to keep the complete suite deterministic on constrained CI runners.
+- Audited tenant configuration administration with optimistic concurrency for product identity, support metadata, vertical terminology, and module visibility; organization shells resolve the saved product name and feature-aware navigation from server-authoritative tenant context.
+- Immutable, forced-RLS tenant configuration snapshots with same-tenant rollback relationships, audited recovery, bounded history UI, and concurrency-safe restore actions.
+- Validated runtime white-label colors mapped into semantic design tokens with automatic WCAG AA foreground selection and arbitrary-CSS rejection.
+- Live production-build browser verification at 375, 512, 768, and 1440 pixels confirmed no horizontal overflow, stable semantic reading order, one main/H1, correct desktop-sidebar visibility, and 44px shared action targets; the test uncovered and drove fixes for mobile flex overflow and undersized controls.
+- Functional command palette filtering over only the tenant-feature- and capability-approved navigation graph; removed the inert notification control and false unread indicator until a durable notification domain exists.
+- Reusable CustomerHeader and AICommandCenter controls now fail closed when hosts omit action handlers, eliminating enabled no-op actions from production and demo compositions.
+- Tenant- and location-isolated showroom visits with active-visit uniqueness, appointment linkage, idempotent check-in and controlled transitions, required completion/cancellation evidence, immutable status history, audit records, live workspace controls, customer-timeline events, and factual AI evidence.
+- Capability-aware lead intake in the live Lead Queue with membership-scoped active locations, accessible responsive input, customer identity reuse, repeat buying-cycle creation, idempotent submission, and direct handoff to the authoritative customer workspace.
+- Live Customer Workspace vehicle selection over membership-visible available inventory, with duplicate suppression, real primary/alternative interest persistence, and server enforcement that purchase interests reference an active Lead and inventory at the exact authorized dealership location.
+- Live draft Deal creation from an active Lead and primary same-location Inventory Unit, with a database-enforced one-non-cancelled-Deal-per-buying-cycle invariant, concurrency conflict handling, and capability-aware Customer Workspace controls.
+- Capability-aware Customer Workspace Deal lifecycle controls for work start, approval submission, distinct manager approval, contracting, cancellation evidence, and sale completion only after a completed delivery handoff.
+- Timezone-aware delivery scheduling and controlled scheduled-to-ready-to-completed handoff controls in the Customer Workspace, with cancellation evidence and the completed-handoff gate wired into terminal Deal delivery.
+- Live immutable purchase-quote authoring in the Customer Workspace with exact-cent vehicle, fee, tax, and discount lines; versioned proposals; presented, accepted, and evidence-backed rejected states; and terminal accepted-quote behavior.
+- Live timezone-aware appointment scheduling with atomic preparation-task creation, capability-aware controls, mandatory dealership location, and server-side Customer/Lead location consistency checks; lead intake now also fails closed when location is omitted.
+- Consent-aware operational SMS controls backed by exact-address, exact-location append-only evidence and the tenant/location Twilio sender; future-dated consent is rejected, quiet hours remain enforced, and sending fails closed when consent, provider configuration, or capabilities are unavailable.
+- Canonical VIN-based customer trade intake plus live appraisal versioning, presentation, acceptance/rejection, calculated equity, and contracted acquisition into same-location inventory; trade capture and Lead linkage are atomic and idempotent.
+- Capability- and location-aware Inventory workspace registration for validated VIN, stock, vehicle metadata, and exact-cent list price, backed by canonical Vehicle reuse and durable dealership inventory cycles.
+- Tenant-admin Twilio provisioning with all-locations authorization enforcement, membership-scoped sender visibility, masked non-secret metadata, deployment-secret references, and a one-time webhook handoff UI.
+- First-class Customer Workspace tasks with accessible creation, priority and due-time capture, controlled start/completion/cancellation, required cancellation evidence, immutable status events, audited mutations, idempotent APIs, and exact tenant/location authorization.
+- Controlled Customer Workspace appointment confirmation, arrival, completion, cancellation, and no-show outcomes with required evidence, immutable status events, audited idempotent APIs, and showroom-driven event synchronization.
+- Controlled Lead working, qualification, evidence-backed loss, archival, and reactivation workflows with immutable status events; delivered Deals atomically append the same Lead authority while sold buying cycles remain terminal.
+- Audited Customer source-of-truth profile maintenance with normalized email/phone, shared intake/update identity locks, duplicate-contact rejection, optimistic concurrency, tenant/location authorization, and accessible responsive workspace controls.
+- Live manual call and email outcome logging in the Customer Workspace with idempotency, tenant/location integrity, bounded summaries, valid direction/outcome combinations, and future-evidence rejection alongside consent-aware SMS.
+- Controlled Inventory workspace price and available/unavailable maintenance with optimistic concurrency, required status-change evidence, immutable lifecycle events, and strict protection of Deal-owned hold/sold states.
+- Tenant-scoped active staff administration with live member visibility, role and location reassignment, suspension/reactivation/revocation, self-lockout prevention, last-manager protection, and immutable audit evidence.
+- Live permission- and location-scoped operational overview showing active Leads, outstanding tasks, today's timezone-aware appointments, active showroom visits, pending Deal approvals, and available Inventory without fabricated metrics.
+- Authenticated global record search across Customers, Leads, Inventory, and Deals with capability filtering, exact membership location scope, bounded queries/results, private no-store responses, debounced cancellation-safe UI, and keyboard-accessible result navigation.
+- Responsive manager reporting unlocked by `reports.view`, with bounded 7/30/90-day windows, membership-location-scoped Lead funnel and source performance, immutable-event-based delivered Deal counts and revenue, appointment outcomes, overdue tasks, semantic tables, and explicit operational-not-accounting labeling.
+- Tenant-branded printable purchase proposals rendered from authoritative immutable Quote versions and lines, protected by `deal.read` plus exact location scope, marked no-index, privacy-minimized, responsive on screen, and browser-ready for print or save-to-PDF without pretending to provide durable document storage.
+- Durable task-assignment and Deal-approval notifications produced by authoritative database events, deduplicated per recipient, protected by recipient-only forced RLS plus current location grants, immutable except for recipient-owned read state, exposed through private APIs, and rendered in a responsive accessible shell menu with real unread counts and actionable links.
+- Audited dealership Location administration with stable IDs/slugs, validated IANA timezones, optimistic concurrency, all-location authority for structural changes, provider-side anti-tampering membership checks, restricted-admin metadata maintenance, and deactivation guards covering the final rooftop plus active Leads, tasks, appointments, visits, Deals, and Inventory.
+- Audited custom-role administration with reusable capability profiles, immutable system roles, all-location and dual-capability authorization, capability-escalation prevention in both application and PostgreSQL provider layers, self-role lockout protection, last-manager preservation, optimistic concurrency, and a responsive read-only-aware settings surface.
+- Versioned tenant light/dark logo and favicon configuration using credential-free HTTPS assets, with strict URL validation, responsive shell rendering, theme-aware marks, and tenant-specific organization metadata.
+- Atomic, rerunnable first-tenant provisioning with deterministic tenant-owned IDs, forced-RLS transaction context, exact collision detection, standard immutable role profiles, a queued all-location Owner invitation, rollback safety, audit evidence, container availability, and operator documentation.
+- Invitation-only email/password account creation enforced before user persistence through exact token, tenant, expiry, and normalized-email validation under a narrow forced-RLS read policy; the same boundary protects initial-owner and staff onboarding without handling passwords in provisioning.
+- CI-enforced release gate covering migration validation, lint, strict TypeScript, the complete test suite, optimized application build, whitespace integrity, provisioner syntax, and both migrator and non-root runner container targets; every third-party action is pinned to an immutable commit with regression coverage, and deployment smoke checks cover both protected workers and live browser security-header contracts.
+- Exact migration-journal integrity enforcement proving every checked-in SQL migration is registered once, contiguously ordered, and executable by the release migrator; the invitation-only security migration is now included in the authoritative Drizzle journal.
+- Environment-aware Content Security Policy restricting browser scripts, connections, forms, frames, workers, objects, fonts, and images, with production insecure-request upgrading, no `unsafe-eval`, compatibility for validated HTTPS tenant branding, and live smoke verification of the deployed header contract.
+
+## IN PROGRESS
+
+- A deployable PostgreSQL environment and provisioned verified Resend sender domain.
+- Canonical data-ownership and Airtable migration dependency analysis.
+
+## BLOCKED
+
+- Runtime verification of the authenticated lead-intake workflow is blocked until PostgreSQL is provisioned and migrations are applied.
+- Production integrations: database, email delivery, AI provider, hosting, and external provider credentials are not configured.
+- Two-way cross-base Airtable editing: unavailable on the current Airtable Team plan.
+- Production deployment: no hosting environment or release configuration has been selected.
+- Automated Playwright/axe coverage could not be installed because npm registry metadata and package downloads repeatedly timed out; the manifest was not modified with unavailable dependencies.
+
+## DEFERRED
+
+- VinSolutions integration.
+- Native iOS and Android applications while responsive web remains the MVP target.
+- Advanced OEM integrations, data warehouse, billing, and ML training pipelines.
+- Destructive Airtable legacy-table retirement until all four migration gates pass.
+
+## NEXT
+
+1. Run migrations and integration tests against provisioned PostgreSQL, Resend, and Twilio test credentials.
+2. Provision a container registry/hosting target and perform staging security/runtime verification.
+3. Provision a restricted OpenAI project key and calibrate evidence-grounding, refusal, cost, and latency behavior in staging.
+4. Connect a monitoring destination and verify signed alert delivery in staging.
+5. Reconcile Airtable authority mappings without destructive migration.

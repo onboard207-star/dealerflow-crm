@@ -1,0 +1,3 @@
+import{describe,expect,it}from"vitest";import{LayoutDashboard,Users}from"lucide-react";import{filterNavigationCommands}from"./command-palette-filter";
+const navigation=[{label:"Dealership",items:[{label:"Overview",href:"/workspace",icon:LayoutDashboard},{label:"Customers",href:"/customers",icon:Users}]}];
+describe("command palette",()=>{it("lists only actual tenant navigation commands",()=>{expect(filterNavigationCommands(navigation,"").map((item)=>item.label)).toEqual(["Overview","Customers"]);expect(filterNavigationCommands(navigation,"customer").map((item)=>item.href)).toEqual(["/customers"]);});it("can match a navigation group",()=>{expect(filterNavigationCommands(navigation,"dealership")).toHaveLength(2);});});

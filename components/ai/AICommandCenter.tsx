@@ -548,10 +548,10 @@ function ActionButton({
 }: ActionButtonProps) {
   const unavailableOffline =
     mode === "offline" && action.requiresConnection !== false;
-  const disabled = action.availability === "disabled" || unavailableOffline;
+  const disabled = action.availability === "disabled" || unavailableOffline || !onAction;
   const unavailableReason = unavailableOffline
     ? "Unavailable while offline"
-    : action.unavailableReason ?? "Unavailable";
+    : action.unavailableReason ?? (onAction ? "Unavailable" : "Action is not connected in this context");
 
   return (
     <Button

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { PanelLeftClose } from "lucide-react";
 import { Brand } from "@/components/app-shell/brand";
-import { defaultNavigation, supportNavigation, type NavigationGroup } from "@/components/app-shell/navigation";
+import { defaultNavigation, type NavigationGroup } from "@/components/app-shell/navigation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -10,13 +10,16 @@ interface SidebarProps {
   activeHref?: string;
   onClose?: () => void;
   className?: string;
+  brandName?: string;
+  logoUrl?: string;
+  logoDarkUrl?: string;
 }
 
-export function Sidebar({ navigation = defaultNavigation, activeHref = "#", onClose, className }: SidebarProps) {
+export function Sidebar({ navigation = defaultNavigation, activeHref = "#", onClose, className, brandName, logoUrl, logoDarkUrl }: SidebarProps) {
   return (
     <aside className={cn("flex h-full w-64 flex-col border-r bg-card/80 backdrop-blur-xl", className)} aria-label="Primary navigation">
       <div className="flex h-16 items-center justify-between px-4">
-        <Brand />
+        <Brand name={brandName} logoUrl={logoUrl} logoDarkUrl={logoDarkUrl} />
         {onClose && <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close navigation"><PanelLeftClose className="size-4" /></Button>}
       </div>
       <nav className="flex-1 overflow-y-auto px-3 py-3">
@@ -32,9 +35,6 @@ export function Sidebar({ navigation = defaultNavigation, activeHref = "#", onCl
           </div>
         ))}
       </nav>
-      <div className="border-t p-3">
-        <Link href={supportNavigation.href} className="focus-ring flex h-9 items-center gap-3 rounded-lg px-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"><supportNavigation.icon className="size-4" /><span>{supportNavigation.label}</span></Link>
-      </div>
     </aside>
   );
 }

@@ -32,6 +32,7 @@ const temperatureStyles: Record<CustomerTemperature, string> = {
   hot: "bg-primary text-primary-foreground",
   warm: "bg-accent text-accent-foreground",
   cool: "bg-muted text-muted-foreground",
+  unknown: "border border-border bg-muted text-muted-foreground",
 };
 
 const quickActions: ReadonlyArray<{
@@ -114,6 +115,7 @@ export function CustomerHeader(props: CustomerHeaderProps) {
     props.state === "offline" ? props.lastUpdatedLabel : undefined;
 
   const isActionAvailable = (action: CustomerHeaderAction) => {
+    if (!props.onAction) return false;
     if (props.state === "offline") return false;
     if (props.state === "archived") {
       return action === "more" && props.actionAvailability?.more !== false;
@@ -235,7 +237,7 @@ export function CustomerHeader(props: CustomerHeaderProps) {
               <Button
                 key={action}
                 variant={index === 0 && available ? "default" : "outline"}
-                className="h-11 min-w-0 px-3 sm:h-9"
+                className="h-11 min-w-0 px-3"
                 disabled={!available}
                 aria-describedby={!available ? unavailableMessageId : undefined}
                 onClick={() => props.onAction?.(action)}

@@ -1,0 +1,13 @@
+import { NextResponse } from "next/server";
+import { CustomerRecommendationService,RecommendationValidationError } from "@/lib/application/ai";
+import { AuthorizationError } from "@/lib/platform/auth";
+import { AuthenticationError,MembershipError,PostgresMembershipReader,authenticateOrganizationRequest } from "@/lib/server/auth";
+import { PostgresRecommendationRunProvider } from "@/lib/server/ai";
+import { getDatabasePool } from "@/lib/server/database";
+import { resolveCorrelationId } from "@/lib/server/observability";
+
+export const runtime="nodejs";export const dynamic="force-dynamic";
+interface Context{params:Promise<{organizationId:string;runId:string}>}
+export async function POST(request:Request,context:Context){const correlationId=resolveCorrelationId(request);try{const{organizationId,runId}=await context.params;const body:unknown=await request.json();if(!isBody(body))return problem(400,"invalid_request","Review decision is invalid.",correlationId);const pool=getDatabasePool();const actor=await authenticateOrganizationRequest(request,organizationId,new PostgresMembershipReader(pool));const provider=new PostgresRecommendationRunProvider(pool);const unavailable={generate:async()=>{throw new Error("Generation is unavailable in review.");}};await new CustomerRecommendationService(provider,unavailable).review({actor,organizationId,runId,decision:body.decision,...(body.note?{note:body.note}:{})});return NextResponse.json({runId,decision:body.decision},{headers:{"cache-control":"no-store","x-correlation-id":correlationId}});}catch(error){if(error instanceof SyntaxError)return problem(400,"invalid_json","Request body must be valid JSON.",correlationId);if(error instanceof AuthenticationError)return problem(401,"unauthorized",error.message,correlationId);if(error instanceof MembershipError||error instanceof AuthorizationError)return problem(403,"forbidden","Recommendation review is not permitted.",correlationId);if(error instanceof RecommendationValidationError)return problem(409,"review_conflict",error.message,correlationId);return problem(500,"internal_error","Recommendation review failed.",correlationId);}}
+function isBody(value:unknown):value is{decision:"accepted"|"dismissed";note?:string}{if(typeof value!=="object"||value===null)return false;const item=value as Record<string,unknown>;return(item.decision==="accepted"||item.decision==="dismissed")&&(item.note===undefined||typeof item.note==="string");}
+function problem(status:number,error:string,message:string,correlationId:string){return NextResponse.json({error,message,correlationId},{status,headers:{"cache-control":"no-store","x-correlation-id":correlationId}});}

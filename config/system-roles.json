@@ -1,0 +1,32 @@
+[
+  {
+    "key": "owner",
+    "name": "Owner",
+    "description": "Full dealership platform authority.",
+    "capabilities": ["organization.configure", "staff.manage", "customer.read", "customer.create", "customer.update", "lead.read", "lead.create", "lead.assign", "lead.update", "task.read", "task.create", "task.update", "communication.read", "communication.create", "communication.consent.manage", "communication.send", "appointment.read", "appointment.create", "appointment.update", "deal.read", "deal.create", "deal.update", "deal.approve", "inventory.read", "inventory.create", "inventory.update", "reports.view"]
+  },
+  {
+    "key": "sales-manager",
+    "name": "Sales Manager",
+    "description": "Sales operations, assignment, approval, reporting, and team administration.",
+    "capabilities": ["staff.manage", "customer.read", "customer.create", "customer.update", "lead.read", "lead.create", "lead.assign", "lead.update", "task.read", "task.create", "task.update", "communication.read", "communication.create", "communication.consent.manage", "communication.send", "appointment.read", "appointment.create", "appointment.update", "deal.read", "deal.create", "deal.update", "deal.approve", "inventory.read", "reports.view"]
+  },
+  {
+    "key": "salesperson",
+    "name": "Salesperson",
+    "description": "Customer, Lead, appointment, communication, and Deal workflow access.",
+    "capabilities": ["customer.read", "customer.create", "customer.update", "lead.read", "lead.create", "lead.update", "task.read", "task.create", "task.update", "communication.read", "communication.create", "communication.consent.manage", "communication.send", "appointment.read", "appointment.create", "appointment.update", "deal.read", "deal.create", "deal.update", "inventory.read"]
+  },
+  {
+    "key": "bdc",
+    "name": "BDC",
+    "description": "Lead engagement, customer communication, appointment, and follow-up access.",
+    "capabilities": ["customer.read", "customer.create", "customer.update", "lead.read", "lead.create", "lead.assign", "lead.update", "task.read", "task.create", "task.update", "communication.read", "communication.create", "communication.consent.manage", "communication.send", "appointment.read", "appointment.create", "appointment.update", "inventory.read"]
+  },
+  {
+    "key": "finance-manager",
+    "name": "Finance Manager",
+    "description": "Deal approval and finance workflow access with supporting customer context.",
+    "capabilities": ["customer.read", "lead.read", "task.read", "task.create", "task.update", "communication.read", "communication.create", "appointment.read", "deal.read", "deal.create", "deal.update", "deal.approve", "inventory.read", "reports.view"]
+  }
+]

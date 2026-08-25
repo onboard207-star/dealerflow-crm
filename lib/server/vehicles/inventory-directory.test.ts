@@ -1,0 +1,8 @@
+import { describe, expect, it, vi } from "vitest";
+import type { DatabaseClient, DatabasePool } from "@/lib/server/database";
+import { InventoryDirectoryError, InventoryDirectoryReader } from "./inventory-directory";
+
+describe("InventoryDirectoryReader", () => {
+  it("embeds allowed locations in the inventory query", async () => { const query = vi.fn<DatabaseClient["query"]>().mockResolvedValueOnce({}).mockResolvedValueOnce({}).mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({}); const client: DatabaseClient = { query, release: vi.fn() }; const pool: DatabasePool = { connect: vi.fn().mockResolvedValue(client) }; const result = await new InventoryDirectoryReader(pool).list({ userId: "usr_salesperson", organizationId: "org_dealerflow", locationIds: ["loc_main"] }, { status: "available" }); expect(result.records).toEqual([]); expect(query.mock.calls[2]?.[0]).toContain("i.location_id = ANY($3::text[])"); expect(query.mock.calls[2]?.[1]).toEqual(["org_dealerflow", false, ["loc_main"], "", "available", 25]); });
+  it("rejects unbounded requests and unknown statuses before database access", () => { const pool = { connect: vi.fn() } as unknown as DatabasePool; const reader = new InventoryDirectoryReader(pool); expect(() => reader.list({ userId: "usr_salesperson", organizationId: "org_dealerflow", locationIds: "all" }, { limit: 101 })).toThrow(InventoryDirectoryError); expect(() => reader.list({ userId: "usr_salesperson", organizationId: "org_dealerflow", locationIds: "all" }, { status: "mystery" })).toThrow(InventoryDirectoryError); expect(pool.connect).not.toHaveBeenCalled(); });
+});

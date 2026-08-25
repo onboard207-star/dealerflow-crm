@@ -14,6 +14,7 @@ import {
 import { AICommandCenter } from "@/components/ai/AICommandCenter";
 import { CustomerHeader } from "@/components/customer/CustomerHeader";
 import { CustomerSnapshot } from "@/components/customer/CustomerSnapshot";
+import { CustomerTimeline } from "@/components/customer/CustomerTimeline";
 import type {
   CustomerWorkspaceProps,
   CustomerWorkspaceSidebarItem,
@@ -64,14 +65,27 @@ const timelineCategories = [
 
 export function CustomerWorkspace({
   aiCommandProps,
+  aiControls,
   className,
   headerProps,
   onSidebarItemSelect,
   sidebarItems = defaultSidebarItems,
   snapshotProps,
+  visitControls,
+  vehicleControls,
+  dealControls,
+  deliveryControls,
+  quoteControls,
+  appointmentControls,
+  communicationControls,
+  tradeControls,
+  taskControls,
+  leadControls,
+  profileControls,
   timelineDescription =
     "This workspace will display the complete chronological customer history, including calls, emails, texts, appointments, tasks, showroom visits, AI events, and deal activity.",
   timelineTitle = "Customer Timeline",
+  timelineEntries,
 }: CustomerWorkspaceProps) {
   return (
     <div
@@ -86,16 +100,40 @@ export function CustomerWorkspace({
 
       <AICommandCenter {...aiCommandProps} />
 
+      {aiControls}
+
+      {leadControls}
+
+      {profileControls}
+
+      {appointmentControls}
+
+      {taskControls}
+
+      {communicationControls}
+
+      {visitControls}
+
+      {vehicleControls}
+
+      {dealControls}
+
+      {quoteControls}
+
+      {tradeControls}
+
+      {deliveryControls}
+
       <WorkspaceMainRegion
         onSidebarItemSelect={onSidebarItemSelect}
         sidebarItems={sidebarItems}
         snapshotProps={snapshotProps}
       />
 
-      <TimelinePlaceholder
+      {timelineEntries ? <CustomerTimeline entries={timelineEntries} /> : <TimelinePlaceholder
         description={timelineDescription}
         title={timelineTitle}
-      />
+      />}
     </div>
   );
 }

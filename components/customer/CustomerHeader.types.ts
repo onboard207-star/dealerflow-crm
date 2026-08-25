@@ -1,4 +1,4 @@
-export type CustomerTemperature = "hot" | "warm" | "cool";
+export type CustomerTemperature = "hot" | "warm" | "cool" | "unknown";
 
 export type CustomerHeaderAction =
   | "call"

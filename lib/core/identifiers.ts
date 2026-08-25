@@ -1,0 +1,44 @@
+import { randomUUID } from "node:crypto";
+
+export type EntityIdPrefix =
+  | "apt"
+  | "ase"
+  | "air"
+  | "aud"
+  | "cus"
+  | "dea"
+  | "dst"
+  | "dlv"
+  | "dse"
+  | "com"
+  | "cns"
+  | "led"
+  | "lse"
+  | "int"
+  | "inv"
+  | "iue"
+  | "evt"
+  | "loc"
+  | "mem"
+  | "org"
+  | "oin"
+  | "ocv"
+  | "qli"
+  | "quo"
+  | "qst"
+  | "rol"
+  | "snd"
+  | "tsk"
+  | "tse"
+  | "tap"
+  | "tas"
+  | "tem"
+  | "veh"
+  | "vis"
+  | "vhi"
+  | "vse"
+  | "usr";
+
+export function generateEntityId(prefix: EntityIdPrefix): string {
+  return `${prefix}_${randomUUID().replaceAll("-", "")}`;
+}

@@ -1,5 +1,7 @@
 import type { LucideIcon } from "lucide-react";
-import { Boxes, Building2, CircleHelp, LayoutDashboard, Settings, Users } from "lucide-react";
+import { BarChart3, Building2, CarFront, CircleDollarSign, LayoutDashboard, MapPinned, MessageSquareWarning, Plug, Settings, ShieldCheck, UserCog, UserRoundSearch, Users } from "lucide-react";
+import type { Capability } from "@/lib/platform/auth";
+import type { TenantFeatures } from "@/lib/platform/tenant";
 
 export interface NavigationItem {
   label: string;
@@ -13,8 +15,34 @@ export interface NavigationGroup {
 }
 
 export const defaultNavigation: NavigationGroup[] = [
-  { label: "Workspace", items: [{ label: "Overview", href: "#", icon: LayoutDashboard }, { label: "Organization", href: "#", icon: Building2 }, { label: "Team", href: "#", icon: Users }] },
-  { label: "System", items: [{ label: "Components", href: "#", icon: Boxes }, { label: "Settings", href: "#", icon: Settings }] },
+  { label: "Workspace", items: [{ label: "Product entry", href: "/", icon: LayoutDashboard }, { label: "Customer workspace demo", href: "/demo/customer-workspace", icon: Users }] },
 ];
 
-export const supportNavigation: NavigationItem = { label: "Help & support", href: "#", icon: CircleHelp };
+export function createOrganizationNavigation(organizationId: string, capabilities?: readonly Capability[], features?: TenantFeatures): NavigationGroup[] {
+  const base = `/organizations/${organizationId}`;
+  const featureByCapability: Partial<Record<Capability, keyof TenantFeatures>> = {
+    "customer.read": "crm", "lead.read": "crm", "inventory.read": "inventory", "deal.read": "finance",
+  };
+  const allowed = (capability: Capability) => {
+    const feature = featureByCapability[capability];
+    return (!feature || features?.[feature] !== false) && (!capabilities || capabilities.includes(capability));
+  };
+  return [{
+    label: "Dealership",
+    items: [
+      { label: "Overview", href: `${base}/workspace`, icon: LayoutDashboard },
+      ...(allowed("lead.read") ? [{ label: "Leads", href: `${base}/leads`, icon: Users }] : []),
+      ...(allowed("customer.read") ? [{ label: "Customers", href: `${base}/customers`, icon: UserRoundSearch }] : []),
+      ...(allowed("inventory.read") ? [{ label: "Inventory", href: `${base}/inventory`, icon: CarFront }] : []),
+      ...(allowed("deal.read") ? [{ label: "Deals", href: `${base}/deals`, icon: CircleDollarSign }] : []),
+      ...(allowed("reports.view") ? [{ label: "Reports", href: `${base}/reports`, icon: BarChart3 }] : []),
+      ...(allowed("staff.manage") ? [{ label: "Team", href: `${base}/settings/team`, icon: UserCog }] : []),
+      ...(allowed("staff.manage") && allowed("organization.configure") ? [{ label: "Roles", href: `${base}/settings/roles`, icon: ShieldCheck }] : []),
+      ...(allowed("organization.configure") ? [{ label: "Integrations", href: `${base}/settings/integrations`, icon: Plug }] : []),
+      ...(allowed("organization.configure") ? [{ label: "Configuration", href: `${base}/settings/configuration`, icon: Settings }] : []),
+      ...(allowed("organization.configure") ? [{ label: "Locations", href: `${base}/settings/locations`, icon: MapPinned }] : []),
+      ...(allowed("organization.configure") && allowed("communication.read") ? [{ label: "Messaging Ops", href: `${base}/operations/messages`, icon: MessageSquareWarning }] : []),
+      { label: "Switch workspace", href: "/select-organization", icon: Building2 },
+    ],
+  }];
+}
