@@ -8,9 +8,12 @@ export const applicationEnvironments = [
 export type ApplicationEnvironment =
   (typeof applicationEnvironments)[number];
 
+export type DatabaseSslMode = "disable" | "verify-full";
+
 export interface ServerEnvironment {
   appEnvironment: ApplicationEnvironment;
   databaseUrl?: string;
+  databaseSslMode?: DatabaseSslMode;
   authSecret?: string;
   authUrl?: string;
   jobSecret?: string;
@@ -50,6 +53,7 @@ export function parseServerEnvironment(
   const issues: string[] = [];
   const appEnvironment = parseApplicationEnvironment(source.APP_ENV, issues);
   const databaseUrl = readOptional(source.DATABASE_URL);
+  const databaseSslMode = readOptional(source.DATABASE_SSL_MODE);
   const authSecret = readOptional(source.BETTER_AUTH_SECRET);
   const authUrl = readOptional(source.BETTER_AUTH_URL);
   const jobSecret = readOptional(source.DEALERFLOW_JOB_SECRET);
@@ -69,6 +73,14 @@ export function parseServerEnvironment(
 
   if (databaseUrl && !isPostgresUrl(databaseUrl)) {
     issues.push("DATABASE_URL must use the postgres or postgresql protocol.");
+  }
+
+  if (
+    databaseSslMode &&
+    databaseSslMode !== "disable" &&
+    databaseSslMode !== "verify-full"
+  ) {
+    issues.push("DATABASE_SSL_MODE must be disable or verify-full.");
   }
 
   if (requirements.authentication && !authSecret) {
@@ -114,6 +126,9 @@ export function parseServerEnvironment(
   return Object.freeze({
     appEnvironment,
     ...(databaseUrl ? { databaseUrl } : {}),
+    ...(databaseSslMode === "disable" || databaseSslMode === "verify-full"
+      ? { databaseSslMode }
+      : {}),
     ...(authSecret ? { authSecret } : {}),
     ...(authUrl ? { authUrl } : {}),
     ...(jobSecret ? { jobSecret } : {}),

@@ -55,6 +55,27 @@ describe("parseServerEnvironment", () => {
     }
   });
 
+  it("accepts only explicit supported database SSL modes", () => {
+    expect(
+      parseServerEnvironment({
+        ...validProductionEnvironment,
+        DATABASE_SSL_MODE: "verify-full",
+      }).databaseSslMode,
+    ).toBe("verify-full");
+    expect(
+      parseServerEnvironment({
+        ...validProductionEnvironment,
+        DATABASE_SSL_MODE: "disable",
+      }).databaseSslMode,
+    ).toBe("disable");
+    expect(() =>
+      parseServerEnvironment({
+        ...validProductionEnvironment,
+        DATABASE_SSL_MODE: "require",
+      }),
+    ).toThrow(EnvironmentConfigurationError);
+  });
+
   it("requires HTTPS authentication URLs outside local environments", () => {
     expect(() =>
       parseServerEnvironment({

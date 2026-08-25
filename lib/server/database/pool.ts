@@ -1,11 +1,15 @@
 import { Pool, type PoolConfig } from "pg";
 
-import type { ApplicationEnvironment } from "@/lib/server/config";
+import type {
+  ApplicationEnvironment,
+  DatabaseSslMode,
+} from "@/lib/server/config";
 import { parseServerEnvironment } from "@/lib/server/config";
 
 export interface DatabasePoolConfiguration {
   connectionString: string;
   appEnvironment: ApplicationEnvironment;
+  sslMode?: DatabaseSslMode;
   maximumConnections?: number;
 }
 
@@ -18,11 +22,7 @@ export function createDatabasePool(
     idleTimeoutMillis: 30_000,
     connectionTimeoutMillis: 10_000,
     application_name: "dealerflow-ai",
-    ssl:
-      configuration.appEnvironment === "development" ||
-      configuration.appEnvironment === "test"
-        ? undefined
-        : { rejectUnauthorized: true },
+    ssl: resolveDatabaseSsl(configuration),
   };
 
   return new Pool(poolConfiguration);
@@ -40,6 +40,21 @@ export function getDatabasePool(): Pool {
   sharedPool = createDatabasePool({
     connectionString: environment.databaseUrl,
     appEnvironment: environment.appEnvironment,
+    sslMode: environment.databaseSslMode,
   });
   return sharedPool;
+}
+
+function resolveDatabaseSsl(
+  configuration: DatabasePoolConfiguration,
+): PoolConfig["ssl"] {
+  if (configuration.sslMode === "disable") return undefined;
+  if (configuration.sslMode === "verify-full") {
+    return { rejectUnauthorized: true };
+  }
+
+  return configuration.appEnvironment === "development" ||
+    configuration.appEnvironment === "test"
+    ? undefined
+    : { rejectUnauthorized: true };
 }

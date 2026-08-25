@@ -1,14 +1,15 @@
 # Deployment
 
-DealerFlow is not deployed yet. The repository produces a valid optimized Next.js build, but production requires external PostgreSQL, authentication secrets, hosting, monitoring, and a migration execution environment.
+DealerFlow has a live Render staging deployment. Production promotion still requires completed provider credentials, monitoring, rollback rehearsal, and release evidence.
 
 ## Runtime requirements
 
 - Node.js 22
 - pnpm 11.9.0
-- PostgreSQL with SSL in staging and production
+- PostgreSQL with verified SSL in staging and production, unless the runtime uses a trusted provider-private network
 - `APP_ENV`
 - `DATABASE_URL`
+- `DATABASE_SSL_MODE=verify-full` for external database endpoints; use `disable` only for a trusted private endpoint such as Render's internal database URL
 - `BETTER_AUTH_SECRET` containing at least 32 high-entropy characters
 - `DEALERFLOW_JOB_SECRET` containing at least 32 high-entropy characters and distinct from authentication/provider secrets
 - `BETTER_AUTH_URL` using HTTPS outside local development and test
@@ -22,6 +23,8 @@ The application exposes `/api/health` for process liveness and `/api/ready` for 
 Readiness also fails closed when authentication, scheduler, transactional-email, or AI provider configuration is incomplete. Use authenticated `GET /api/internal/jobs/transactional-email` with the scheduler bearer secret for privacy-safe seven-day queue counts, oldest queued age, and grouped failure codes; no recipient addresses or message bodies are returned.
 
 Copy `.env.example` for local configuration. Never commit populated environment files.
+
+The secure staging and production default is `verify-full`. Render web services that use Render's internal PostgreSQL hostname must set `DATABASE_SSL_MODE=disable`; that traffic remains inside Render's private network and avoids relying on a public certificate for the internal hostname. Never use `disable` with an Internet-routable database endpoint.
 
 Configure the hosting scheduler to invoke both `POST /api/internal/jobs/outbound-messages` and `POST /api/internal/jobs/transactional-email` with `Authorization: Bearer <DEALERFLOW_JOB_SECRET>`. Run them frequently enough to satisfy messaging and account-email latency requirements. The email worker accepts a bounded `limit` query parameter from 1 through 100, defaults to 25, and retries transient delivery failures with bounded exponential backoff. Never expose the scheduler credential to browsers or reuse it as an application session secret.
 
@@ -107,13 +110,13 @@ The suite verifies liveness, full readiness, login rendering, anonymous rejectio
 
 The staging pass must also generate a Customer recommendation with a non-production record, verify strict evidence citations and `store: false` behavior, exercise provider refusal/failure presentation, and record acceptance or dismissal without executing the suggested action. Confirm no customer contact data or model content appears in logs or alert delivery.
 
-## Current deployment blockers
+## Current staging deployment
 
-- No PostgreSQL environment has been provisioned.
-- Authentication and its durable verification/recovery email queue cannot be runtime-verified until production database, auth, Resend, and verified sender-domain credentials are available.
-- No hosting project, container registry, staging environment, monitoring destination, or rollback target is configured.
-- Integration credentials, including an OpenAI project key, and webhook endpoints are unavailable.
+- The Render staging web service and PostgreSQL database are provisioned, migrations are applied, and the initial tenant is provisioned.
+- Account-email delivery and owner onboarding require Resend credentials and a verified sender domain.
+- Full AI readiness requires a restricted OpenAI project key and pinned model.
+- Monitoring, alert routing, Twilio test credentials, and a rehearsed rollback remain outstanding.
 
 ## Rollback
 
-The initial migration has not been applied. Before the first staging deployment, establish point-in-time recovery and test restore procedures. Application releases should be backward-compatible with the currently applied schema whenever practical; destructive migrations require a separate expand/migrate/contract sequence. Roll back web replicas to the previous immutable image only after verifying its schema compatibility. Do not reverse a migration by deleting production data; use a reviewed forward repair migration or restore to a proven recovery point.
+Staging migrations have been applied. Before production deployment, establish point-in-time recovery and test restore procedures. Application releases should be backward-compatible with the currently applied schema whenever practical; destructive migrations require a separate expand/migrate/contract sequence. Roll back web replicas to the previous immutable image only after verifying its schema compatibility. Do not reverse a migration by deleting production data; use a reviewed forward repair migration or restore to a proven recovery point.
