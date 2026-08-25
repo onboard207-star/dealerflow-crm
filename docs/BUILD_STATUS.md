@@ -131,6 +131,7 @@
 - Environment-aware Content Security Policy restricting browser scripts, connections, forms, frames, workers, objects, fonts, and images, with production insecure-request upgrading, no `unsafe-eval`, compatibility for validated HTTPS tenant branding, and live smoke verification of the deployed header contract.
 - Live Render staging infrastructure in Virginia with a paid PostgreSQL 16 database and Docker web service; the health endpoint returns HTTP 200 with the expected no-store and browser-security headers, and the complete migration chain has been applied successfully against the real database.
 - Explicit database SSL transport policy preserves verified certificates by default while supporting trusted provider-private networking for the Render runtime.
+- Better Auth uses its database-capable runtime entry point so direct PostgreSQL-backed authentication can initialize in the standalone deployment.
 - Real PostgreSQL execution uncovered and repaired two migration-order defects: composite parent indexes now precede tenant-integrity foreign keys, and the configuration-history self-reference is added only after its composite unique index exists.
 
 ## IN PROGRESS

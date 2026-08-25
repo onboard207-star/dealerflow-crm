@@ -1,4 +1,4 @@
-import { betterAuth } from "better-auth/minimal";
+import { betterAuth } from "better-auth";
 
 import { generateEntityId } from "@/lib/core/identifiers";
 import { parseServerEnvironment } from "@/lib/server/config";
