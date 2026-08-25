@@ -9,10 +9,10 @@ CREATE TABLE "organization_configuration_versions" (
   CONSTRAINT "configuration_versions_id_format" CHECK ("id" ~ '^ocv_[a-z0-9_-]{6,64}$'),
   CONSTRAINT "configuration_versions_change_kind" CHECK ("change_kind" IN ('update','rollback')),
   CONSTRAINT "configuration_versions_snapshot_object" CHECK (jsonb_typeof("configuration")='object'),
-  CONSTRAINT "configuration_versions_restore_consistency" CHECK (("change_kind"='rollback')=("restored_from_id" IS NOT NULL)),
-  CONSTRAINT "configuration_versions_same_org_restore_fk" FOREIGN KEY ("organization_id","restored_from_id") REFERENCES "organization_configuration_versions"("organization_id","id")
+  CONSTRAINT "configuration_versions_restore_consistency" CHECK (("change_kind"='rollback')=("restored_from_id" IS NOT NULL))
 );
 CREATE UNIQUE INDEX "configuration_versions_organization_id_unique" ON "organization_configuration_versions"("organization_id","id");
+ALTER TABLE "organization_configuration_versions" ADD CONSTRAINT "configuration_versions_same_org_restore_fk" FOREIGN KEY ("organization_id","restored_from_id") REFERENCES "organization_configuration_versions"("organization_id","id");
 CREATE INDEX "configuration_versions_created_idx" ON "organization_configuration_versions"("organization_id","created_at" DESC);
 ALTER TABLE "organization_configuration_versions" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "organization_configuration_versions" FORCE ROW LEVEL SECURITY;

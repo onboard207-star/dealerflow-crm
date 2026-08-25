@@ -129,15 +129,17 @@
 - CI-enforced release gate covering migration validation, lint, strict TypeScript, the complete test suite, optimized application build, whitespace integrity, provisioner syntax, and both migrator and non-root runner container targets; every third-party action is pinned to an immutable commit with regression coverage, and deployment smoke checks cover both protected workers and live browser security-header contracts.
 - Exact migration-journal integrity enforcement proving every checked-in SQL migration is registered once, contiguously ordered, and executable by the release migrator; the invitation-only security migration is now included in the authoritative Drizzle journal.
 - Environment-aware Content Security Policy restricting browser scripts, connections, forms, frames, workers, objects, fonts, and images, with production insecure-request upgrading, no `unsafe-eval`, compatibility for validated HTTPS tenant branding, and live smoke verification of the deployed header contract.
+- Live Render staging infrastructure in Virginia with a paid PostgreSQL 16 database and Docker web service; the health endpoint returns HTTP 200 with the expected no-store and browser-security headers, and the complete migration chain has been applied successfully against the real database.
+- Real PostgreSQL execution uncovered and repaired two migration-order defects: composite parent indexes now precede tenant-integrity foreign keys, and the configuration-history self-reference is added only after its composite unique index exists.
 
 ## IN PROGRESS
 
-- A deployable PostgreSQL environment and provisioned verified Resend sender domain.
+- A provisioned verified Resend sender domain and remaining staging provider credentials.
 - Canonical data-ownership and Airtable migration dependency analysis.
 
 ## BLOCKED
 
-- Runtime verification of the authenticated lead-intake workflow is blocked until PostgreSQL is provisioned and migrations are applied.
+- Runtime verification of authenticated workflows is pending initial-tenant provisioning and account-email delivery.
 - Production integrations: database, email delivery, AI provider, hosting, and external provider credentials are not configured.
 - Two-way cross-base Airtable editing: unavailable on the current Airtable Team plan.
 - Production deployment: no hosting environment or release configuration has been selected.
@@ -152,8 +154,8 @@
 
 ## NEXT
 
-1. Run migrations and integration tests against provisioned PostgreSQL, Resend, and Twilio test credentials.
-2. Provision a container registry/hosting target and perform staging security/runtime verification.
+1. Provision the initial DealerFlow tenant and complete invitation-only owner onboarding after Resend is configured.
+2. Run authenticated lead-to-sale integration tests against staging PostgreSQL, Resend, and Twilio test credentials.
 3. Provision a restricted OpenAI project key and calibrate evidence-grounding, refusal, cost, and latency behavior in staging.
 4. Connect a monitoring destination and verify signed alert delivery in staging.
 5. Reconcile Airtable authority mappings without destructive migration.
