@@ -2,11 +2,16 @@ import { betterAuth } from "better-auth";
 
 import { generateEntityId } from "@/lib/core/identifiers";
 import { parseServerEnvironment } from "@/lib/server/config";
-import { getDatabasePool } from "@/lib/server/database";
+import {
+  createDatabasePool,
+  getDatabasePool,
+  type DatabasePool,
+} from "@/lib/server/database";
 import { PostgresTransactionalEmailQueue, createPasswordResetEmail, createVerificationEmail } from "@/lib/server/email";
 import { isInvitationSignupAllowed } from "./invitation-signup";
 
 let authInstance: ReturnType<typeof createAuth> | undefined;
+let authDatabasePool: DatabasePool | undefined;
 
 export function getAuth() {
   if (authInstance) return authInstance;
@@ -19,10 +24,19 @@ function createAuth() {
     database: true,
     authentication: true,
   });
+  if (!environment.databaseUrl) {
+    throw new Error("Authentication database configuration is unavailable.");
+  }
+  authDatabasePool ??= createDatabasePool({
+    connectionString: environment.databaseUrl,
+    appEnvironment: environment.appEnvironment,
+    sslMode: environment.databaseSslMode,
+    runtime: "authentication",
+  });
   const emailQueue = new PostgresTransactionalEmailQueue(getDatabasePool());
 
   return betterAuth({
-    database: getDatabasePool(),
+    database: authDatabasePool,
     secret: environment.authSecret,
     baseURL: environment.authUrl,
     trustedOrigins: environment.authUrl ? [environment.authUrl] : [],

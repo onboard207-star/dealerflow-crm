@@ -23,4 +23,15 @@ describe("createDatabasePool", () => {
     expect(pool.options.ssl).toBeUndefined();
     await pool.end();
   });
+
+  it("scopes authentication connections with an explicit PostgreSQL setting", async () => {
+    const pool = createDatabasePool({
+      connectionString: "postgresql://user:password@private-db/dealerflow",
+      appEnvironment: "staging",
+      runtime: "authentication",
+    });
+
+    expect(pool.options.options).toBe("-c app.auth_runtime=enabled");
+    await pool.end();
+  });
 });

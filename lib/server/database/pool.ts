@@ -10,6 +10,7 @@ export interface DatabasePoolConfiguration {
   connectionString: string;
   appEnvironment: ApplicationEnvironment;
   sslMode?: DatabaseSslMode;
+  runtime?: "application" | "authentication";
   maximumConnections?: number;
 }
 
@@ -22,6 +23,10 @@ export function createDatabasePool(
     idleTimeoutMillis: 30_000,
     connectionTimeoutMillis: 10_000,
     application_name: "dealerflow-ai",
+    options:
+      configuration.runtime === "authentication"
+        ? "-c app.auth_runtime=enabled"
+        : undefined,
     ssl: resolveDatabaseSsl(configuration),
   };
 
