@@ -134,6 +134,9 @@
 - Better Auth uses its database-capable runtime entry point so direct PostgreSQL-backed authentication can initialize in the standalone deployment.
 - Dedicated authentication database connections carry a narrowly scoped PostgreSQL runtime marker, allowing Better Auth to manage global identity rows without weakening tenant-scoped application connections.
 - Real PostgreSQL execution uncovered and repaired two migration-order defects: composite parent indexes now precede tenant-integrity foreign keys, and the configuration-history self-reference is added only after its composite unique index exists.
+- Live owner authentication is verified end to end in Render staging: invitation-bound signup, Resend verification, password recovery, and verified credential persistence are operational.
+- Repaired the operational overview appointment query to use the canonical `appointments.starts_at` column, with regression coverage preventing the removed `scheduled_at` reference from returning.
+- Latest repository gate: Drizzle migration validation, lint, strict TypeScript, 276 tests across 69 files, and the optimized Next.js production build all pass.
 
 ## IN PROGRESS
 
@@ -142,7 +145,6 @@
 
 ## BLOCKED
 
-- Runtime verification of authenticated workflows is pending account-email delivery.
 - Production integrations: email delivery, AI provider, monitoring, and external provider credentials are not configured.
 - Two-way cross-base Airtable editing: unavailable on the current Airtable Team plan.
 - Production deployment: no hosting environment or release configuration has been selected.
