@@ -142,13 +142,14 @@
 - Complete fictional 26-person dealership roster mapped to standard least-privilege system roles, including new General Manager, Service, Inventory, Controller, and Reception permission profiles; reserved invalid email addresses and absent auth accounts prevent template identities from signing in.
 - First authoritative Vehicle Workspace at `/organizations/{organizationId}/inventory/{inventoryUnitId}` with exact-unit identity, lifecycle evidence, capability- and location-scoped customer/deal relationships, non-fabricated media fallback, responsive inventory navigation, and direct global-search routing.
 - Canonical exact-unit inventory media with tenant and location isolation, provider provenance, immutable checksum and verification evidence, removal consistency, bounded image metadata, verified responsive galleries, and a fail-closed no-photo state; catalog imagery and nonfunctional uploads remain excluded.
-- Latest repository gate: Drizzle migration validation, lint, strict TypeScript, 285 tests across 72 files, and the optimized Next.js production build all pass.
+- Governed Cloudflare R2 inventory uploads with short-lived exact-object PUT authorization, complete secret validation, durable idempotent upload intents, server-side byte/MIME/signature/SHA-256/dimension verification, atomic publication, audited ordering, evidence-backed removal, and configuration-aware UI suppression when storage is unavailable.
+- Latest repository gate: Drizzle migration validation, lint, strict TypeScript, 290 tests across 73 files, and the optimized Next.js production build all pass.
 
 ## IN PROGRESS
 
 - A provisioned verified Resend sender domain and remaining staging provider credentials.
 - Canonical data-ownership and Airtable migration dependency analysis.
-- Selection and credentialing of a durable object-storage/image-delivery provider for governed inventory uploads.
+- Cloudflare R2 bucket, restricted token, public image domain, and exact-origin CORS configuration in staging.
 
 ## BLOCKED
 
@@ -166,7 +167,7 @@
 
 ## NEXT
 
-1. Select and configure the inventory-media storage provider, then implement signed upload initiation, provider callback verification, and evidence-backed removal without accepting arbitrary client URLs.
+1. Provision the staging Cloudflare R2 bucket, restricted token, public image domain, and exact-origin CORS policy; then run a real upload, reorder, and removal smoke pass.
 2. Apply the versioned working-dealership template to the staging tenant and verify its live reporting, directories, workspace, and staff views.
 3. Run authenticated lead-to-sale integration tests against staging PostgreSQL, Resend, and Twilio test credentials.
 4. Provision a restricted OpenAI project key and calibrate evidence-grounding, refusal, cost, and latency behavior in staging.

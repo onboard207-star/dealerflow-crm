@@ -1,4 +1,5 @@
 import { CarFront, ShieldCheck } from "lucide-react";
+import { InventoryMediaControls } from "./InventoryMediaControls";
 
 export interface VerifiedVehicleMediaAsset {
   id: string;
@@ -11,9 +12,10 @@ export interface VerifiedVehicleMediaAsset {
 
 interface VerifiedVehicleMediaProps {
   assets: readonly VerifiedVehicleMediaAsset[];
+  management?: { organizationId: string; inventoryUnitId: string };
 }
 
-export function VerifiedVehicleMedia({ assets }: VerifiedVehicleMediaProps) {
+export function VerifiedVehicleMedia({ assets, management }: VerifiedVehicleMediaProps) {
   if (!assets.length) {
     return (
       <section className="overflow-hidden rounded-xl border bg-card shadow-soft" aria-labelledby="media-heading">
@@ -60,6 +62,7 @@ export function VerifiedVehicleMedia({ assets }: VerifiedVehicleMediaProps) {
             <figcaption className="sr-only">
               Verified {new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(new Date(asset.verifiedAt))}
             </figcaption>
+            {management ? <InventoryMediaControls {...management} mediaId={asset.id} /> : null}
           </figure>
         ))}
       </div>

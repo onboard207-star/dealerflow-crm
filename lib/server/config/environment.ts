@@ -26,6 +26,12 @@ export interface ServerEnvironment {
   aiProvider?: "openai";
   openaiApiKey?: string;
   aiModel?: string;
+  mediaProvider?: "r2";
+  r2AccountId?: string;
+  r2AccessKeyId?: string;
+  r2SecretAccessKey?: string;
+  r2Bucket?: string;
+  r2PublicBaseUrl?: string;
 }
 
 export interface EnvironmentRequirements {
@@ -34,6 +40,7 @@ export interface EnvironmentRequirements {
   jobs?: boolean;
   email?: boolean;
   ai?: boolean;
+  media?: boolean;
 }
 
 export class EnvironmentConfigurationError extends Error {
@@ -66,6 +73,12 @@ export function parseServerEnvironment(
   const aiProvider=readOptional(source.DEALERFLOW_AI_PROVIDER);
   const openaiApiKey=readOptional(source.OPENAI_API_KEY);
   const aiModel=readOptional(source.DEALERFLOW_AI_MODEL);
+  const mediaProvider=readOptional(source.DEALERFLOW_MEDIA_PROVIDER);
+  const r2AccountId=readOptional(source.CLOUDFLARE_R2_ACCOUNT_ID);
+  const r2AccessKeyId=readOptional(source.CLOUDFLARE_R2_ACCESS_KEY_ID);
+  const r2SecretAccessKey=readOptional(source.CLOUDFLARE_R2_SECRET_ACCESS_KEY);
+  const r2Bucket=readOptional(source.CLOUDFLARE_R2_BUCKET);
+  const r2PublicBaseUrl=readOptional(source.CLOUDFLARE_R2_PUBLIC_BASE_URL);
 
   if (requirements.database && !databaseUrl) {
     issues.push("DATABASE_URL is required for database operations.");
@@ -118,6 +131,14 @@ export function parseServerEnvironment(
   if(requirements.ai&&!openaiApiKey)issues.push("OPENAI_API_KEY is required for AI recommendations.");
   if(requirements.ai&&!aiModel)issues.push("DEALERFLOW_AI_MODEL is required for AI recommendations.");
   if(aiModel&&!/^[a-zA-Z0-9._-]{2,100}$/.test(aiModel))issues.push("DEALERFLOW_AI_MODEL is invalid.");
+  if(mediaProvider&&mediaProvider!=="r2")issues.push("DEALERFLOW_MEDIA_PROVIDER must be r2.");
+  const mediaValues=[r2AccountId,r2AccessKeyId,r2SecretAccessKey,r2Bucket,r2PublicBaseUrl];
+  if(mediaValues.some(Boolean)&&mediaProvider!=="r2")issues.push("DEALERFLOW_MEDIA_PROVIDER=r2 is required when Cloudflare R2 settings are present.");
+  if(mediaProvider==="r2"&&mediaValues.some((value)=>!value))issues.push("All Cloudflare R2 media settings are required when DEALERFLOW_MEDIA_PROVIDER=r2.");
+  if(requirements.media&&mediaProvider!=="r2")issues.push("DEALERFLOW_MEDIA_PROVIDER=r2 is required for inventory media.");
+  if(r2AccountId&&!/^[a-f0-9]{32}$/.test(r2AccountId))issues.push("CLOUDFLARE_R2_ACCOUNT_ID is invalid.");
+  if(r2Bucket&&!/^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/.test(r2Bucket))issues.push("CLOUDFLARE_R2_BUCKET is invalid.");
+  if(r2PublicBaseUrl&&!isHttpsBaseUrl(r2PublicBaseUrl))issues.push("CLOUDFLARE_R2_PUBLIC_BASE_URL must be an HTTPS origin without credentials, query, or fragment.");
 
   if (issues.length > 0) {
     throw new EnvironmentConfigurationError(issues);
@@ -141,8 +162,16 @@ export function parseServerEnvironment(
     ...(aiProvider==="openai"?{aiProvider}:{}),
     ...(openaiApiKey?{openaiApiKey}:{}),
     ...(aiModel?{aiModel}:{}),
+    ...(mediaProvider==="r2"?{mediaProvider}:{}),
+    ...(r2AccountId?{r2AccountId}:{}),
+    ...(r2AccessKeyId?{r2AccessKeyId}:{}),
+    ...(r2SecretAccessKey?{r2SecretAccessKey}:{}),
+    ...(r2Bucket?{r2Bucket}:{}),
+    ...(r2PublicBaseUrl?{r2PublicBaseUrl}:{}),
   });
 }
+
+function isHttpsBaseUrl(value:string):boolean{try{const url=new URL(value);return url.protocol==="https:"&&!url.username&&!url.password&&!url.search&&!url.hash;}catch{return false;}}
 
 function isMailbox(value: string): boolean {
   const match = value.match(/^(?:[^<>]+\s+<)?([^<>\s]+@[^<>\s]+)>?$/);

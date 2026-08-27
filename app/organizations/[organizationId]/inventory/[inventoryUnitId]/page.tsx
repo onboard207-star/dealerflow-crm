@@ -4,9 +4,11 @@ import { ArrowLeft, Clock3, MapPin, Users } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
 import { InventoryUnitControls } from "@/components/inventory/InventoryUnitControls";
+import { InventoryMediaUpload } from "@/components/inventory/InventoryMediaUpload";
 import { VerifiedVehicleMedia } from "@/components/inventory/VerifiedVehicleMedia";
 import { Button } from "@/components/ui/button";
 import { VehicleWorkspaceReader } from "@/lib/server/vehicles";
+import { inventoryMediaStorageAvailable } from "@/lib/server/vehicles/media-manager-factory";
 import { loadDirectoryContext } from "../../_lib/load-directory-context";
 
 export const dynamic = "force-dynamic";
@@ -37,6 +39,7 @@ export default async function VehicleWorkspacePage({ params }: PageProps) {
     .filter(Boolean)
     .join(" ");
   const canUpdate = capabilities.includes("inventory.update");
+  const canManageMedia = canUpdate && inventoryMediaStorageAvailable();
 
   return (
     <AppShell
@@ -100,7 +103,8 @@ export default async function VehicleWorkspacePage({ params }: PageProps) {
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(18rem,1fr)]">
           <div className="space-y-6">
-            <VerifiedVehicleMedia assets={record.media} />
+            <VerifiedVehicleMedia assets={record.media} management={canManageMedia ? { organizationId, inventoryUnitId } : undefined} />
+            {canManageMedia ? <InventoryMediaUpload organizationId={organizationId} inventoryUnitId={inventoryUnitId} /> : null}
 
             <section className="rounded-xl border bg-card p-5 shadow-soft sm:p-6" aria-labelledby="details-heading">
               <h2 id="details-heading" className="text-lg font-semibold">Vehicle details</h2>

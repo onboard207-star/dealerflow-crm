@@ -17,6 +17,7 @@ export type EntityIdPrefix =
   | "int"
   | "inv"
   | "ima"
+  | "imu"
   | "iue"
   | "evt"
   | "loc"

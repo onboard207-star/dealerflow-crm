@@ -17,5 +17,5 @@ describe("production Next.js configuration", () => {
     expect(headers.get("Content-Security-Policy")).toContain("object-src 'none'");
     expect(headers.get("Content-Security-Policy")).toContain("frame-ancestors 'none'");
   });
-  it("limits production browser sources while allowing validated HTTPS tenant images",()=>{const policy=createContentSecurityPolicy("production");expect(policy).toContain("default-src 'self'");expect(policy).toContain("img-src 'self' data: blob: https:");expect(policy).toContain("form-action 'self'");expect(policy).toContain("upgrade-insecure-requests");expect(policy).not.toContain("unsafe-eval");expect(createContentSecurityPolicy("development")).toContain("unsafe-eval");});
+  it("limits production browser sources while allowing validated HTTPS tenant images",()=>{const policy=createContentSecurityPolicy("production");expect(policy).toContain("default-src 'self'");expect(policy).toContain("img-src 'self' data: blob: https:");expect(policy).toContain("connect-src 'self' https://*.r2.cloudflarestorage.com");expect(policy).toContain("form-action 'self'");expect(policy).toContain("upgrade-insecure-requests");expect(policy).not.toContain("unsafe-eval");expect(createContentSecurityPolicy("development")).toContain("unsafe-eval");});
 });

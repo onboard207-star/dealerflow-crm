@@ -225,6 +225,13 @@
       "when": 1787879000000,
       "tag": "0031_inventory_unit_media",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1787882000000,
+      "tag": "0032_inventory_media_uploads",
+      "breakpoints": true
     }
   ]
 }

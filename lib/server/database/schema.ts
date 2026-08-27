@@ -732,6 +732,42 @@ export const inventoryUnitMedia = pgTable("inventory_unit_media", {
   check("inventory_unit_media_removal_reason", sql`${table.removalReason} is null or length(trim(${table.removalReason})) between 1 and 500`),
 ]);
 
+export const inventoryMediaUploads = pgTable("inventory_media_uploads", {
+  id: text("id").primaryKey(),
+  organizationId: text("organization_id").notNull(),
+  locationId: text("location_id").notNull(),
+  vehicleId: text("vehicle_id").notNull(),
+  inventoryUnitId: text("inventory_unit_id").notNull(),
+  objectKey: text("object_key").notNull(),
+  originalFilename: text("original_filename").notNull(),
+  contentType: text("content_type").notNull(),
+  expectedByteSize: integer("expected_byte_size").notNull(),
+  altText: text("alt_text").notNull(),
+  status: text("status").default("pending").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+  mediaId: text("media_id"),
+  idempotencyKey: text("idempotency_key").notNull(),
+  initiatedBy: text("initiated_by").notNull().references(() => users.id, { onDelete: "restrict" }),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("inventory_media_uploads_organization_id_unique").on(table.organizationId, table.id),
+  uniqueIndex("inventory_media_uploads_object_key_unique").on(table.objectKey),
+  uniqueIndex("inventory_media_uploads_idempotency_unique").on(table.organizationId, table.idempotencyKey),
+  index("inventory_media_uploads_pending_idx").on(table.organizationId, table.inventoryUnitId, table.status, table.expiresAt),
+  foreignKey({ columns: [table.organizationId, table.locationId, table.vehicleId, table.inventoryUnitId], foreignColumns: [inventoryUnits.organizationId, inventoryUnits.locationId, inventoryUnits.vehicleId, inventoryUnits.id], name: "inventory_media_uploads_exact_unit_fk" }),
+  foreignKey({ columns: [table.organizationId, table.mediaId], foreignColumns: [inventoryUnitMedia.organizationId, inventoryUnitMedia.id], name: "inventory_media_uploads_same_media_fk" }),
+  check("inventory_media_uploads_id_format", sql`${table.id} ~ '^imu_[a-z0-9_-]{6,64}$'`),
+  check("inventory_media_uploads_object_key", sql`${table.objectKey} ~ '^organizations/org_[a-z0-9_-]{6,64}/inventory/inv_[a-z0-9_-]{6,64}/[a-z0-9_-]{16,80}\\.(jpg|png|webp)$'`),
+  check("inventory_media_uploads_filename", sql`length(trim(${table.originalFilename})) between 1 and 255`),
+  check("inventory_media_uploads_content_type", sql`${table.contentType} in ('image/jpeg','image/png','image/webp')`),
+  check("inventory_media_uploads_byte_size", sql`${table.expectedByteSize} between 1 and 20971520`),
+  check("inventory_media_uploads_alt_text", sql`length(trim(${table.altText})) between 1 and 300`),
+  check("inventory_media_uploads_status", sql`${table.status} in ('pending','completed','expired','failed')`),
+  check("inventory_media_uploads_completion", sql`(${table.status}='completed')=(${table.completedAt} is not null and ${table.mediaId} is not null)`),
+  check("inventory_media_uploads_expiry", sql`${table.expiresAt}>${table.createdAt}`),
+]);
+
 export const leadVehicleInterests = pgTable(
   "lead_vehicle_interests",
   {

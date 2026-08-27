@@ -44,3 +44,9 @@ Administrators with `organization.configure` and `communication.read` may review
 The browser never supplies recommendation evidence. The authenticated route reads current tenant records on the server, removes customer contact identity, persists the evidence and pending run before provider contact, and accepts only cited evidence IDs from the bounded input set. Prompts request concise recommendations and explicitly prohibit invented facts and chain-of-thought. Refusals and provider failures are durable safe states. Completed guidance remains advisory and supports one-time human acceptance or dismissal; review does not execute the recommended business action.
 
 Token counts, model, latency, refusal state, prompt version, and provider response ID are retained for audit and aggregate telemetry. Prompts, evidence, and output are not written to operational logs or alert payloads.
+
+## Inventory media boundary
+
+DealerFlow uses Cloudflare R2 through its S3-compatible interface while keeping storage operations behind a provider-neutral server boundary. Authorized inventory staff request a tenant- and unit-scoped upload intent; the browser receives a five-minute PUT URL for one generated object key, content type, and byte size. Provider credentials never enter the browser or database.
+
+An upload response is not publication evidence. DealerFlow retrieves the object, verifies its byte count, declared and detected MIME type, SHA-256 digest, and encoded image dimensions, then atomically creates the exact-unit media record and completes the intent. Only verified active records appear in the Vehicle Workspace. Reordering is audited. Removal immediately hides the record with required human evidence and then attempts object deletion; a storage deletion failure cannot republish the record. Catalog or OEM imagery is a separate future authority and must never be labeled as an actual unit photo.

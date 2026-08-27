@@ -1,0 +1,10 @@
+import { NextResponse } from "next/server";
+import { AuthorizationError } from "@/lib/platform/auth";
+import { AuthenticationError,MembershipError,PostgresMembershipReader,authenticateOrganizationRequest } from "@/lib/server/auth";
+import { EnvironmentConfigurationError } from "@/lib/server/config";
+import { getDatabasePool } from "@/lib/server/database";
+import { createInventoryMediaManager } from "@/lib/server/vehicles/media-manager-factory";
+import { InventoryMediaIntegrityError,InventoryMediaStorageError,InventoryMediaValidationError } from "@/lib/server/vehicles";
+export const runtime="nodejs";export const dynamic="force-dynamic";interface Context{params:Promise<{organizationId:string;inventoryUnitId:string;uploadId:string}>}
+export async function POST(request:Request,context:Context){try{const{organizationId,inventoryUnitId,uploadId}=await context.params;const pool=getDatabasePool();const actor=await authenticateOrganizationRequest(request,organizationId,new PostgresMembershipReader(pool));const result=await createInventoryMediaManager().complete({actor,organizationId,inventoryUnitId,uploadId});return NextResponse.json(result,{headers:{"cache-control":"no-store"}});}catch(error){return failure(error);}}
+function failure(error:unknown){if(error instanceof AuthenticationError)return problem(401,"unauthorized",error.message);if(error instanceof MembershipError||error instanceof AuthorizationError)return problem(403,"forbidden","Inventory media access is not permitted.");if(error instanceof InventoryMediaValidationError)return problem(400,"invalid_request",error.message);if(error instanceof InventoryMediaIntegrityError)return problem(409,"data_conflict",error.message);if(error instanceof EnvironmentConfigurationError)return problem(503,"storage_unavailable","Inventory media storage is not configured.");if(error instanceof InventoryMediaStorageError)return problem(422,"verification_failed",error.message);return problem(500,"internal_error","The upload could not be verified.");}function problem(status:number,error:string,message:string){return NextResponse.json({error,message},{status,headers:{"cache-control":"no-store"}});}

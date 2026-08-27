@@ -17,12 +17,15 @@ DealerFlow has a live Render staging deployment. Production promotion still requ
 - Optional `DEALERFLOW_EMAIL_REPLY_TO` support mailbox
 - Optional paired `DEALERFLOW_ALERT_WEBHOOK_URL` and high-entropy `DEALERFLOW_ALERT_WEBHOOK_SECRET` for aggregate operational alerts
 - `DEALERFLOW_AI_PROVIDER=openai`, a secret-manager-injected `OPENAI_API_KEY`, and an explicitly pinned `DEALERFLOW_AI_MODEL`
+- Optional verified inventory media requires `DEALERFLOW_MEDIA_PROVIDER=r2` plus the complete `CLOUDFLARE_R2_*` contract from `.env.example`; the upload UI fails closed when any setting is absent
 - `DEALERFLOW_INTEGRATION_SECRET_<REFERENCE>` for each active provider account, injected by the deployment secret manager
 
 The application exposes `/api/health` for process liveness and `/api/ready` for dependency readiness. Readiness returns HTTP 503 until PostgreSQL is configured and reachable; it does not expose connection details.
 Readiness also fails closed when authentication, scheduler, transactional-email, or AI provider configuration is incomplete. Use authenticated `GET /api/internal/jobs/transactional-email` with the scheduler bearer secret for privacy-safe seven-day queue counts, oldest queued age, and grouped failure codes; no recipient addresses or message bodies are returned.
 
 Copy `.env.example` for local configuration. Never commit populated environment files.
+
+For inventory media, create a private Cloudflare R2 bucket and an object read domain, then restrict the bucket CORS policy to the exact DealerFlow origins. Allow `PUT` with `Content-Type` and expose `ETag`; do not use wildcard origins in production. The access key must be limited to the single media bucket. DealerFlow issues five-minute signed PUT URLs, downloads the stored object server-side to verify its byte size, MIME signature, SHA-256, and dimensions, and only then creates a visible media record. The public base URL must never contain credentials or signed query parameters.
 
 The secure staging and production default is `verify-full`. Render web services that use Render's internal PostgreSQL hostname must set `DATABASE_SSL_MODE=disable`; that traffic remains inside Render's private network and avoids relying on a public certificate for the internal hostname. Never use `disable` with an Internet-routable database endpoint.
 

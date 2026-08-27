@@ -7,7 +7,7 @@ export function createContentSecurityPolicy(environment = process.env.NODE_ENV):
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
-    `connect-src 'self'${environment === "development" ? " ws: wss:" : ""}`,
+    `connect-src 'self' https://*.r2.cloudflarestorage.com${environment === "development" ? " ws: wss:" : ""}`,
     "worker-src 'self' blob:",
     "object-src 'none'",
     "frame-src 'none'",
