@@ -166,5 +166,7 @@ describe("PostgresCRMSession", () => {
     expect(result.records).toHaveLength(1);
     expect(result.records[0]?.idempotencyKey).toBe("web:123");
     expect(result.nextCursor).toBe("led_website");
+    expect(database.calls[0]?.text).toContain("status::text = $6");
+    expect(database.calls[0]?.text).not.toContain("status = $6");
   });
 });

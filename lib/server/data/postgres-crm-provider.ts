@@ -262,7 +262,7 @@ export class PostgresCRMSession implements CRMDataSession {
          AND ($3::text IS NULL OR customer_id = $3)
          AND ($4::text IS NULL OR assigned_user_id = $4)
          AND ($5::text IS NULL OR stage = $5)
-         AND ($6::text IS NULL OR status = $6)
+         AND ($6::text IS NULL OR status::text = $6)
        ORDER BY id LIMIT $7`,
       [query.organizationId, query.cursor ?? null, query.customerId ?? null,
         query.assignedUserId ?? null, query.stage ?? null, query.status ?? null,

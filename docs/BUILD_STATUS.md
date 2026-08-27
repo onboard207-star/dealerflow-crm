@@ -136,6 +136,7 @@
 - Real PostgreSQL execution uncovered and repaired two migration-order defects: composite parent indexes now precede tenant-integrity foreign keys, and the configuration-history self-reference is added only after its composite unique index exists.
 - Live owner authentication is verified end to end in Render staging: invitation-bound signup, Resend verification, password recovery, and verified credential persistence are operational.
 - Repaired the operational overview appointment query to use the canonical `appointments.starts_at` column, with regression coverage preventing the removed `scheduled_at` reference from returning.
+- Repaired PostgreSQL Lead status filters to compare the `lead_status` enum through an explicit text representation in both CRM query paths, with regression coverage for the live database operator contract.
 - Latest repository gate: Drizzle migration validation, lint, strict TypeScript, 276 tests across 69 files, and the optimized Next.js production build all pass.
 
 ## IN PROGRESS

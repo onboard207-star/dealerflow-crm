@@ -72,7 +72,7 @@ export class CRMDirectoryReader {
            AND t.lead_id = l.id AND t.status IN ('open','in-progress')) task ON true
          WHERE l.organization_id = $1 AND ($2::boolean OR c.location_id IS NULL OR c.location_id = ANY($3::text[]))
            AND ($4::text IS NULL OR lower(c.display_name) LIKE $4 || '%' OR c.normalized_email LIKE $4 || '%' OR ($5::text IS NOT NULL AND c.normalized_phone LIKE $5 || '%'))
-           AND ($6::text IS NULL OR l.status = $6) AND ($7::text IS NULL OR l.assigned_user_id = $7)
+           AND ($6::text IS NULL OR l.status::text = $6) AND ($7::text IS NULL OR l.assigned_user_id = $7)
            AND ($8::timestamptz IS NULL OR (l.created_at, l.id) < ($8, $9))
          ORDER BY l.created_at DESC, l.id DESC LIMIT $10`,
         [scope.organizationId, scope.locationIds === "all", scope.locationIds === "all" ? [] : scope.locationIds,

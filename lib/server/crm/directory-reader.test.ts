@@ -35,7 +35,10 @@ describe("CRMDirectoryReader", () => {
       userId: "usr_salesperson_001", organizationId: "org_dealerflow",
       locationIds: ["loc_main"],
     }, { status: "working" });
-    expect(query.mock.calls[2]?.[0]).toContain("c.location_id = ANY($3::text[])");
+    const leadSql = String(query.mock.calls[2]?.[0]);
+    expect(leadSql).toContain("c.location_id = ANY($3::text[])");
+    expect(leadSql).toContain("l.status::text = $6");
+    expect(leadSql).not.toContain("l.status = $6");
     expect(query.mock.calls[2]?.[1]).toContain("working");
   });
 
