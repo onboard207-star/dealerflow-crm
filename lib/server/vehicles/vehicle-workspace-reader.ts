@@ -21,6 +21,17 @@ export interface VehicleWorkspaceRecord {
     trim?: string;
     exteriorColor?: string;
   };
+  media: readonly {
+    id: string;
+    url: string;
+    contentType: "image/jpeg" | "image/png" | "image/webp";
+    width: number;
+    height: number;
+    altText: string;
+    sortOrder: number;
+    capturedAt?: string;
+    verifiedAt: string;
+  }[];
   events: readonly {
     id: string;
     kind: string;
@@ -79,6 +90,14 @@ export class VehicleWorkspaceReader {
       const row = result.rows[0];
       if (!row) return null;
 
+      const mediaResult = await client.query(
+        `SELECT id,delivery_url,content_type,width,height,alt_text,sort_order,captured_at,verified_at
+        FROM inventory_unit_media
+        WHERE organization_id=$1 AND inventory_unit_id=$2 AND location_id=$3 AND vehicle_id=$4 AND status='active'
+        ORDER BY sort_order,id LIMIT 50`,
+        [scope.organizationId, inventoryUnitId, row.location_id, row.vehicle_id],
+      ) as { rows: MediaRow[] };
+
       const eventResult = await client.query(
         `SELECT id,kind,from_status::text,to_status::text,old_price_cents,new_price_cents,reason,occurred_at
         FROM inventory_unit_events WHERE organization_id=$1 AND inventory_unit_id=$2
@@ -122,6 +141,17 @@ export class VehicleWorkspaceReader {
           ...(row.trim ? { trim: row.trim } : {}),
           ...(row.exterior_color ? { exteriorColor: row.exterior_color } : {}),
         },
+        media: mediaResult.rows.map((asset) => ({
+          id: asset.id,
+          url: asset.delivery_url,
+          contentType: asset.content_type,
+          width: asset.width,
+          height: asset.height,
+          altText: asset.alt_text,
+          sortOrder: asset.sort_order,
+          ...(asset.captured_at ? { capturedAt: asset.captured_at.toISOString() } : {}),
+          verifiedAt: asset.verified_at.toISOString(),
+        })),
         events: eventResult.rows.map((event) => ({
           id: event.id, kind: event.kind, toStatus: event.to_status, occurredAt: event.occurred_at.toISOString(),
           ...(event.from_status ? { fromStatus: event.from_status } : {}),
@@ -145,6 +175,7 @@ export class VehicleWorkspaceReader {
 }
 
 interface InventoryRow { id:string;vehicle_id:string;location_id:string;location_name:string;stock_number:string;status:string;list_price_cents:number|null;acquired_at:Date|null;sold_at:Date|null;updated_at:Date;vin:string;year:number;make:string;model:string;trim:string|null;exterior_color:string|null }
+interface MediaRow { id:string;delivery_url:string;content_type:"image/jpeg"|"image/png"|"image/webp";width:number;height:number;alt_text:string;sort_order:number;captured_at:Date|null;verified_at:Date }
 interface EventRow { id:string;kind:string;from_status:string|null;to_status:string;old_price_cents:number|null;new_price_cents:number|null;reason:string|null;occurred_at:Date }
 interface MatchRow { interest_id:string;customer_id:string;customer_name:string;lead_id:string;lead_status:string;lead_stage:string;assigned_user_name:string|null;role:string }
 interface DealRow { id:string;customer_id:string;customer_name:string;deal_number:string;status:string;agreed_price_cents:number|null }

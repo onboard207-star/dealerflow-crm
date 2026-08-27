@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CarFront, Clock3, MapPin, Users } from "lucide-react";
+import { ArrowLeft, Clock3, MapPin, Users } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
 import { InventoryUnitControls } from "@/components/inventory/InventoryUnitControls";
+import { VerifiedVehicleMedia } from "@/components/inventory/VerifiedVehicleMedia";
 import { Button } from "@/components/ui/button";
 import { VehicleWorkspaceReader } from "@/lib/server/vehicles";
 import { loadDirectoryContext } from "../../_lib/load-directory-context";
@@ -99,20 +100,7 @@ export default async function VehicleWorkspacePage({ params }: PageProps) {
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(18rem,1fr)]">
           <div className="space-y-6">
-            <section className="overflow-hidden rounded-xl border bg-card shadow-soft" aria-labelledby="media-heading">
-              <h2 id="media-heading" className="sr-only">Vehicle media</h2>
-              <div className="flex min-h-72 flex-col items-center justify-center gap-3 bg-muted/30 p-8 text-center sm:min-h-96">
-                <span className="flex size-16 items-center justify-center rounded-2xl border bg-background shadow-sm">
-                  <CarFront aria-hidden="true" className="size-8 text-muted-foreground" />
-                </span>
-                <div>
-                  <p className="font-medium">No verified unit photos available</p>
-                  <p className="mt-1 max-w-md text-sm text-muted-foreground">
-                    Photos will appear here only when they are attached to this exact inventory unit.
-                  </p>
-                </div>
-              </div>
-            </section>
+            <VerifiedVehicleMedia assets={record.media} />
 
             <section className="rounded-xl border bg-card p-5 shadow-soft sm:p-6" aria-labelledby="details-heading">
               <h2 id="details-heading" className="text-lg font-semibold">Vehicle details</h2>

@@ -690,6 +690,48 @@ export const inventoryUnits = pgTable(
 
 export const inventoryUnitEvents=pgTable("inventory_unit_events",{id:text("id").primaryKey(),organizationId:text("organization_id").notNull(),inventoryUnitId:text("inventory_unit_id").notNull(),kind:text("kind").notNull(),fromStatus:inventoryStatusEnum("from_status"),toStatus:inventoryStatusEnum("to_status").notNull(),oldPriceCents:integer("old_price_cents"),newPriceCents:integer("new_price_cents"),reason:text("reason"),occurredAt:timestamp("occurred_at",{withTimezone:true}).defaultNow().notNull(),idempotencyKey:text("idempotency_key").notNull(),createdBy:text("created_by").notNull().references(()=>users.id,{onDelete:"restrict"})},(table)=>[uniqueIndex("inventory_unit_events_organization_id_unique").on(table.organizationId,table.id),uniqueIndex("inventory_unit_events_idempotency_unique").on(table.organizationId,table.idempotencyKey),index("inventory_unit_events_inventory_time_idx").on(table.organizationId,table.inventoryUnitId,table.occurredAt),foreignKey({columns:[table.organizationId,table.inventoryUnitId],foreignColumns:[inventoryUnits.organizationId,inventoryUnits.id],name:"inventory_unit_events_same_inventory_fk"}),check("inventory_unit_events_id_format",sql`${table.id} ~ '^iue_[a-z0-9_-]{6,64}$'`),check("inventory_unit_events_kind",sql`${table.kind} in ('created','pricing','status')`),check("inventory_unit_events_price_nonnegative",sql`(${table.oldPriceCents} is null or ${table.oldPriceCents}>=0) and (${table.newPriceCents} is null or ${table.newPriceCents}>=0)`),check("inventory_unit_events_reason_length",sql`${table.reason} is null or length(trim(${table.reason})) between 1 and 1000`)]);
 
+export const inventoryUnitMedia = pgTable("inventory_unit_media", {
+  id: text("id").primaryKey(),
+  organizationId: text("organization_id").notNull(),
+  locationId: text("location_id").notNull(),
+  vehicleId: text("vehicle_id").notNull(),
+  inventoryUnitId: text("inventory_unit_id").notNull(),
+  provider: text("provider").notNull(),
+  providerAssetId: text("provider_asset_id").notNull(),
+  deliveryUrl: text("delivery_url").notNull(),
+  contentType: text("content_type").notNull(),
+  byteSize: integer("byte_size").notNull(),
+  sha256: text("sha256").notNull(),
+  width: integer("width").notNull(),
+  height: integer("height").notNull(),
+  altText: text("alt_text").notNull(),
+  sortOrder: integer("sort_order").default(0).notNull(),
+  capturedAt: timestamp("captured_at", { withTimezone: true }),
+  verifiedAt: timestamp("verified_at", { withTimezone: true }).notNull(),
+  verifiedBy: text("verified_by").notNull().references(() => users.id, { onDelete: "restrict" }),
+  status: text("status").default("active").notNull(),
+  removedAt: timestamp("removed_at", { withTimezone: true }),
+  removedBy: text("removed_by").references(() => users.id, { onDelete: "restrict" }),
+  removalReason: text("removal_reason"),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("inventory_unit_media_organization_id_unique").on(table.organizationId, table.id),
+  uniqueIndex("inventory_unit_media_provider_asset_unique").on(table.organizationId, table.provider, table.providerAssetId),
+  index("inventory_unit_media_inventory_order_idx").on(table.organizationId, table.inventoryUnitId, table.status, table.sortOrder),
+  foreignKey({ columns: [table.organizationId, table.locationId, table.vehicleId, table.inventoryUnitId], foreignColumns: [inventoryUnits.organizationId, inventoryUnits.locationId, inventoryUnits.vehicleId, inventoryUnits.id], name: "inventory_unit_media_exact_unit_fk" }),
+  check("inventory_unit_media_id_format", sql`${table.id} ~ '^ima_[a-z0-9_-]{6,64}$'`),
+  check("inventory_unit_media_provider_format", sql`${table.provider} ~ '^[a-z0-9][a-z0-9_-]{1,63}$'`),
+  check("inventory_unit_media_content_type", sql`${table.contentType} in ('image/jpeg','image/png','image/webp')`),
+  check("inventory_unit_media_delivery_url", sql`${table.deliveryUrl} ~ '^https://[^[:space:]]+$'`),
+  check("inventory_unit_media_sha256", sql`${table.sha256} ~ '^[a-f0-9]{64}$'`),
+  check("inventory_unit_media_dimensions", sql`${table.byteSize} between 1 and 52428800 and ${table.width} between 1 and 20000 and ${table.height} between 1 and 20000`),
+  check("inventory_unit_media_alt_text", sql`length(trim(${table.altText})) between 1 and 300`),
+  check("inventory_unit_media_sort_order", sql`${table.sortOrder} between 0 and 1000`),
+  check("inventory_unit_media_status", sql`${table.status} in ('active','removed')`),
+  check("inventory_unit_media_removal_consistency", sql`(${table.status}='removed')=(${table.removedAt} is not null and ${table.removedBy} is not null and ${table.removalReason} is not null)`),
+  check("inventory_unit_media_removal_reason", sql`${table.removalReason} is null or length(trim(${table.removalReason})) between 1 and 500`),
+]);
+
 export const leadVehicleInterests = pgTable(
   "lead_vehicle_interests",
   {

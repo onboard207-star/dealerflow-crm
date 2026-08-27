@@ -30,6 +30,19 @@ describe("VehicleWorkspaceReader", () => {
       .mockResolvedValueOnce({ rows: [inventoryRow] })
       .mockResolvedValueOnce({
         rows: [{
+          id: "ima_vehicle01",
+          delivery_url: "https://media.dealerflow.example/inventory/DF24001/front.webp",
+          content_type: "image/webp",
+          width: 1600,
+          height: 1200,
+          alt_text: "Front three-quarter view of the 2026 Honda CR-V",
+          sort_order: 0,
+          captured_at: new Date("2026-08-02T12:00:00.000Z"),
+          verified_at: new Date("2026-08-02T12:05:00.000Z"),
+        }],
+      })
+      .mockResolvedValueOnce({
+        rows: [{
           id: "iue_event01",
           kind: "created",
           from_status: null,
@@ -83,12 +96,15 @@ describe("VehicleWorkspaceReader", () => {
       exteriorColor: "Platinum White Pearl",
     });
     expect(result?.matches[0]).toMatchObject({ customerName: "Jordan Lee", role: "primary" });
+    expect(result?.media[0]).toMatchObject({ id: "ima_vehicle01", contentType: "image/webp", sortOrder: 0 });
     expect(result?.deals[0]).toMatchObject({ dealNumber: "D-260042", agreedPriceCents: 4200000 });
     expect(query.mock.calls[2]?.[0]).toContain("i.location_id=ANY($4::text[])");
     expect(query.mock.calls[2]?.[1]).toEqual(["org_dealerflow", "inv_vehicle01", false, ["loc_main01"]]);
-    expect(query.mock.calls[4]?.[0]).toContain("lead.location_id=ANY($4::text[])");
-    expect(query.mock.calls[4]?.[1]).toEqual(["org_dealerflow", "veh_vehicle01", false, ["loc_main01"]]);
-    expect(query.mock.calls[5]?.[0]).toContain("deal.location_id=ANY($4::text[])");
+    expect(query.mock.calls[3]?.[0]).toContain("location_id=$3 AND vehicle_id=$4");
+    expect(query.mock.calls[3]?.[1]).toEqual(["org_dealerflow", "inv_vehicle01", "loc_main01", "veh_vehicle01"]);
+    expect(query.mock.calls[5]?.[0]).toContain("lead.location_id=ANY($4::text[])");
+    expect(query.mock.calls[5]?.[1]).toEqual(["org_dealerflow", "veh_vehicle01", false, ["loc_main01"]]);
+    expect(query.mock.calls[6]?.[0]).toContain("deal.location_id=ANY($4::text[])");
     expect(client.release).toHaveBeenCalledOnce();
   });
 
@@ -119,6 +135,7 @@ describe("VehicleWorkspaceReader", () => {
       .mockResolvedValueOnce({})
       .mockResolvedValueOnce({ rows: [inventoryRow] })
       .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({});
     const client: DatabaseClient = { query, release: vi.fn() };
     const pool: DatabasePool = { connect: vi.fn().mockResolvedValue(client) };
@@ -133,6 +150,6 @@ describe("VehicleWorkspaceReader", () => {
 
     expect(result?.matches).toEqual([]);
     expect(result?.deals).toEqual([]);
-    expect(query).toHaveBeenCalledTimes(5);
+    expect(query).toHaveBeenCalledTimes(6);
   });
 });
