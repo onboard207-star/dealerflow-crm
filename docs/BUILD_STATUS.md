@@ -137,7 +137,8 @@
 - Live owner authentication is verified end to end in Render staging: invitation-bound signup, Resend verification, password recovery, and verified credential persistence are operational.
 - Repaired the operational overview appointment query to use the canonical `appointments.starts_at` column, with regression coverage preventing the removed `scheduled_at` reference from returning.
 - Repaired PostgreSQL Lead status filters to compare the `lead_status` enum through an explicit text representation in both CRM query paths, with regression coverage for the live database operator contract.
-- Latest repository gate: Drizzle migration validation, lint, strict TypeScript, 276 tests across 69 files, and the optimized Next.js production build all pass.
+- Repaired Team administration queries to use the canonical `users.display_name` identity column for member display and ordering, with regression coverage preventing stale `users.name` references.
+- Latest repository gate: Drizzle migration validation, lint, strict TypeScript, 277 tests across 70 files, and the optimized Next.js production build all pass.
 
 ## IN PROGRESS
 
