@@ -1,4 +1,5 @@
 import { AppShell } from "@/components/app-shell";
+import Link from "next/link";
 import { InventoryRegistrationForm } from "@/components/inventory/InventoryRegistrationForm";
 import { InventoryUnitControls } from "@/components/inventory/InventoryUnitControls";
 import { InventoryDirectoryReader } from "@/lib/server/vehicles";
@@ -30,7 +31,7 @@ export default async function InventoryPage({ params, searchParams }: PageProps)
       </form>
       <div className="mt-5 overflow-hidden rounded-xl border bg-card shadow-soft">
         {page.records.length ? <ul className="divide-y" role="list">{page.records.map((item) => <li key={item.inventoryId} className="grid gap-3 p-4 sm:grid-cols-[minmax(14rem,2fr)_repeat(3,minmax(8rem,1fr))] sm:items-center sm:p-5">
-          <span className="min-w-0"><span className="block truncate text-sm font-medium">{item.year} {item.make} {item.model}{item.trim ? ` ${item.trim}` : ""}</span><span className="block truncate text-xs text-muted-foreground">{item.vin}</span></span>
+          <Link className="focus-ring -m-2 min-w-0 rounded-lg p-2 hover:bg-accent hover:text-accent-foreground" href={`${base}/${item.inventoryId}`}><span className="block truncate text-sm font-medium">{item.year} {item.make} {item.model}{item.trim ? ` ${item.trim}` : ""}</span><span className="block truncate text-xs text-muted-foreground">{item.vin}</span><span className="mt-1 block text-xs font-medium text-primary">Open vehicle workspace</span></Link>
           <Fact label="Stock" value={item.stockNumber} /><Fact label="Status" value={item.status} /><span><Fact label="Price" value={item.listPriceCents !== undefined ? formatPrice(item.listPriceCents) : "Not listed"} />{canUpdate?<InventoryUnitControls item={item} organizationId={organizationId}/>:null}</span>
         </li>)}</ul> : <div className="p-8 text-center text-sm text-muted-foreground">No inventory matches these filters.</div>}
       </div>

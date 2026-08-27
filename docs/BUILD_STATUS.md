@@ -140,7 +140,8 @@
 - Repaired Team administration queries to use the canonical `users.display_name` identity column for member display and ordering, with regression coverage preventing stale `users.name` references.
 - Reusable, transactional working-dealership template with 24 rolling months of linked CRM history, 1,440 historical Leads, 432 delivered sales, 48 current Inventory units, 36 active opportunities, and durable audit-version protection against duplicate seeding.
 - Complete fictional 26-person dealership roster mapped to standard least-privilege system roles, including new General Manager, Service, Inventory, Controller, and Reception permission profiles; reserved invalid email addresses and absent auth accounts prevent template identities from signing in.
-- Latest repository gate: Drizzle migration validation, lint, strict TypeScript, 280 tests across 71 files, and the optimized Next.js production build all pass.
+- First authoritative Vehicle Workspace at `/organizations/{organizationId}/inventory/{inventoryUnitId}` with exact-unit identity, lifecycle evidence, capability- and location-scoped customer/deal relationships, non-fabricated media fallback, responsive inventory navigation, and direct global-search routing.
+- Latest repository gate: Drizzle migration validation, lint, strict TypeScript, 284 tests across 72 files, and the optimized Next.js production build all pass.
 
 ## IN PROGRESS
 
@@ -163,8 +164,9 @@
 
 ## NEXT
 
-1. Apply the versioned working-dealership template to the staging tenant and verify its live reporting, directories, workspace, and staff views.
-2. Run authenticated lead-to-sale integration tests against staging PostgreSQL, Resend, and Twilio test credentials.
-3. Provision a restricted OpenAI project key and calibrate evidence-grounding, refusal, cost, and latency behavior in staging.
-4. Connect a monitoring destination and verify signed alert delivery in staging.
-5. Reconcile Airtable authority mappings without destructive migration.
+1. Add the canonical inventory-media model and governed upload/provider boundary, then extend the Vehicle Workspace with verified unit imagery only.
+2. Apply the versioned working-dealership template to the staging tenant and verify its live reporting, directories, workspace, and staff views.
+3. Run authenticated lead-to-sale integration tests against staging PostgreSQL, Resend, and Twilio test credentials.
+4. Provision a restricted OpenAI project key and calibrate evidence-grounding, refusal, cost, and latency behavior in staging.
+5. Connect a monitoring destination and verify signed alert delivery in staging.
+6. Reconcile Airtable authority mappings without destructive migration.

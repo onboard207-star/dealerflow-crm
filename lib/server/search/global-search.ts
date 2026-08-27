@@ -22,7 +22,7 @@ export class GlobalSearchReader{
     ]);return[
       ...customers.map(item=>({kind:"customer"as const,id:item.id,label:item.displayName,description:[item.status,item.email??item.phone].filter(Boolean).join(" · "),href:`${base}/customers/${item.id}`})),
       ...leads.map(item=>({kind:"lead"as const,id:item.id,label:item.customerName,description:`${item.stage} · ${item.status} · ${item.source}`,href:`${base}/customers/${item.customerId}`})),
-      ...inventory.map(item=>({kind:"inventory"as const,id:item.inventoryId,label:`${item.year} ${item.make} ${item.model}${item.trim?` ${item.trim}`:""}`,description:`Stock ${item.stockNumber} · ${item.status} · ${item.vin}`,href:`${base}/inventory?q=${encodeURIComponent(item.stockNumber)}`})),
+      ...inventory.map(item=>({kind:"inventory"as const,id:item.inventoryId,label:`${item.year} ${item.make} ${item.model}${item.trim?` ${item.trim}`:""}`,description:`Stock ${item.stockNumber} · ${item.status} · ${item.vin}`,href:`${base}/inventory/${item.inventoryId}`})),
       ...deals.map(item=>({kind:"deal"as const,id:item.id,label:`${item.dealNumber} · ${item.customerName}`,description:`${item.vehicleLabel} · ${item.status}`,href:`${base}/customers/${item.customerId}`})),
     ];}
 }
