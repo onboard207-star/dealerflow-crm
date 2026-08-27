@@ -13,6 +13,7 @@
     "db:check": "drizzle-kit check",
     "db:migrate": "drizzle-kit migrate",
     "tenant:provision": "node scripts/provision-tenant.mjs",
+    "tenant:seed-template": "node scripts/seed-dealership-template.mjs",
     "smoke:deployment": "node scripts/smoke-deployment.mjs",
     "validate": "pnpm db:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },

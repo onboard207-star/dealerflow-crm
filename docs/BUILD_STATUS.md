@@ -138,7 +138,9 @@
 - Repaired the operational overview appointment query to use the canonical `appointments.starts_at` column, with regression coverage preventing the removed `scheduled_at` reference from returning.
 - Repaired PostgreSQL Lead status filters to compare the `lead_status` enum through an explicit text representation in both CRM query paths, with regression coverage for the live database operator contract.
 - Repaired Team administration queries to use the canonical `users.display_name` identity column for member display and ordering, with regression coverage preventing stale `users.name` references.
-- Latest repository gate: Drizzle migration validation, lint, strict TypeScript, 277 tests across 70 files, and the optimized Next.js production build all pass.
+- Reusable, transactional working-dealership template with 24 rolling months of linked CRM history, 1,440 historical Leads, 432 delivered sales, 48 current Inventory units, 36 active opportunities, and durable audit-version protection against duplicate seeding.
+- Complete fictional 26-person dealership roster mapped to standard least-privilege system roles, including new General Manager, Service, Inventory, Controller, and Reception permission profiles; reserved invalid email addresses and absent auth accounts prevent template identities from signing in.
+- Latest repository gate: Drizzle migration validation, lint, strict TypeScript, 280 tests across 71 files, and the optimized Next.js production build all pass.
 
 ## IN PROGRESS
 
@@ -161,7 +163,7 @@
 
 ## NEXT
 
-1. Complete invitation-only owner onboarding after Resend is configured.
+1. Apply the versioned working-dealership template to the staging tenant and verify its live reporting, directories, workspace, and staff views.
 2. Run authenticated lead-to-sale integration tests against staging PostgreSQL, Resend, and Twilio test credentials.
 3. Provision a restricted OpenAI project key and calibrate evidence-grounding, refusal, cost, and latency behavior in staging.
 4. Connect a monitoring destination and verify signed alert delivery in staging.

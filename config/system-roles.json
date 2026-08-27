@@ -12,6 +12,12 @@
     "capabilities": ["staff.manage", "customer.read", "customer.create", "customer.update", "lead.read", "lead.create", "lead.assign", "lead.update", "task.read", "task.create", "task.update", "communication.read", "communication.create", "communication.consent.manage", "communication.send", "appointment.read", "appointment.create", "appointment.update", "deal.read", "deal.create", "deal.update", "deal.approve", "inventory.read", "reports.view"]
   },
   {
+    "key": "general-manager",
+    "name": "General Manager",
+    "description": "Dealership-wide operational oversight, reporting, staffing, and deal approval authority.",
+    "capabilities": ["organization.configure", "staff.manage", "customer.read", "customer.create", "customer.update", "lead.read", "lead.create", "lead.assign", "lead.update", "task.read", "task.create", "task.update", "communication.read", "communication.create", "communication.consent.manage", "communication.send", "appointment.read", "appointment.create", "appointment.update", "deal.read", "deal.create", "deal.update", "deal.approve", "inventory.read", "inventory.create", "inventory.update", "reports.view"]
+  },
+  {
     "key": "salesperson",
     "name": "Salesperson",
     "description": "Customer, Lead, appointment, communication, and Deal workflow access.",
@@ -28,5 +34,35 @@
     "name": "Finance Manager",
     "description": "Deal approval and finance workflow access with supporting customer context.",
     "capabilities": ["customer.read", "lead.read", "task.read", "task.create", "task.update", "communication.read", "communication.create", "appointment.read", "deal.read", "deal.create", "deal.update", "deal.approve", "inventory.read", "reports.view"]
+  },
+  {
+    "key": "service-manager",
+    "name": "Service Manager",
+    "description": "Customer care, service-team workflow, scheduling, communication, and reporting access.",
+    "capabilities": ["staff.manage", "customer.read", "customer.update", "task.read", "task.create", "task.update", "communication.read", "communication.create", "communication.consent.manage", "communication.send", "appointment.read", "appointment.create", "appointment.update", "inventory.read", "reports.view"]
+  },
+  {
+    "key": "service-advisor",
+    "name": "Service Advisor",
+    "description": "Customer care, service appointment, communication, and follow-up access.",
+    "capabilities": ["customer.read", "customer.update", "task.read", "task.create", "task.update", "communication.read", "communication.create", "communication.consent.manage", "communication.send", "appointment.read", "appointment.create", "appointment.update", "inventory.read"]
+  },
+  {
+    "key": "inventory-manager",
+    "name": "Inventory Manager",
+    "description": "Vehicle and inventory administration with supporting customer and deal visibility.",
+    "capabilities": ["customer.read", "lead.read", "task.read", "task.create", "task.update", "deal.read", "inventory.read", "inventory.create", "inventory.update", "reports.view"]
+  },
+  {
+    "key": "controller",
+    "name": "Controller",
+    "description": "Financial oversight, reporting, deal review, and approval access.",
+    "capabilities": ["customer.read", "lead.read", "task.read", "task.create", "task.update", "communication.read", "appointment.read", "deal.read", "deal.update", "deal.approve", "inventory.read", "reports.view"]
+  },
+  {
+    "key": "receptionist",
+    "name": "Receptionist",
+    "description": "Front-desk customer intake, appointment, communication, and task access.",
+    "capabilities": ["customer.read", "customer.create", "customer.update", "lead.read", "lead.create", "task.read", "task.create", "task.update", "communication.read", "communication.create", "appointment.read", "appointment.create", "appointment.update", "inventory.read"]
   }
 ]
