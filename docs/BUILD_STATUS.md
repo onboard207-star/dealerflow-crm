@@ -145,6 +145,7 @@
 - Canonical exact-unit inventory media with tenant and location isolation, provider provenance, immutable checksum and verification evidence, removal consistency, bounded image metadata, verified responsive galleries, and a fail-closed no-photo state; catalog imagery and nonfunctional uploads remain excluded.
 - Governed Cloudflare R2 inventory uploads with short-lived exact-object PUT authorization, complete secret validation, durable idempotent upload intents, server-side byte/MIME/signature/SHA-256/dimension verification, atomic publication, audited ordering, evidence-backed removal, and configuration-aware UI suppression when storage is unavailable.
 - Live authenticated workflow verification uncovered and repaired approval and task notification insertion under forced RLS: a narrowly scoped provider helper validates active recipient location access, while trigger-level unique-violation handling preserves deduplication without conflict reads across recipient-only policies.
+- Deal transition failures now emit privacy-safe structured telemetry and return a validated correlation ID, making unexpected live workflow failures traceable without exposing database details to users.
 - Latest repository gate: Drizzle migration validation, lint, strict TypeScript, 292 tests across 73 files, and the optimized Next.js production build all pass.
 
 ## IN PROGRESS
@@ -152,7 +153,7 @@
 - A provisioned verified Resend sender domain and remaining staging provider credentials.
 - Canonical data-ownership and Airtable migration dependency analysis.
 - Cloudflare R2 bucket, restricted token, public image domain, and exact-origin CORS configuration in staging.
-- Authenticated visual verification of the populated staging workspace, reports, directories, and staff views; the current browser session reaches the expected login boundary but has no DealerFlow session.
+- Completion of the authenticated lead-to-sale staging smoke workflow; workspace, reports, directories, roles, and staff views have already been verified with the live Owner session.
 
 ## BLOCKED
 
@@ -171,7 +172,7 @@
 ## NEXT
 
 1. Provision the staging Cloudflare R2 bucket, restricted token, public image domain, and exact-origin CORS policy; then run a real upload, reorder, and removal smoke pass.
-2. Sign in to staging and verify the populated workspace, reports, directories, and staff views, then run the authenticated lead-to-sale integration pass against PostgreSQL, Resend, and Twilio test credentials.
+2. Complete the authenticated lead-to-sale integration pass and verify the resulting sold Lead, delivered Deal, inventory lifecycle, trade acquisition, delivery handoff, and timeline records.
 3. Review the one operator-created Customer, Lead, opportunity, and Inventory unit alongside template records and retain or archive them based on their intended operational purpose.
 4. Provision a restricted OpenAI project key and calibrate evidence-grounding, refusal, cost, and latency behavior in staging.
 5. Connect a monitoring destination and verify signed alert delivery in staging.
