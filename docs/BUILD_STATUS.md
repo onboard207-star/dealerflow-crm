@@ -147,7 +147,9 @@
 - Live authenticated workflow verification uncovered and repaired approval and task notification insertion under forced RLS: a narrowly scoped provider helper validates active recipient location access, while trigger-level unique-violation handling preserves deduplication without conflict reads across recipient-only policies.
 - Deal transition failures now emit privacy-safe structured telemetry and return a validated correlation ID, making unexpected live workflow failures traceable without exposing database details to users.
 - Live Deal contracting uncovered PostgreSQL parameter ambiguity between the inventory-status enum assignment and sold-state comparison; the Deal provider now casts that shared parameter consistently.
-- Latest repository gate: Drizzle migration validation, lint, strict TypeScript, 293 tests across 74 files, and the optimized Next.js production build all pass.
+- Live sale completion uncovered an uncast SQL case expression for terminal vehicle-interest states; purchased and inactive branches now retain the canonical PostgreSQL enum type.
+- Trade acquisition now reports active-inventory and duplicate-stock collisions as actionable domain conflicts instead of generic server failures.
+- Latest repository gate: Drizzle migration validation, lint, strict TypeScript, 294 tests across 75 files, and the optimized Next.js production build all pass.
 
 ## IN PROGRESS
 

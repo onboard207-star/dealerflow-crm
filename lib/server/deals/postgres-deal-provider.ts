@@ -50,7 +50,7 @@ class Session implements DealSession {
       const leadUpdate=await this.db.query<{from_status:"open"|"working"|"qualified"}>(`WITH current AS (SELECT status FROM leads WHERE organization_id=$1 AND id=$2 AND customer_id=$3 AND status IN ('open','working','qualified') FOR UPDATE), updated AS (UPDATE leads lead SET status='sold',stage='delivered',lost_reason=NULL,updated_by=$4,updated_at=now() FROM current WHERE lead.organization_id=$1 AND lead.id=$2 RETURNING current.status AS from_status) SELECT from_status FROM updated`,[record.organizationId,record.leadId,record.customerId,context.actorId]);
       if(!leadUpdate.rows[0])throw new DealIntegrityError("The Lead is no longer eligible for sale completion.");
       await this.db.query("INSERT INTO lead_status_events(id,organization_id,lead_id,from_status,to_status,occurred_at,idempotency_key,created_by) VALUES($1,$2,$3,$4,'sold',now(),$5,$6)",[generateEntityId("lse"),record.organizationId,record.leadId,leadUpdate.rows[0].from_status,`deal-delivered:${record.id}`,context.actorId]);
-      await this.db.query(`UPDATE lead_vehicle_interests SET status = CASE WHEN vehicle_id = $4 THEN 'purchased' ELSE 'inactive' END,
+      await this.db.query(`UPDATE lead_vehicle_interests SET status = CASE WHEN vehicle_id = $4 THEN 'purchased'::vehicle_interest_status ELSE 'inactive'::vehicle_interest_status END,
         updated_by = $5, updated_at = now() WHERE organization_id = $1 AND lead_id = $2 AND customer_id = $3 AND status = 'active'`,
       [record.organizationId, record.leadId, record.customerId, record.primaryVehicleId, context.actorId]);
     }
