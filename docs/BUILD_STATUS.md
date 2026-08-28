@@ -150,7 +150,7 @@
 - Live sale completion uncovered an uncast SQL case expression for terminal vehicle-interest states; purchased and inactive branches now retain the canonical PostgreSQL enum type.
 - Trade acquisition now reports active-inventory and duplicate-stock collisions as actionable domain conflicts instead of generic server failures.
 - Authenticated staging lead-to-sale verification is complete: the smoke Lead is sold at the delivered stage, Deal DF-D14C520D is delivered, the purchased F-150 inventory is sold, the accepted trade is acquired as available stock TRD-0827A, and the delivery handoff plus authoritative timeline are complete. A pre-existing active inventory cycle for the trade VIN was corrected to unavailable with immutable inventory-event and audit evidence before acquisition.
-- Returning-customer staging verification preserves Customer `cus_e825f105eb1e4f6e97724947372d01a1`, its delivered Deal and sold Lead, while creating an independent open buying cycle with a new Lead, available CR-V interest, showroom appointment, linked preparation task, and governed call-attempt evidence. The Customer Workspace operational Deal slice is now scoped to the selected Lead so prior delivered Deals remain historical context instead of blocking the new cycle.
+- Returning-customer staging verification preserves Customer `cus_e825f105eb1e4f6e97724947372d01a1`, delivered Deal `DF-D14C520D`, and the sold Lead while creating an independent open buying cycle with a new Lead, available CR-V interest, showroom appointment, linked preparation task, governed call-attempt evidence, and draft Deal `DF-800525E3`. The Customer Workspace operational Deal slice is scoped to the selected Lead, while the customer-wide timeline retains the complete prior sale.
 - Latest repository gate: lint, strict TypeScript, 296 tests across 75 files, and the optimized Next.js production build all pass.
 
 ## IN PROGRESS
@@ -176,8 +176,7 @@
 ## NEXT
 
 1. Provision the staging Cloudflare R2 bucket, restricted token, public image domain, and exact-origin CORS policy; then run a real upload, reorder, and removal smoke pass.
-2. Deploy the returning-customer Deal read-model repair and finish the new-cycle Deal smoke pass against the retained sold Customer.
-3. Retain the completed operator-created sale and returning buying cycle as linked staging training records.
-4. Provision a restricted OpenAI project key and calibrate evidence-grounding, refusal, cost, and latency behavior in staging.
-5. Connect a monitoring destination and verify signed alert delivery in staging.
-6. Reconcile Airtable authority mappings without destructive migration.
+2. Retain the completed operator-created sale and returning buying cycle as linked staging training records.
+3. Provision a restricted OpenAI project key and calibrate evidence-grounding, refusal, cost, and latency behavior in staging.
+4. Connect a monitoring destination and verify signed alert delivery in staging.
+5. Reconcile Airtable authority mappings without destructive migration.
