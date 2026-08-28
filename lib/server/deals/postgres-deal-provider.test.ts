@@ -1,0 +1,11 @@
+import { readFileSync } from "node:fs";
+import { describe, expect, it } from "vitest";
+
+describe("PostgresDealProvider", () => {
+  it("casts the Deal-controlled inventory status parameter consistently", () => {
+    const source = readFileSync(new URL("./postgres-deal-provider.ts", import.meta.url), "utf8");
+
+    expect(source).toContain("status = $3::inventory_status");
+    expect(source).toContain("$3::inventory_status = 'sold'::inventory_status");
+  });
+});

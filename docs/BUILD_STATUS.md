@@ -146,7 +146,8 @@
 - Governed Cloudflare R2 inventory uploads with short-lived exact-object PUT authorization, complete secret validation, durable idempotent upload intents, server-side byte/MIME/signature/SHA-256/dimension verification, atomic publication, audited ordering, evidence-backed removal, and configuration-aware UI suppression when storage is unavailable.
 - Live authenticated workflow verification uncovered and repaired approval and task notification insertion under forced RLS: a narrowly scoped provider helper validates active recipient location access, while trigger-level unique-violation handling preserves deduplication without conflict reads across recipient-only policies.
 - Deal transition failures now emit privacy-safe structured telemetry and return a validated correlation ID, making unexpected live workflow failures traceable without exposing database details to users.
-- Latest repository gate: Drizzle migration validation, lint, strict TypeScript, 292 tests across 73 files, and the optimized Next.js production build all pass.
+- Live Deal contracting uncovered PostgreSQL parameter ambiguity between the inventory-status enum assignment and sold-state comparison; the Deal provider now casts that shared parameter consistently.
+- Latest repository gate: Drizzle migration validation, lint, strict TypeScript, 293 tests across 74 files, and the optimized Next.js production build all pass.
 
 ## IN PROGRESS
 

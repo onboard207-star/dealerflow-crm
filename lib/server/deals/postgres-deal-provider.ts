@@ -39,8 +39,8 @@ class Session implements DealSession {
       if (delivery.rows[0]?.ready !== true) throw new DealIntegrityError("A completed delivery handoff is required before the Deal can be delivered.");
     }
     if (record.inventoryUnitId && (record.status === "contracted" || record.status === "delivered")) {
-      const inventoryUpdate = await this.db.query<{ id: string }>(`UPDATE inventory_units SET status = $3,
-        sold_at = CASE WHEN $3 = 'sold' THEN now() ELSE sold_at END, updated_by = $4, updated_at = now()
+      const inventoryUpdate = await this.db.query<{ id: string }>(`UPDATE inventory_units SET status = $3::inventory_status,
+        sold_at = CASE WHEN $3::inventory_status = 'sold'::inventory_status THEN now() ELSE sold_at END, updated_by = $4, updated_at = now()
         WHERE organization_id = $1 AND id = $2 AND status IN ('available','hold') RETURNING id`,
       [record.organizationId, record.inventoryUnitId, record.status === "delivered" ? "sold" : "hold", context.actorId]);
       if (!inventoryUpdate.rows[0]) throw new DealIntegrityError("Deal inventory is no longer available.");
