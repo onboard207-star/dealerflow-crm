@@ -149,6 +149,7 @@
 - Live Deal contracting uncovered PostgreSQL parameter ambiguity between the inventory-status enum assignment and sold-state comparison; the Deal provider now casts that shared parameter consistently.
 - Live sale completion uncovered an uncast SQL case expression for terminal vehicle-interest states; purchased and inactive branches now retain the canonical PostgreSQL enum type.
 - Trade acquisition now reports active-inventory and duplicate-stock collisions as actionable domain conflicts instead of generic server failures.
+- Authenticated staging lead-to-sale verification is complete: the smoke Lead is sold at the delivered stage, Deal DF-D14C520D is delivered, the purchased F-150 inventory is sold, the accepted trade is acquired as available stock TRD-0827A, and the delivery handoff plus authoritative timeline are complete. A pre-existing active inventory cycle for the trade VIN was corrected to unavailable with immutable inventory-event and audit evidence before acquisition.
 - Latest repository gate: Drizzle migration validation, lint, strict TypeScript, 294 tests across 75 files, and the optimized Next.js production build all pass.
 
 ## IN PROGRESS
@@ -156,7 +157,6 @@
 - A provisioned verified Resend sender domain and remaining staging provider credentials.
 - Canonical data-ownership and Airtable migration dependency analysis.
 - Cloudflare R2 bucket, restricted token, public image domain, and exact-origin CORS configuration in staging.
-- Completion of the authenticated lead-to-sale staging smoke workflow; workspace, reports, directories, roles, and staff views have already been verified with the live Owner session.
 
 ## BLOCKED
 
@@ -175,8 +175,8 @@
 ## NEXT
 
 1. Provision the staging Cloudflare R2 bucket, restricted token, public image domain, and exact-origin CORS policy; then run a real upload, reorder, and removal smoke pass.
-2. Complete the authenticated lead-to-sale integration pass and verify the resulting sold Lead, delivered Deal, inventory lifecycle, trade acquisition, delivery handoff, and timeline records.
-3. Review the one operator-created Customer, Lead, opportunity, and Inventory unit alongside template records and retain or archive them based on their intended operational purpose.
+2. Verify the returning-customer workflow by opening a new buying-cycle Lead against the retained sold Customer while preserving the delivered sale and communication history.
+3. Retain the completed operator-created sale as a training record or archive its future test buying cycle after return-customer verification.
 4. Provision a restricted OpenAI project key and calibrate evidence-grounding, refusal, cost, and latency behavior in staging.
 5. Connect a monitoring destination and verify signed alert delivery in staging.
 6. Reconcile Airtable authority mappings without destructive migration.
