@@ -63,11 +63,11 @@ export class CustomerWorkspaceReader {
          ORDER BY CASE vi.role WHEN 'primary' THEN 0 WHEN 'alternative' THEN 1 ELSE 2 END, vi.priority, vi.created_at`,
         [organizationId, customerId, lead.id, allLocations, locationIds],
       )) as { rows: Array<{ id: string; vehicle_id: string; role: "primary" | "alternative" | "trade"; status: string; priority: number; year: number; make: string; model: string; trim: string | null; exterior_color: string | null; vin: string; inventory_id: string | null; inventory_location_id: string | null; stock_number: string | null; inventory_status: string | null; list_price_cents: number | null }> } : { rows: [] };
-      const dealResult = visibility.deals ? (await client.query(
+      const dealResult = visibility.deals && lead ? (await client.query(
         `SELECT id, deal_number, status, purchase_type, agreed_price_cents FROM deals
-         WHERE organization_id = $1 AND customer_id = $2
-         ORDER BY CASE WHEN status NOT IN ('delivered','cancelled') THEN 0 ELSE 1 END, updated_at DESC LIMIT 1`,
-        [organizationId, customerId],
+         WHERE organization_id = $1 AND customer_id = $2 AND lead_id = $3
+         ORDER BY updated_at DESC LIMIT 1`,
+        [organizationId, customerId, lead.id],
       )) as { rows: Array<{ id: string; deal_number: string; status: "draft" | "working" | "pending-approval" | "approved" | "contracted" | "delivered" | "cancelled"; purchase_type: string | null; agreed_price_cents: number | null }> } : { rows: [] };
       const currentDealForQuote = dealResult.rows[0];
       const quoteResult = visibility.deals && currentDealForQuote ? (await client.query(

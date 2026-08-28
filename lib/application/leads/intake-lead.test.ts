@@ -221,6 +221,56 @@ describe("LeadIntakeService", () => {
     expect(provider.leadWrites).toBe(1);
   });
 
+  it("creates an independent buying cycle for a returning sold customer", async () => {
+    const provider = new MemoryCRMProvider();
+    const historicalCustomer: CustomerRecord = {
+      id: "cus_returning",
+      organizationId,
+      locationId,
+      displayName: "Jordan Lee",
+      email: "jordan.lee@example.com",
+      phone: "+12075550184",
+      status: "active",
+      createdAt: "2024-08-23T12:00:00.000Z",
+      createdBy: "usr_salesperson",
+      updatedAt: "2024-08-30T12:00:00.000Z",
+      updatedBy: "usr_salesperson",
+    };
+    const historicalSale: LeadRecord = {
+      id: "led_historical_sale",
+      organizationId,
+      locationId,
+      customerId: historicalCustomer.id,
+      assignedUserId: "usr_salesperson",
+      source: "Returning Customer",
+      stage: "Delivered",
+      status: "sold",
+      idempotencyKey: "historical-sale:2024",
+      createdAt: "2024-08-23T12:00:00.000Z",
+      createdBy: "usr_salesperson",
+      updatedAt: "2024-08-30T12:00:00.000Z",
+      updatedBy: "usr_salesperson",
+    };
+    provider.customers.push(historicalCustomer);
+    provider.leads.push(historicalSale);
+
+    const result = await createService(provider).intake(
+      createRequest({
+        idempotencyKey: "returning-customer:2026-cycle",
+        source: "Returning Customer",
+      }),
+    );
+
+    expect(result.customer.id).toBe(historicalCustomer.id);
+    expect(result.customerCreated).toBe(false);
+    expect(result.leadCreated).toBe(true);
+    expect(result.lead.id).not.toBe(historicalSale.id);
+    expect(result.lead.customerId).toBe(historicalSale.customerId);
+    expect(result.lead.status).toBe("open");
+    expect(provider.leads).toHaveLength(2);
+    expect(provider.leads[0]).toEqual(historicalSale);
+  });
+
   it("returns the prior result for a repeated idempotency key", async () => {
     const provider = new MemoryCRMProvider();
     const service = createService(provider);
