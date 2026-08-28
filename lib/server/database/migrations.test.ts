@@ -226,4 +226,16 @@ describe("tenant database migrations", () => {
     expect(migration).toContain("send_attempts_resolution_consistent");
     expect(migration).toContain("send_attempts_reconciliation_idx");
   });
+
+  it("authorizes cross-recipient notifications without exposing membership rows", () => {
+    const migration = readFileSync(join(migrationDirectory, "0033_notification_recipient_authorization.sql"), "utf8");
+    expect(migration).toContain("notification_recipient_is_active");
+    expect(migration).toContain("SECURITY DEFINER");
+    expect(migration).toContain("SET search_path = pg_catalog");
+    expect(migration).toContain("REVOKE ALL ON FUNCTION");
+    expect(migration).toContain('DROP POLICY "notifications_tenant_insert"');
+    expect(migration).toContain('CREATE POLICY "notifications_tenant_insert"');
+    expect(migration).toContain("public.organization_memberships");
+    expect(migration).toContain("public.membership_locations");
+  });
 });
