@@ -139,6 +139,7 @@
 - Repaired PostgreSQL Lead status filters to compare the `lead_status` enum through an explicit text representation in both CRM query paths, with regression coverage for the live database operator contract.
 - Repaired Team administration queries to use the canonical `users.display_name` identity column for member display and ordering, with regression coverage preventing stale `users.name` references.
 - Reusable, transactional working-dealership template with 24 rolling months of linked CRM history, 1,440 historical Leads, 432 delivered sales, 48 current Inventory units, 36 active opportunities, and durable audit-version protection against duplicate seeding.
+- The working-dealership template is active in the staging tenant: its version marker prevents duplicate application, all 26 fictional staff memberships are present, 432 delivered sales remain linked, and live integrity checks report zero orphan Deals or vehicle interests. Tenant totals correctly include one additional operator-created Customer, Lead, active opportunity, and current Inventory unit beyond the template baseline.
 - Complete fictional 26-person dealership roster mapped to standard least-privilege system roles, including new General Manager, Service, Inventory, Controller, and Reception permission profiles; reserved invalid email addresses and absent auth accounts prevent template identities from signing in.
 - First authoritative Vehicle Workspace at `/organizations/{organizationId}/inventory/{inventoryUnitId}` with exact-unit identity, lifecycle evidence, capability- and location-scoped customer/deal relationships, non-fabricated media fallback, responsive inventory navigation, and direct global-search routing.
 - Canonical exact-unit inventory media with tenant and location isolation, provider provenance, immutable checksum and verification evidence, removal consistency, bounded image metadata, verified responsive galleries, and a fail-closed no-photo state; catalog imagery and nonfunctional uploads remain excluded.
@@ -150,6 +151,7 @@
 - A provisioned verified Resend sender domain and remaining staging provider credentials.
 - Canonical data-ownership and Airtable migration dependency analysis.
 - Cloudflare R2 bucket, restricted token, public image domain, and exact-origin CORS configuration in staging.
+- Authenticated visual verification of the populated staging workspace, reports, directories, and staff views; the current browser session reaches the expected login boundary but has no DealerFlow session.
 
 ## BLOCKED
 
@@ -168,8 +170,8 @@
 ## NEXT
 
 1. Provision the staging Cloudflare R2 bucket, restricted token, public image domain, and exact-origin CORS policy; then run a real upload, reorder, and removal smoke pass.
-2. Apply the versioned working-dealership template to the staging tenant and verify its live reporting, directories, workspace, and staff views.
-3. Run authenticated lead-to-sale integration tests against staging PostgreSQL, Resend, and Twilio test credentials.
+2. Sign in to staging and verify the populated workspace, reports, directories, and staff views, then run the authenticated lead-to-sale integration pass against PostgreSQL, Resend, and Twilio test credentials.
+3. Review the one operator-created Customer, Lead, opportunity, and Inventory unit alongside template records and retain or archive them based on their intended operational purpose.
 4. Provision a restricted OpenAI project key and calibrate evidence-grounding, refusal, cost, and latency behavior in staging.
 5. Connect a monitoring destination and verify signed alert delivery in staging.
 6. Reconcile Airtable authority mappings without destructive migration.
