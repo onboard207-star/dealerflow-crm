@@ -238,4 +238,13 @@ describe("tenant database migrations", () => {
     expect(migration).toContain("public.organization_memberships");
     expect(migration).toContain("public.membership_locations");
   });
+
+  it("deduplicates notification triggers without conflict reads across recipient RLS", () => {
+    const migration = readFileSync(join(migrationDirectory, "0034_notification_trigger_deduplication.sql"), "utf8");
+    expect(migration).toContain("CREATE OR REPLACE FUNCTION notify_task_assignment");
+    expect(migration).toContain("CREATE OR REPLACE FUNCTION notify_deal_approval");
+    expect(migration).toContain("EXCEPTION WHEN unique_violation");
+    expect(migration).toContain("notification_recipient_is_active");
+    expect(migration).not.toContain("ON CONFLICT");
+  });
 });

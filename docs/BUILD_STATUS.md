@@ -144,8 +144,8 @@
 - First authoritative Vehicle Workspace at `/organizations/{organizationId}/inventory/{inventoryUnitId}` with exact-unit identity, lifecycle evidence, capability- and location-scoped customer/deal relationships, non-fabricated media fallback, responsive inventory navigation, and direct global-search routing.
 - Canonical exact-unit inventory media with tenant and location isolation, provider provenance, immutable checksum and verification evidence, removal consistency, bounded image metadata, verified responsive galleries, and a fail-closed no-photo state; catalog imagery and nonfunctional uploads remain excluded.
 - Governed Cloudflare R2 inventory uploads with short-lived exact-object PUT authorization, complete secret validation, durable idempotent upload intents, server-side byte/MIME/signature/SHA-256/dimension verification, atomic publication, audited ordering, evidence-backed removal, and configuration-aware UI suppression when storage is unavailable.
-- Live authenticated workflow verification uncovered and repaired approval-notification insertion under forced RLS: a narrowly scoped, locked-down provider helper now validates active recipient location access without exposing other membership rows or weakening recipient-only notification reads.
-- Latest repository gate: Drizzle migration validation, lint, strict TypeScript, 291 tests across 73 files, and the optimized Next.js production build all pass.
+- Live authenticated workflow verification uncovered and repaired approval and task notification insertion under forced RLS: a narrowly scoped provider helper validates active recipient location access, while trigger-level unique-violation handling preserves deduplication without conflict reads across recipient-only policies.
+- Latest repository gate: Drizzle migration validation, lint, strict TypeScript, 292 tests across 73 files, and the optimized Next.js production build all pass.
 
 ## IN PROGRESS
 
