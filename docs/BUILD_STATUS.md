@@ -152,6 +152,8 @@
 - Authenticated staging lead-to-sale verification is complete: the smoke Lead is sold at the delivered stage, Deal DF-D14C520D is delivered, the purchased F-150 inventory is sold, the accepted trade is acquired as available stock TRD-0827A, and the delivery handoff plus authoritative timeline are complete. A pre-existing active inventory cycle for the trade VIN was corrected to unavailable with immutable inventory-event and audit evidence before acquisition.
 - Returning-customer staging verification preserves Customer `cus_e825f105eb1e4f6e97724947372d01a1`, delivered Deal `DF-D14C520D`, and the sold Lead while creating an independent open buying cycle with a new Lead, available CR-V interest, showroom appointment, linked preparation task, governed call-attempt evidence, and draft Deal `DF-800525E3`. The Customer Workspace operational Deal slice is scoped to the selected Lead, while the customer-wide timeline retains the complete prior sale.
 - Latest repository gate: lint, strict TypeScript, 296 tests across 75 files, and the optimized Next.js production build all pass.
+- Inventory Media Batch 2 extends the governed R2 authority with explicit actual/CGI/OEM provenance, one active primary image per exact unit, automatic primary continuity after removal, multi-file upload selection, inventory-card primary-image resolution, responsive full-gallery navigation, source labeling, and broken-image fallbacks. Real staging upload acceptance remains dependent on provisioning the documented R2 environment and CORS policy.
+- Latest Batch 2 repository gate: Drizzle migration validation, lint, strict TypeScript, 301 tests across 76 files, and the optimized Next.js production build pass.
 
 ## IN PROGRESS
 

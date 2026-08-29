@@ -57,6 +57,7 @@ The operator provisioner establishes a new tenant atomically without pre-creatin
 - `inventory_units` records a dealership/location inventory cycle. A sold vehicle may later return as a new unit without creating a second vehicle identity.
 - `lead_vehicle_interests` links one buying cycle to primary, alternative, or trade context and enforces that its lead belongs to the same customer.
 - Current inventory status and historical interest are separate facts. Selling or removing inventory must not erase the customer's relationship to the vehicle.
+- Inventory media belongs to one exact inventory unit and records immutable delivery, verification, dimensions, content, filename, and provenance authority. `actual`, `cgi-reference`, and `oem-reference` are explicit source types; only one active image may be primary for an inventory unit. Reference media never becomes proof of a physical VIN photo, and removing a primary image safely promotes the next active image without republishing the removed object.
 - Inventory and interest mutations are idempotent, audited, capability-controlled, and protected by forced row-level security.
 - Authorized inventory staff may correct list price and explicitly move units between available and unavailable with evidence. Held and sold states remain Deal-controlled. Registration, trade acquisition, manual maintenance, Deal hold, and Deal sale produce immutable `inventory_unit_events`; optimistic timestamps reject stale merchandising edits.
 

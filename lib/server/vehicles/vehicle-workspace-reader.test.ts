@@ -39,6 +39,9 @@ describe("VehicleWorkspaceReader", () => {
           sort_order: 0,
           captured_at: new Date("2026-08-02T12:00:00.000Z"),
           verified_at: new Date("2026-08-02T12:05:00.000Z"),
+          source_type: "actual",
+          is_primary: true,
+          original_filename: "front.webp",
         }],
       })
       .mockResolvedValueOnce({
@@ -96,7 +99,7 @@ describe("VehicleWorkspaceReader", () => {
       exteriorColor: "Platinum White Pearl",
     });
     expect(result?.matches[0]).toMatchObject({ customerName: "Jordan Lee", role: "primary" });
-    expect(result?.media[0]).toMatchObject({ id: "ima_vehicle01", contentType: "image/webp", sortOrder: 0 });
+    expect(result?.media[0]).toMatchObject({ id: "ima_vehicle01", contentType: "image/webp", sortOrder: 0, sourceType: "actual", isPrimary: true, originalFilename: "front.webp" });
     expect(result?.deals[0]).toMatchObject({ dealNumber: "D-260042", agreedPriceCents: 4200000 });
     expect(query.mock.calls[2]?.[0]).toContain("i.location_id=ANY($4::text[])");
     expect(query.mock.calls[2]?.[1]).toEqual(["org_dealerflow", "inv_vehicle01", false, ["loc_main01"]]);
