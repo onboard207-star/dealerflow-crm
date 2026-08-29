@@ -34,6 +34,7 @@ export interface OrganizationMembership {
   organizationId: string;
   locationIds: readonly string[] | "all";
   capabilities: readonly Capability[];
+  roleKeys?: readonly string[];
   features?: Readonly<Record<string, boolean>>;
 }
 

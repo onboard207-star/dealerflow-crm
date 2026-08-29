@@ -18,6 +18,7 @@ describe("resolveAuthorizationActor", () => {
           allLocations: false,
           locationIds: ["loc_main"],
           capabilities: ["lead.create", "customer.read", "unknown.permission"],
+          roleKeys: ["salesperson"],
         };
       },
     };
@@ -31,6 +32,7 @@ describe("resolveAuthorizationActor", () => {
           organizationId,
           locationIds: ["loc_main"],
           capabilities: ["lead.create", "customer.read"],
+          roleKeys: ["salesperson"],
         },
       ],
     });

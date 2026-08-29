@@ -5,6 +5,8 @@ export * from "./accept-invitation";
 export * from "./invitation-directory";
 export * from "./membership-directory";
 export * from "./operational-overview";
+export * from "./role-workspace";
+export * from "./role-workspace-reader";
 export * from "./postgres-location-administration";
 export * from "./location-directory";
 export * from "./postgres-role-administration";

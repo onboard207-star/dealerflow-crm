@@ -32,6 +32,7 @@ export interface MembershipSnapshot {
   allLocations: boolean;
   locationIds: readonly string[];
   capabilities: readonly string[];
+  roleKeys?: readonly string[];
   features?: Readonly<Record<string, boolean>>;
 }
 
@@ -80,6 +81,7 @@ export async function resolveAuthorizationActor(
         organizationId: membership.organizationId,
         locationIds: membership.allLocations ? "all" : membership.locationIds,
         capabilities: resolvedCapabilities,
+        ...(membership.roleKeys ? { roleKeys: membership.roleKeys } : {}),
         ...(membership.features ? { features: membership.features } : {}),
       },
     ],
@@ -100,6 +102,8 @@ export class PostgresMembershipReader implements MembershipReader {
                FILTER (WHERE ml.location_id IS NOT NULL), '{}') AS location_ids,
              COALESCE(array_agg(DISTINCT rc.capability)
                FILTER (WHERE rc.capability IS NOT NULL), '{}') AS capabilities,
+             COALESCE(array_agg(DISTINCT role.key)
+               FILTER (WHERE role.key IS NOT NULL), '{}') AS role_keys,
              COALESCE(c.features, '{}'::jsonb) AS features
            FROM organization_memberships m
            JOIN users u ON u.id = m.user_id AND u.active = true
@@ -108,6 +112,8 @@ export class PostgresMembershipReader implements MembershipReader {
              AND ml.organization_id = m.organization_id
            LEFT JOIN membership_roles mr ON mr.membership_id = m.id
              AND mr.organization_id = m.organization_id
+           LEFT JOIN roles role ON role.id = mr.role_id
+             AND role.organization_id = m.organization_id
            LEFT JOIN role_capabilities rc ON rc.role_id = mr.role_id
              AND rc.organization_id = m.organization_id
            LEFT JOIN organization_configurations c ON c.organization_id = m.organization_id
@@ -120,6 +126,7 @@ export class PostgresMembershipReader implements MembershipReader {
             all_locations: boolean;
             location_ids: string[];
             capabilities: string[];
+            role_keys: string[];
             features: Record<string, boolean>;
           }>;
         };
@@ -130,6 +137,7 @@ export class PostgresMembershipReader implements MembershipReader {
               allLocations: row.all_locations,
               locationIds: row.location_ids,
               capabilities: row.capabilities,
+              roleKeys: row.role_keys,
               features: row.features,
             }
           : null;

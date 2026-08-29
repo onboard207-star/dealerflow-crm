@@ -157,6 +157,8 @@
 - Latest Batch 2 repository gate: Drizzle migration validation, lint, strict TypeScript, 301 tests across 76 files, and the optimized Next.js production build pass.
 - Staging release `ed4e1d3` deployed successfully on Render on August 28, 2026. The pre-deploy runner applied migration `0035`, the service became live, and authenticated desktop/mobile smoke checks passed for the inventory directory and empty-state Vehicle Workspace.
 - Staging does not yet define `DEALERFLOW_MEDIA_PROVIDER` or the required `CLOUDFLARE_R2_*` environment contract. The upload UI correctly fails closed; real three-photo upload, primary selection, reorder, removal, and broken-object acceptance remain externally blocked until the private R2 bucket, credentials, public read domain, and exact-origin CORS policy are provisioned.
+- Role-Based Workspaces v1 resolves live membership roles into deterministic presentation profiles while retaining explicit capabilities, tenant membership, feature configuration, and location grants as the only access authority. Salesperson, Sales Manager, Owner/GM, BDC, Finance, Inventory, Controller, and Reception views use verified scoped queues and KPIs; Service Manager and Service Advisor receive truthful module-unavailable states until authoritative service workflows exist.
+- Multi-role users can switch layout context without changing or expanding their capability union. Workspace aggregation is server-side, tenant-contextual, location-scoped, and fails closed when role capabilities are removed. The latest Batch 3 repository gate passes migration validation, lint, strict TypeScript, 308 tests across 78 files, and the optimized production build.
 
 ## IN PROGRESS
 
