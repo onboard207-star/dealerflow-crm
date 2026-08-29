@@ -30,6 +30,7 @@ const defaultUser: UserIdentity = { name: "Account", email: "Workspace member", 
 export function AppShell({ children, breadcrumbs = [{ label: "DealerFlow" }, { label: "Workspace" }], user = defaultUser, navigation, activeHref, contentClassName, organizationId, navigationCapabilities, brandName }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [commandOpen, setCommandOpen] = React.useState(false);
+  const menuButtonRef = React.useRef<HTMLButtonElement>(null);
   const tenantRuntime = useTenantRuntime();
 
   React.useEffect(() => {
@@ -46,9 +47,9 @@ export function AppShell({ children, breadcrumbs = [{ label: "DealerFlow" }, { l
   return (
     <div className="min-h-dvh bg-background">
       <Sidebar navigation={resolvedNavigation} activeHref={activeHref} brandName={resolvedBrandName} logoUrl={tenantRuntime?.logoUrl} logoDarkUrl={tenantRuntime?.logoDarkUrl} className="fixed inset-y-0 left-0 z-40 hidden lg:flex" />
-      <MobileSidebar open={mobileOpen} onOpenChange={setMobileOpen} navigation={resolvedNavigation} activeHref={activeHref} brandName={resolvedBrandName} logoUrl={tenantRuntime?.logoUrl} logoDarkUrl={tenantRuntime?.logoDarkUrl} />
+      <MobileSidebar open={mobileOpen} onOpenChange={setMobileOpen} navigation={resolvedNavigation} activeHref={activeHref} brandName={resolvedBrandName} logoUrl={tenantRuntime?.logoUrl} logoDarkUrl={tenantRuntime?.logoDarkUrl} triggerRef={menuButtonRef} />
       <div className="min-w-0 lg:pl-64">
-        <TopNavigation breadcrumbs={breadcrumbs} user={user} onMenuOpen={() => setMobileOpen(true)} onSearchOpen={() => setCommandOpen(true)} organizationId={organizationId} />
+        <TopNavigation breadcrumbs={breadcrumbs} user={user} onMenuOpen={() => setMobileOpen(true)} onSearchOpen={() => setCommandOpen(true)} organizationId={organizationId} menuButtonRef={menuButtonRef} />
         <main id="main-content" className={cn("min-h-[calc(100dvh-4rem)] p-4 sm:p-6 lg:p-8", contentClassName)}>{children}</main>
       </div>
       <CommandPalette open={commandOpen} onOpenChange={setCommandOpen} navigation={resolvedNavigation} organizationId={organizationId} />
