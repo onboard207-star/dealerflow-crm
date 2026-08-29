@@ -155,6 +155,8 @@
 - Inventory Media Batch 2 extends the governed R2 authority with explicit actual/CGI/OEM provenance, one active primary image per exact unit, automatic primary continuity after removal, multi-file upload selection, inventory-card primary-image resolution, responsive full-gallery navigation, source labeling, and broken-image fallbacks. Real staging upload acceptance remains dependent on provisioning the documented R2 environment and CORS policy.
 - Render-compatible pre-deploy migration entrypoint applies the checked-in schema chain before a new web release becomes live; web replicas do not run migrations during startup.
 - Latest Batch 2 repository gate: Drizzle migration validation, lint, strict TypeScript, 301 tests across 76 files, and the optimized Next.js production build pass.
+- Staging release `ed4e1d3` deployed successfully on Render on August 28, 2026. The pre-deploy runner applied migration `0035`, the service became live, and authenticated desktop/mobile smoke checks passed for the inventory directory and empty-state Vehicle Workspace.
+- Staging does not yet define `DEALERFLOW_MEDIA_PROVIDER` or the required `CLOUDFLARE_R2_*` environment contract. The upload UI correctly fails closed; real three-photo upload, primary selection, reorder, removal, and broken-object acceptance remain externally blocked until the private R2 bucket, credentials, public read domain, and exact-origin CORS policy are provisioned.
 
 ## IN PROGRESS
 
