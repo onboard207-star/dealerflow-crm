@@ -29,7 +29,7 @@ export function Sidebar({ navigation = defaultNavigation, activeHref = "#", onCl
             <ul className="space-y-1">
               {group.items.map((item) => {
                 const active = activeHref === item.href && item.href !== "#";
-                return <li key={item.label}><Link href={item.href} aria-current={active ? "page" : undefined} className={cn("focus-ring flex h-9 items-center gap-3 rounded-lg px-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground", active && "bg-accent text-accent-foreground")}><item.icon className="size-4" aria-hidden="true" /><span>{item.label}</span></Link></li>;
+                return <li key={item.label}><Link href={item.href} onClick={onClose} aria-current={active ? "page" : undefined} className={cn("focus-ring flex h-11 items-center gap-3 rounded-lg px-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:h-9", active && "bg-accent text-accent-foreground")}><item.icon className="size-4" aria-hidden="true" /><span>{item.label}</span></Link></li>;
               })}
             </ul>
           </div>

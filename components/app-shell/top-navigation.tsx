@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { UserMenu, type UserIdentity } from "@/components/app-shell/user-menu";
 import { NotificationMenu } from "@/components/app-shell/notification-menu";
 
-export function TopNavigation({ breadcrumbs, user, onMenuOpen, onSearchOpen,organizationId }: { breadcrumbs: BreadcrumbItem[]; user: UserIdentity; onMenuOpen: () => void; onSearchOpen: () => void;organizationId?:string }) {
+export function TopNavigation({ breadcrumbs, user, onMenuOpen, onSearchOpen, organizationId }: { breadcrumbs: BreadcrumbItem[]; user: UserIdentity; onMenuOpen: () => void; onSearchOpen: () => void; organizationId?: string }) {
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-background/85 px-4 backdrop-blur-xl sm:px-6">
       <Button variant="ghost" size="icon" onClick={onMenuOpen} className="lg:hidden" aria-label="Open navigation"><Menu className="size-5" /></Button>

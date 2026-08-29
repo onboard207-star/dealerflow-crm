@@ -13,8 +13,8 @@ export function CustomerTimeline({ entries }: { entries: readonly TimelineEntry[
         {entries.map((entry) => { const Icon = icons[entry.kind]; return (
           <li key={`${entry.kind}-${entry.id}`} className="grid grid-cols-[2.25rem_minmax(0,1fr)] gap-3 rounded-lg p-2.5 hover:bg-muted/40">
             <span className="grid size-9 place-items-center rounded-full border bg-background"><Icon className="size-4 text-muted-foreground" aria-hidden="true" /></span>
-            <div className="min-w-0"><div className="flex flex-wrap items-baseline justify-between gap-2"><h3 className="text-sm font-medium">{entry.title}</h3><time className="text-xs text-muted-foreground" dateTime={entry.occurredAt}>{formatDate(entry.occurredAt)}</time></div>
-              {entry.description ? <p className="mt-1 text-sm text-muted-foreground">{entry.description}</p> : null}
+            <div className="min-w-0"><div className="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-baseline sm:justify-between sm:gap-2"><h3 className="break-words text-sm font-medium">{entry.title}</h3><time className="text-xs text-muted-foreground" dateTime={entry.occurredAt}>{formatDate(entry.occurredAt)}</time></div>
+              {entry.description ? <p className="mt-1 break-words text-sm text-muted-foreground">{entry.description}</p> : null}
               {entry.status ? <p className="mt-1 text-xs capitalize text-muted-foreground">{entry.status.replace("-", " ")}</p> : null}</div>
           </li>); })}
       </ol> : <div className="mt-5 rounded-lg border border-dashed bg-muted/30 p-5 text-sm text-muted-foreground">No recorded activity is available for this customer yet.</div>}

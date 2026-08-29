@@ -77,7 +77,7 @@ export default async function VehicleWorkspacePage({ params }: PageProps) {
               {vehicleName}
             </h1>
             <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-              <span>VIN {record.vehicle.vin}</span>
+              <span className="break-all">VIN {record.vehicle.vin}</span>
               <span className="inline-flex items-center gap-1.5">
                 <MapPin aria-hidden="true" className="size-4" />
                 {record.inventory.locationName}

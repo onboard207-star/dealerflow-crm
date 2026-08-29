@@ -25,11 +25,18 @@ export default async function InventoryPage({ params, searchParams }: PageProps)
     <section className="mx-auto max-w-7xl" aria-labelledby="inventory-heading">
       <div><h1 id="inventory-heading" className="text-2xl font-semibold tracking-tight">Inventory</h1><p className="mt-1 text-sm text-muted-foreground">Canonical vehicles currently visible to your assigned locations.</p></div>
       {canCreate ? <InventoryRegistrationForm locations={locations} organizationId={organizationId} /> : null}
-      <form action={base} className="mt-5 grid gap-3 rounded-xl border bg-card p-4 sm:grid-cols-[minmax(0,1fr)_12rem_auto]">
-        <label className="space-y-1 text-xs font-medium text-muted-foreground">Vehicle search<input name="q" defaultValue={filters.q} maxLength={100} placeholder="Stock, VIN, year, make, or model" className="focus-ring block h-10 w-full rounded-lg border bg-background px-3 text-sm text-foreground" /></label>
-        <label className="space-y-1 text-xs font-medium text-muted-foreground">Status<select name="status" defaultValue={filters.status ?? ""} className="focus-ring block h-10 w-full rounded-lg border bg-background px-3 text-sm text-foreground"><option value="">All statuses</option><option value="available">Available</option><option value="hold">Hold</option><option value="sold">Sold</option><option value="unavailable">Unavailable</option></select></label>
-        <button className="focus-ring h-10 self-end rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground">Apply</button>
-      </form>
+      <details className="group mt-5 rounded-xl border bg-card" open={Boolean(filters.q || filters.status)}>
+        <summary className="focus-ring flex min-h-11 cursor-pointer list-none items-center justify-between rounded-xl px-4 text-sm font-medium sm:hidden">
+          Search and filter inventory
+          <span aria-hidden="true" className="text-muted-foreground group-open:hidden">Show</span>
+          <span aria-hidden="true" className="hidden text-muted-foreground group-open:inline">Hide</span>
+        </summary>
+        <form action={base} className="hidden gap-3 border-t p-4 group-open:grid sm:grid sm:grid-cols-[minmax(0,1fr)_12rem_auto] sm:border-t-0">
+          <label className="space-y-1 text-xs font-medium text-muted-foreground">Vehicle search<input name="q" defaultValue={filters.q} maxLength={100} placeholder="Stock, VIN, year, make, or model" className="focus-ring block h-11 w-full rounded-lg border bg-background px-3 text-sm text-foreground" /></label>
+          <label className="space-y-1 text-xs font-medium text-muted-foreground">Status<select name="status" defaultValue={filters.status ?? ""} className="focus-ring block h-11 w-full rounded-lg border bg-background px-3 text-sm text-foreground"><option value="">All statuses</option><option value="available">Available</option><option value="hold">Hold</option><option value="sold">Sold</option><option value="unavailable">Unavailable</option></select></label>
+          <button className="focus-ring h-11 self-end rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground">Apply filters</button>
+        </form>
+      </details>
       <div className="mt-5 overflow-hidden rounded-xl border bg-card shadow-soft">
         {page.records.length ? <ul className="divide-y" role="list">{page.records.map((item) => <li key={item.inventoryId} className="grid gap-3 p-4 sm:grid-cols-[minmax(22rem,2fr)_repeat(3,minmax(8rem,1fr))] sm:items-center sm:p-5">
           <Link aria-label={`Open ${item.year} ${item.make} ${item.model}, stock ${item.stockNumber}`} className="focus-ring -m-2 grid min-w-0 gap-3 rounded-lg p-2 hover:bg-accent hover:text-accent-foreground sm:grid-cols-[10rem_minmax(0,1fr)] sm:items-center" href={`${base}/${item.inventoryId}`}><InventoryCardMedia image={item.primaryImage} label={`${item.year} ${item.make} ${item.model}`}/><span className="min-w-0"><span className="block truncate text-sm font-medium">{item.year} {item.make} {item.model}{item.trim ? ` ${item.trim}` : ""}</span><span className="block break-all text-xs text-muted-foreground">{item.vin}</span><span className="mt-1 block text-xs font-medium text-primary">Open vehicle workspace</span></span></Link>
@@ -40,5 +47,5 @@ export default async function InventoryPage({ params, searchParams }: PageProps)
   </AppShell>;
 }
 
-function Fact({ label, value }: { label: string; value: string }) { return <span><span className="block text-[11px] text-muted-foreground">{label}</span><span className="block truncate text-sm capitalize">{value}</span></span>; }
+function Fact({ label, value }: { label: string; value: string }) { return <span className="min-w-0"><span className="block text-[11px] text-muted-foreground">{label}</span><span className="block break-words text-sm capitalize sm:truncate">{value}</span></span>; }
 function formatPrice(cents: number) { return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(cents / 100); }

@@ -160,9 +160,11 @@
 - Role-Based Workspaces v1 resolves live membership roles into deterministic presentation profiles while retaining explicit capabilities, tenant membership, feature configuration, and location grants as the only access authority. Salesperson, Sales Manager, Owner/GM, BDC, Finance, Inventory, Controller, and Reception views use verified scoped queues and KPIs; Service Manager and Service Advisor receive truthful module-unavailable states until authoritative service workflows exist.
 - Multi-role users can switch layout context without changing or expanding their capability union. Workspace aggregation is server-side, tenant-contextual, location-scoped, and fails closed when role capabilities are removed. The latest Batch 3 repository gate passes migration validation, lint, strict TypeScript, 308 tests across 78 files, and the optimized production build.
 - Batch 3 staging release `1279fda` is live on Render. Authenticated Owner/GM acceptance verified executive priorities, today queue, verified KPIs, capability-safe quick actions, AI degraded-state disclosure, navigation, and a 390px layout without horizontal overflow. Live testing found and repaired a UTC-versus-rooftop timezone mismatch; the corrected Today queue now agrees with the authoritative Appointments Today definition.
+- Mobile Product UX Batch 4 hardens the responsive shell and highest-frequency workflows with close-on-navigation mobile drawers, phone-safe drawer sizing, 44-pixel mobile controls, compact inventory filter disclosure, long-value wrapping, clearer mobile timeline ordering, and touch-safe vehicle media management. Exact-width testing uncovered and repaired an intrinsic grid-width regression in role workspaces at 320 pixels. The local Customer Workspace passes 320, 360, 390, 430, 844-landscape, and 1440-pixel checks with no page-level horizontal overflow, one main landmark, and one H1.
 
 ## IN PROGRESS
 
+- Batch 4 authenticated staging acceptance and release deployment.
 - A provisioned verified Resend sender domain and remaining staging provider credentials.
 - Canonical data-ownership and Airtable migration dependency analysis.
 - Cloudflare R2 bucket, restricted token, public image domain, and exact-origin CORS configuration in staging.

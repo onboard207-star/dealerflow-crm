@@ -13,7 +13,11 @@ const buttonVariants = cva(
         ghost: "hover:bg-accent hover:text-accent-foreground",
         outline: "border bg-background hover:bg-accent hover:text-accent-foreground",
       },
-      size: { default: "h-11 px-4", sm: "h-8 rounded-md px-3 text-xs", icon: "size-11 p-0" },
+      size: {
+        default: "h-11 px-4",
+        sm: "h-11 rounded-md px-3 text-xs sm:h-9",
+        icon: "size-11 p-0",
+      },
     },
     defaultVariants: { variant: "default", size: "default" },
   },
