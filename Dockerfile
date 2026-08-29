@@ -34,7 +34,10 @@ RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 --ingroup
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
 COPY --from=builder --chown=nextjs:nodejs /app/config ./config
+COPY --from=builder --chown=nextjs:nodejs /app/drizzle ./drizzle
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/render-migrate.mjs ./scripts/render-migrate.mjs
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/seed-dealership-template.mjs ./scripts/seed-dealership-template.mjs
 USER nextjs
 EXPOSE 3000

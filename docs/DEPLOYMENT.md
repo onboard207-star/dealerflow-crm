@@ -90,6 +90,8 @@ The checked-in standard roles are Owner, Sales Manager, Salesperson, BDC, and Fi
 
 Build one immutable image reference per commit. Run the migrator target as a one-off task with only `DATABASE_URL`, then deploy the runner target with the complete environment contract. Never execute migrations automatically when a web replica starts. Every third-party GitHub Action in the release gate is pinned to a reviewed 40-character commit SHA; retain the human-readable major-version comment when updating a pin, and never replace a pin with a mutable tag or branch.
 
+Render uses `node scripts/render-migrate.mjs` as the service's Pre-Deploy Command. The runner image includes only the checked-in migration chain and this narrow migration entrypoint for that release phase; migrations still never run when a web replica starts. A failed pre-deploy migration must prevent the new web release from becoming live.
+
 ```bash
 docker build --target migrator -t dealerflow-ai-migrator:COMMIT .
 docker build --target runner -t dealerflow-ai:COMMIT .
