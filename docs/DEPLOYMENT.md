@@ -3,6 +3,7 @@
 DealerFlow has a live Render staging deployment. Production promotion still requires completed provider credentials, monitoring, rollback rehearsal, and release evidence.
 
 The pilot gate and current evidence are maintained in [Pilot Readiness](operations/PILOT_READINESS.md). Backup and recovery exercises must follow the [Recovery Runbook](operations/RECOVERY_RUNBOOK.md).
+The repeatable onboarding lifecycle and preview-first migration boundary are defined in [First Dealer Launch](operations/FIRST_DEALER_LAUNCH.md).
 
 ## Runtime requirements
 
