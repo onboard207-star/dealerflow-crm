@@ -5,6 +5,7 @@ import {
   type AuthorizationActor,
   type Capability,
 } from "@/lib/platform/auth";
+import { isCapabilityEntitled } from "@/lib/platform/tenant";
 import { withTenantDatabaseContext } from "@/lib/server/database";
 
 import { getAuth } from "./better-auth";
@@ -146,7 +147,4 @@ export class PostgresMembershipReader implements MembershipReader {
   }
 }
 
-const featureByCapability: Partial<Record<Capability, string>> = {
-  "customer.read":"crm","customer.create":"crm","customer.update":"crm","lead.read":"crm","lead.create":"crm","lead.assign":"crm","lead.update":"crm","task.read":"crm","task.create":"crm","task.update":"crm","communication.read":"crm","communication.create":"crm","communication.consent.manage":"crm","communication.send":"crm","appointment.read":"crm","appointment.create":"crm","appointment.update":"crm","inventory.read":"inventory","inventory.create":"inventory","inventory.update":"inventory","deal.read":"finance","deal.create":"finance","deal.update":"finance","deal.approve":"finance","reports.view":"reporting",
-};
-function isCapabilityFeatureEnabled(capability:Capability,features:MembershipSnapshot["features"]){const feature=featureByCapability[capability];return !feature||features?.[feature]!==false;}
+function isCapabilityFeatureEnabled(capability:Capability,features:MembershipSnapshot["features"]){return isCapabilityEntitled(capability,features);}

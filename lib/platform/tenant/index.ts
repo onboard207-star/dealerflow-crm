@@ -15,3 +15,4 @@ export {
   type TenantVertical,
 } from "./tenant-config";
 export { createTenantBrandTokens,contrastRatio,type TenantBrandTokens } from "./brand-tokens";
+export { featureEntitlementRegistry, featureForCapability, isCapabilityEntitled, type FeatureEntitlementDefinition } from "./feature-entitlements";

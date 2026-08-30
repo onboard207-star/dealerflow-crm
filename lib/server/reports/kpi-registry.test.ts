@@ -1,0 +1,2 @@
+import{describe,expect,it}from"vitest";import{formatKpiValue,managementKpiRegistry}from"./kpi-registry";
+describe("management KPI registry",()=>{it("defines every canonical metric once",()=>{const keys=managementKpiRegistry.map(item=>item.key);expect(new Set(keys).size).toBe(keys.length);expect(keys).toHaveLength(6)});it("formats integer cents",()=>{const item=managementKpiRegistry.find(value=>value.key==="deliveredRevenueCents")!;expect(formatKpiValue(item,12_000_000)).toBe("$120,000")})});
