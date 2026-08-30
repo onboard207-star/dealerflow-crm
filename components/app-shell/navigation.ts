@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { BarChart3, Building2, CarFront, CircleDollarSign, Globe2, LayoutDashboard, MapPinned, MessageSquareWarning, PanelsTopLeft, Plug, Settings, Share2, ShieldCheck, UserCog, UserRoundSearch, Users } from "lucide-react";
+import { BarChart3, Building2, CarFront, CircleDollarSign, Globe2, LayoutDashboard, MapPinned, MessageSquareWarning, PanelsTopLeft, Plug, Settings, Share2, ShieldCheck, Sparkles, UserCog, UserRoundSearch, Users } from "lucide-react";
 import type { Capability } from "@/lib/platform/auth";
 import type { TenantFeatures } from "@/lib/platform/tenant";
 
@@ -31,6 +31,7 @@ export function createOrganizationNavigation(organizationId: string, capabilitie
     label: "Dealership",
     items: [
       { label: "Overview", href: `${base}/workspace`, icon: LayoutDashboard },
+      ...(features?.ai !== false && capabilities?.length ? [{ label: "DealerFlow AI", href: `${base}/ai`, icon: Sparkles }] : []),
       ...(allowed("lead.read") ? [{ label: "Leads", href: `${base}/leads`, icon: Users }] : []),
       ...(allowed("customer.read") ? [{ label: "Customers", href: `${base}/customers`, icon: UserRoundSearch }] : []),
       ...(allowed("inventory.read") ? [{ label: "Inventory", href: `${base}/inventory`, icon: CarFront }] : []),
