@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { BarChart3, Building2, CarFront, CircleDollarSign, Globe2, LayoutDashboard, MapPinned, MessageSquareWarning, PanelsTopLeft, Plug, Settings, Share2, ShieldCheck, Sparkles, UserCog, UserRoundSearch, Users } from "lucide-react";
+import { BarChart3, Building2, CarFront, CircleDollarSign, Globe2, LayoutDashboard, MapPinned, MessageSquareWarning, PanelsTopLeft, Plug, Settings, Share2, ShieldAlert, ShieldCheck, Sparkles, UserCog, UserRoundSearch, Users } from "lucide-react";
 import type { Capability } from "@/lib/platform/auth";
 import type { TenantFeatures } from "@/lib/platform/tenant";
 
@@ -38,6 +38,7 @@ export function createOrganizationNavigation(organizationId: string, capabilitie
       ...(allowed("deal.read") ? [{ label: "Deals", href: `${base}/deals`, icon: CircleDollarSign }] : []),
       ...(allowed("deal.read") ? [{ label: "Deal Desking", href: `${base}/desking`, icon: PanelsTopLeft }] : []),
       ...(allowed("reports.view") ? [{ label: "Reports", href: `${base}/reports`, icon: BarChart3 }] : []),
+      ...(allowed("reports.view") ? [{ label: "Command Center", href: `${base}/operations/command-center`, icon: ShieldAlert }] : []),
       ...(allowed("reports.view") ? [{ label: "Website Analytics", href: `${base}/analytics`, icon: Globe2 }] : []),
       ...(allowed("reports.view") ? [{ label: "Social Media", href: `${base}/social`, icon: Share2 }] : []),
       ...(allowed("staff.manage") ? [{ label: "Team", href: `${base}/settings/team`, icon: UserCog }] : []),
