@@ -195,6 +195,14 @@
 - The demo form validates and previews supplied information locally but intentionally does not transmit it. Canonical commercial account persistence, deduplication, spam controls, monitored alerts, and scheduling must exist before public submissions are accepted.
 - No certifications, final prices, provider availability, legal commitments, or confirmed calendar events are fabricated.
 
+## INTEGRATION PLATFORM FOUNDATION
+
+- Added a provider-neutral registry and connector contract with explicit capabilities, authentication, operations, release stages, verification evidence, lifecycle status, and normalized failure categories.
+- Added a server-only credential resolver boundary and explicit unsupported-operation failures.
+- Added deterministic internal stub-provider scenarios and source-authority conflict decisions.
+- VinSolutions remains disabled roadmap support; Twilio remains the only externally verified staging connector path.
+- Persistent generalized sync, OAuth, partner API, conflict queue, and outbound webhook authorities remain deferred rather than represented by nonfunctional UI.
+
 ## BLOCKED
 
 - Production integrations: email delivery, AI provider, monitoring, and external provider credentials are not configured.
