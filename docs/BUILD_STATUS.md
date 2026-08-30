@@ -179,6 +179,14 @@
 - Canonical data-ownership and Airtable migration dependency analysis.
 - Cloudflare R2 bucket, restricted token, public image domain, and exact-origin CORS configuration in staging.
 
+## LATEST BATCH — DEALER SELF-SERVICE AND ACCOUNT HEALTH
+
+- Added server-authoritative confirmation for sensitive Owner/General Manager, Controller, and Finance Manager role assignments.
+- Preserved tenant scope, self-change, capability, and last-manager protections and added the confirmation to the audit event.
+- Added a pure, explainable account-health authority where critical failures cannot be averaged away and missing inputs cannot silently become green.
+- Documented the dealer/internal boundary and explicitly deferred commercial features that lack authoritative persistence, permissions, or external integrations.
+- Production and pilot readiness remain blocked by the existing external readiness gates; this batch does not weaken them.
+
 ## BLOCKED
 
 - Production integrations: email delivery, AI provider, monitoring, and external provider credentials are not configured.

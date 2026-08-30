@@ -2,10 +2,10 @@ import type { AuthorizationActor } from "@/lib/platform/auth";
 import { assertAuthorized } from "@/lib/platform/auth";
 
 export type ManagedMembershipStatus = "active" | "suspended" | "revoked";
-export type MembershipMutationResult = "updated" | "not_found" | "invalid_scope" | "self_change" | "last_manager";
+export type MembershipMutationResult = "updated" | "not_found" | "invalid_scope" | "self_change" | "last_manager" | "privileged_confirmation_required";
 
 export interface MembershipAdministrationProvider {
-  updateAccess(input: { actorId: string; organizationId: string; membershipId: string; roleIds: readonly string[]; locationIds: readonly string[]; allLocations: boolean }): Promise<MembershipMutationResult>;
+  updateAccess(input: { actorId: string; organizationId: string; membershipId: string; roleIds: readonly string[]; locationIds: readonly string[]; allLocations: boolean; confirmPrivileged: boolean }): Promise<MembershipMutationResult>;
   updateStatus(input: { actorId: string; organizationId: string; membershipId: string; status: ManagedMembershipStatus }): Promise<MembershipMutationResult>;
 }
 
@@ -14,13 +14,13 @@ export class MembershipAdministrationError extends Error {}
 export class ManageMembershipsService {
   constructor(private readonly provider: MembershipAdministrationProvider) {}
 
-  async updateAccess(input: { actor: AuthorizationActor; organizationId: string; membershipId: string; roleIds: readonly string[]; locationIds: readonly string[]; allLocations: boolean }) {
+  async updateAccess(input: { actor: AuthorizationActor; organizationId: string; membershipId: string; roleIds: readonly string[]; locationIds: readonly string[]; allLocations: boolean; confirmPrivileged?: boolean }) {
     assertAuthorized(input.actor, { organizationId: input.organizationId, capability: "staff.manage" });
     validateId(input.membershipId);
     if (!input.roleIds.length || new Set(input.roleIds).size !== input.roleIds.length) throw new MembershipAdministrationError("At least one unique role is required.");
     if (!input.allLocations && !input.locationIds.length) throw new MembershipAdministrationError("At least one location is required.");
     if (new Set(input.locationIds).size !== input.locationIds.length) throw new MembershipAdministrationError("Locations must be unique.");
-    return resolve(await this.provider.updateAccess({ ...input, actorId: input.actor.userId }));
+    return resolve(await this.provider.updateAccess({ ...input, actorId: input.actor.userId, confirmPrivileged: input.confirmPrivileged === true }));
   }
 
   async updateStatus(input: { actor: AuthorizationActor; organizationId: string; membershipId: string; status: ManagedMembershipStatus }) {
@@ -35,7 +35,7 @@ function resolve(result: MembershipMutationResult) {
   if (result === "updated") return;
   const messages: Record<Exclude<MembershipMutationResult, "updated">, string> = {
     not_found: "The membership was not found.", invalid_scope: "The selected roles or locations are invalid.",
-    self_change: "You cannot change your own access from this screen.", last_manager: "At least one active staff manager must remain.",
+    self_change: "You cannot change your own access from this screen.", last_manager: "At least one active staff manager must remain.", privileged_confirmation_required: "Confirm the intentional assignment of elevated access.",
   };
   throw new MembershipAdministrationError(messages[result]);
 }
