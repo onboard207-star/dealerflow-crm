@@ -1,5 +1,25 @@
 # DealerFlow AI Build Status
 
+## P0/P1 CLOSURE — CALENDAR AND DEMO PATH
+
+- Added a protected, responsive Appointment Calendar over the canonical PostgreSQL appointment authority.
+- Calendar queries run in tenant context, embed membership Location scope, group by the appointment's authoritative timezone, bound ranges to 31 days, and reject unsupported status filters.
+- Added capability-filtered Calendar navigation and direct Calendar-to-Customer Workspace transitions without duplicating appointment mutation behavior.
+- Added regression coverage for tenant/location query scope, invalid ranges/statuses, and capability-filtered navigation.
+- Persistent import and external pilot gates remain explicitly open; no unsafe direct write path or fabricated readiness was introduced.
+- Detailed closure evidence and remaining P1 queue are recorded in `docs/operations/P0_P1_CLOSURE.md`.
+- Full local gate passes: Drizzle migration validation, lint, strict TypeScript, 405 tests across 96 files, optimized production build, and whitespace validation.
+
+## FULL-SYSTEM ACCEPTANCE — AUGUST 30, 2026
+
+- Reconciled repository, schema, runtime authorities, prior implementation batches, role workspaces, core automotive workflows, integrations, demo data, security, recovery, and launch evidence in `docs/operations/FULL_SYSTEM_ACCEPTANCE.md`.
+- Local HEAD, upstream staging branch, and live Render liveness agree on release `2d628cf59d6d79012586da1e9c9babf0dcc5fb54`.
+- PostgreSQL is confirmed as the runtime source of truth; Airtable remains legacy/control-plane migration analysis only and is not used for runtime reads.
+- No verified P0 application defect was found. The system is conditionally demo ready, not pilot ready, and not production ready.
+- Launch-critical P1 gaps are runtime readiness, backup/restore proof, external monitoring/on-call evidence, persistent controlled import, Calendar, support ownership, and configured R2 media acceptance.
+- Broad product expansion remains sequenced after these launch gates; no application behavior or architecture was changed by the audit.
+- Full acceptance gate passes: Drizzle migration validation, lint, strict TypeScript, 402 tests across 94 files, optimized production build, and whitespace validation.
+
 ## COMPLETED
 
 - Responsive Next.js application shell with desktop and mobile navigation.

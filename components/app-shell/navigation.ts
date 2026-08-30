@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { BarChart3, BookOpen, Building2, CarFront, CircleDollarSign, Globe2, LayoutDashboard, MapPinned, MessageSquareWarning, PanelsTopLeft, Plug, Settings, Share2, ShieldAlert, ShieldCheck, Sparkles, UserCog, UserRoundSearch, Users } from "lucide-react";
+import { BarChart3, BookOpen, Building2, CalendarDays, CarFront, CircleDollarSign, Globe2, LayoutDashboard, MapPinned, MessageSquareWarning, PanelsTopLeft, Plug, Settings, Share2, ShieldAlert, ShieldCheck, Sparkles, UserCog, UserRoundSearch, Users } from "lucide-react";
 import type { Capability } from "@/lib/platform/auth";
 import { isCapabilityEntitled, type TenantFeatures } from "@/lib/platform/tenant";
 
@@ -31,6 +31,7 @@ export function createOrganizationNavigation(organizationId: string, capabilitie
       ...(capabilities?.includes("customer.read") ? [{ label: "Training Center", href: `${base}/training`, icon: BookOpen }] : []),
       ...(allowed("lead.read") ? [{ label: "Leads", href: `${base}/leads`, icon: Users }] : []),
       ...(allowed("customer.read") ? [{ label: "Customers", href: `${base}/customers`, icon: UserRoundSearch }] : []),
+      ...(allowed("appointment.read") ? [{ label: "Calendar", href: `${base}/calendar`, icon: CalendarDays }] : []),
       ...(allowed("inventory.read") ? [{ label: "Inventory", href: `${base}/inventory`, icon: CarFront }] : []),
       ...(allowed("deal.read") ? [{ label: "Deals", href: `${base}/deals`, icon: CircleDollarSign }] : []),
       ...(allowed("deal.read") ? [{ label: "Deal Desking", href: `${base}/desking`, icon: PanelsTopLeft }] : []),
