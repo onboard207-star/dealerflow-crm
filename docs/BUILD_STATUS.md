@@ -1,5 +1,14 @@
 # DealerFlow AI Build Status
 
+## PILOT BLOCKER CLOSURE — RUNTIME READINESS AND GO-LIVE EVIDENCE
+
+- Corrected the readiness contract so optional AI and media providers cannot make the healthy core application unavailable.
+- Core readiness still fails closed on authentication, internal jobs, transactional account email, or database failure.
+- AI, media, and alerting now report separate `configured` or `not-configured` capability states; feature-level provider boundaries remain fail closed.
+- Added regression coverage proving incomplete optional provider configuration is never reported as configured.
+- Added an evidence-backed first-pilot NO-GO package with exact scope, provider decisions, role matrix, UAT requirements, checklist, recovery boundaries, and remaining launch blockers in `docs/operations/FIRST_PILOT_GO_LIVE.md`.
+- Full local gate passes: Drizzle migration validation, lint, strict TypeScript, 407 tests across 97 files, optimized production build, and whitespace validation.
+
 ## P0/P1 CLOSURE — CALENDAR AND DEMO PATH
 
 - Added a protected, responsive Appointment Calendar over the canonical PostgreSQL appointment authority.

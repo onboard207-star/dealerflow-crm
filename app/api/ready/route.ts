@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getDatabasePool } from "@/lib/server/database";
 import { evaluateReadiness } from "@/lib/server/health/readiness";
+import { inspectOptionalRuntimeCapabilities } from "@/lib/server/health/runtime-capabilities";
 import { parseServerEnvironment } from "@/lib/server/config";
 
 export const dynamic = "force-dynamic";
@@ -17,15 +18,17 @@ export async function GET() {
     {
       name: "runtime-configuration",
       check: async () => {
-        parseServerEnvironment(process.env, { authentication: true, jobs: true, email: true, ai: true });
+        parseServerEnvironment(process.env, { authentication: true, jobs: true, email: true });
       },
     },
   ]);
+  const capabilities = inspectOptionalRuntimeCapabilities(process.env);
 
   return NextResponse.json(
     {
       status: result.ready ? "ready" : "unavailable",
       checks: result.checks,
+      capabilities,
     },
     {
       status: result.ready ? 200 : 503,

@@ -74,7 +74,7 @@ The current preview must not be connected directly to production writes without 
 
 | ID | Gate | Domain | Evidence | Next action |
 | --- | --- | --- | --- | --- |
-| FS-001 | Pilot | Runtime | `/api/ready` reports runtime configuration unavailable. | Complete required staging environment and verify exact-release readiness. |
+| FS-001 | Pilot | Runtime | Core readiness previously treated optional AI as mandatory. | Repaired locally: core auth/jobs/email remain required while AI, media, and alerting report separate honest capability states; staging acceptance remains. |
 | FS-002 | Pilot | Recovery | No provider backup configuration or restore drill is recorded. | Capture backup settings and complete an isolated timed restore. |
 | FS-003 | Pilot | Monitoring | Alert contract exists; external receipt and on-call response are unverified. | Configure a receiver, run a synthetic alert, and record ownership. |
 | FS-004 | Pilot | Import | Validation/preview only; no persistent batch, commit, reconciliation, or reversal. | Implement the governed import sequence above as a dedicated batch. |
