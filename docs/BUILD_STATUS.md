@@ -187,6 +187,14 @@
 - Documented the dealer/internal boundary and explicitly deferred commercial features that lack authoritative persistence, permissions, or external integrations.
 - Production and pilot readiness remain blocked by the existing external readiness gates; this batch does not weaken them.
 
+## PUBLIC WEBSITE FOUNDATION
+
+- Added a public, responsive marketing surface separated from authenticated organization routes.
+- Added truthful Product, AI, Integrations, Security, Pricing, Contact, and Book a Demo pages using shared marketing components.
+- Added canonical metadata, sitemap, robots exclusions, semantic landmarks, keyboard focus behavior, and mobile-safe navigation.
+- The demo form validates and previews supplied information locally but intentionally does not transmit it. Canonical commercial account persistence, deduplication, spam controls, monitored alerts, and scheduling must exist before public submissions are accepted.
+- No certifications, final prices, provider availability, legal commitments, or confirmed calendar events are fabricated.
+
 ## BLOCKED
 
 - Production integrations: email delivery, AI provider, monitoring, and external provider credentials are not configured.
