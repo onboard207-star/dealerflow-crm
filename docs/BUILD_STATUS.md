@@ -179,6 +179,14 @@
 - Canonical data-ownership and Airtable migration dependency analysis.
 - Cloudflare R2 bucket, restricted token, public image domain, and exact-origin CORS configuration in staging.
 
+## DOCUMENT PLATFORM FOUNDATION
+
+- Reused the immutable Deal quote and protected printable-proposal authority instead of introducing a second quote model.
+- Added a pure, provider-neutral document platform contract for versioned global and tenant templates, declared bindings, deterministic rendering, governed lifecycle transitions, configurable Deal packet completeness, finalized-PDF storage references, and electronic-signature envelopes.
+- Required missing data is reported as `needs-information`; template values are escaped, undeclared placeholders and executable markup are rejected, and finalized/voided documents plus signed envelopes are immutable.
+- The existing quote route remains browser print/save-to-PDF only. Canonical server PDF generation, durable private storage, verified delivery, and a real electronic-signature provider remain explicitly deferred and are not presented as working product features.
+- Added the operational authority, privacy, audit, provider, retention, and deferred-work contract in `docs/operations/DOCUMENT_PLATFORM.md`.
+
 ## LATEST BATCH — DEALER SELF-SERVICE AND ACCOUNT HEALTH
 
 - Added server-authoritative confirmation for sensitive Owner/General Manager, Controller, and Finance Manager role assignments.
