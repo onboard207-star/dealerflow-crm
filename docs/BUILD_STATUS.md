@@ -187,6 +187,15 @@
 - The existing quote route remains browser print/save-to-PDF only. Canonical server PDF generation, durable private storage, verified delivery, and a real electronic-signature provider remain explicitly deferred and are not presented as working product features.
 - Added the operational authority, privacy, audit, provider, retention, and deferred-work contract in `docs/operations/DOCUMENT_PLATFORM.md`.
 
+## LEARNING SYSTEM FOUNDATION
+
+- Added one canonical application-domain learning authority for versioned courses, modules, knowledge articles, assignment identity, evidence-based progress, first-login orientation, contextual help, release education, and approved knowledge grounding.
+- Added materially different published tracks for current Salesperson, BDC, Sales Manager, GSM, GM/Owner, Finance/Controller, Inventory, Reception, Dealer Administration, and internal Platform Administration audiences. Recon and Service tracks remain draft because their application workflows are not authoritative.
+- Knowledge search filters current published articles by dealer/internal audience, tenant scope, role, capability, category, workspace, and feature. Internal support and protected Finance/admin guidance fail closed for unauthorized users.
+- Added an authenticated responsive Training Center with role tracks, Quick Start, product-guide search, contextual help summaries, and role-targeted What's New content.
+- Completion tracking, acknowledgments, feedback, support requests, content administration, contextual drawers, product-help AI answers, and training analytics remain explicitly unavailable until durable authorities exist. The UI does not fabricate progress or submission.
+- Documented governance, privacy, security, AI grounding, and deferred persistence in `docs/operations/LEARNING_SYSTEM.md`.
+
 ## LATEST BATCH — DEALER SELF-SERVICE AND ACCOUNT HEALTH
 
 - Added server-authoritative confirmation for sensitive Owner/General Manager, Controller, and Finance Manager role assignments.
