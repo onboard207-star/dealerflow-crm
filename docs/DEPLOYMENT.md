@@ -2,6 +2,8 @@
 
 DealerFlow has a live Render staging deployment. Production promotion still requires completed provider credentials, monitoring, rollback rehearsal, and release evidence.
 
+The pilot gate and current evidence are maintained in [Pilot Readiness](operations/PILOT_READINESS.md). Backup and recovery exercises must follow the [Recovery Runbook](operations/RECOVERY_RUNBOOK.md).
+
 ## Runtime requirements
 
 - Node.js 22

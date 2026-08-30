@@ -1,7 +1,7 @@
 const baseUrl = requiredUrl(process.env.DEALERFLOW_SMOKE_BASE_URL);
 const jobSecret = process.env.DEALERFLOW_JOB_SECRET?.trim();
 
-await verifyJson("liveness", "/api/health", 200, (body) => body.status === "ok");
+await verifyJson("liveness", "/api/health", 200, (body) => body.status === "ok" && isRelease(body.release));
 await verifyJson("readiness", "/api/ready", 200, (body) => body.status === "ready");
 await verifyPage("login", "/login", 200);
 await verifyJson("protected job rejects anonymous access", "/api/internal/jobs/transactional-email", 401, (body) => body.error === "unauthorized");
@@ -15,6 +15,7 @@ function requiredUrl(value) {
   if (url.protocol !== "https:" && !["localhost", "127.0.0.1"].includes(url.hostname)) throw new Error("Smoke tests require HTTPS outside localhost.");
   return url;
 }
+function isRelease(value) { return value && ["development", "test", "staging", "production"].includes(value.environment) && (value.commitSha === "unknown" || /^[a-f0-9]{7,40}$/.test(value.commitSha)) && typeof value.deployedAt === "string"; }
 async function verifyPage(name, path, status) {
   const response = await fetch(new URL(path, baseUrl), { redirect: "manual" });
   if (response.status !== status) throw new Error(`${name} returned HTTP ${response.status}; expected ${status}.`);
