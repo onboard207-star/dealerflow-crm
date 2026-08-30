@@ -10,6 +10,7 @@ This is not a verified P0 application defect. The current release has strong ten
 
 - Branch: `codex/staging-deployment`
 - Baseline commit: `985d040d09538a6dd95792b95e2708763c0a6aa6`
+- Hardening implementation commit: `85471fa60b0cbdf4e54798cb51642553339cd167`
 - Runtime: Node.js 24.19.0 in the local validation environment
 - Framework: Next.js 15.5.21, React 19.1.0, TypeScript 5.7.2
 - Database: PostgreSQL with forced tenant RLS; checked-in migrations `0000` through `0035`
@@ -64,6 +65,12 @@ Initial internal planning targets, not contractual commitments:
 6. Name the pilot sponsor, dealership champion, support owner, escalation contact, dates, and success criteria.
 7. Obtain an explicit production release approval; staging success never authorizes production deployment.
 
+## Staging verification — August 30, 2026
+
+Render deployed hardening commit `85471fa60b0cbdf4e54798cb51642553339cd167` successfully. Authenticated tenant administration rendered the expected organization-scoped readiness view and exposed the bounded release identity (`staging`, commit `85471fa60b0c`) without secrets or production authorization.
+
+The read-only deployment smoke suite passed liveness and the release identity contract, then stopped at readiness with HTTP 503. The readiness payload reported `database: ready` and `runtime-configuration: unavailable`. This is a truthful release blocker, not a reason to weaken the readiness check. Protected-worker and later smoke assertions did not run after the fail-fast readiness result.
+
 ## Severity and response ownership
 
 - P0: tenant exposure, destructive unauthorized action, credential exposure, or broad outage. Stop affected workflows, page the technical owner, preserve evidence, and notify the pilot sponsor.
@@ -72,4 +79,3 @@ Initial internal planning targets, not contractual commitments:
 - P3: cosmetic, documentation, or low-impact usability issue. Prioritize normally.
 
 Names, phone numbers, response-time promises, and customer communication channels require founder approval and must not be invented in source control.
-
