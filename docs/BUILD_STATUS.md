@@ -1,5 +1,14 @@
 # DealerFlow AI Build Status
 
+## PILOT HYPERCARE TELEMETRY FOUNDATION
+
+- Added a governed append-only product usage event authority with forced tenant RLS, location integrity, release/feature attribution, idempotency, and explicit actor/data classification.
+- Added a strict meaningful-event taxonomy and privacy validator that rejects sensitive customer, credential, financial, message, note, prompt, document, and vehicle identity attributes.
+- Human adoption excludes demo tenants, DealerFlow staff, automation, and synthetic simulation by contract.
+- Added PostgreSQL writer and regression coverage for tenant context, idempotency, privacy, and exclusion rules.
+- No live pilot outcomes are claimed; operations aggregation and instrumentation remain dependent on canonical pilot, support, training, and import authorities.
+- Full gate passes: migration validation, lint, strict TypeScript, 416 tests across 99 files, optimized production build, and whitespace validation.
+
 ## PILOT BLOCKER CLOSURE — RUNTIME READINESS AND GO-LIVE EVIDENCE
 
 - Corrected the readiness contract so optional AI and media providers cannot make the healthy core application unavailable.

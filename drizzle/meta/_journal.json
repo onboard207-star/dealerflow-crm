@@ -253,6 +253,13 @@
       "when": 1787961000000,
       "tag": "0035_inventory_media_provenance",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1788130000000,
+      "tag": "0036_governed_product_telemetry",
+      "breakpoints": true
     }
   ]
 }

@@ -25,6 +25,7 @@ export type EntityIdPrefix =
   | "org"
   | "oin"
   | "ocv"
+  | "pue"
   | "qli"
   | "quo"
   | "qst"

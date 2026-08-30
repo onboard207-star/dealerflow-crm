@@ -248,4 +248,12 @@ describe("tenant database migrations", () => {
     expect(migration).toContain("notification_recipient_is_active");
     expect(migration).not.toContain("ON CONFLICT");
   });
+
+  it("adds forced tenant isolation and explicit exclusion dimensions for product telemetry", () => {
+    const migration = readFileSync(join(migrationDirectory, "0036_governed_product_telemetry.sql"), "utf8");
+    expect(migration).toContain('ALTER TABLE "product_usage_events" FORCE ROW LEVEL SECURITY');
+    expect(migration).toContain('"actor_type" in (\'dealer-user\',\'dealerflow-staff\',\'automation\',\'synthetic\')');
+    expect(migration).toContain('"data_class" in (\'demo\',\'pilot\',\'production\')');
+    expect(migration).toContain('current_setting(\'app.organization_id\', true)');
+  });
 });
