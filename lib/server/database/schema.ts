@@ -1449,3 +1449,40 @@ export const productUsageEvents = pgTable(
     check("product_usage_events_device_class", sql`${table.deviceClass} in ('desktop','tablet','mobile','server')`),
   ],
 );
+
+export const importBatches = pgTable("import_batches", {
+  id: text("id").primaryKey(),
+  organizationId: text("organization_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
+  domain: text("domain").notNull(), sourceName: text("source_name").notNull(), sourceChecksum: text("source_checksum").notNull(),
+  mapping: jsonb("mapping").$type<Record<string, string>>().notNull(), status: text("status").notNull(),
+  totalRows: integer("total_rows").notNull(), validRows: integer("valid_rows").notNull(), rejectedRows: integer("rejected_rows").notNull(),
+  duplicateRows: integer("duplicate_rows").notNull(), unresolvedRows: integer("unresolved_rows").notNull(),
+  idempotencyKey: text("idempotency_key").notNull(), createdBy: text("created_by").notNull().references(() => users.id, { onDelete: "restrict" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(), completedAt: timestamp("completed_at", { withTimezone: true }),
+}, (table) => [
+  uniqueIndex("import_batches_organization_id_unique").on(table.organizationId, table.id),
+  uniqueIndex("import_batches_idempotency_unique").on(table.organizationId, table.idempotencyKey),
+  index("import_batches_status_idx").on(table.organizationId, table.status, table.createdAt),
+  check("import_batches_id_format", sql`${table.id} ~ '^imb_[a-z0-9_-]{6,64}$'`),
+  check("import_batches_domain", sql`${table.domain} in ('customer-lead','inventory','user')`),
+  check("import_batches_status", sql`${table.status} in ('review-required','ready','completed','failed','aborted')`),
+  check("import_batches_checksum", sql`${table.sourceChecksum} ~ '^[a-f0-9]{64}$'`),
+  check("import_batches_source_name_length", sql`char_length(trim(${table.sourceName})) between 1 and 255`),
+  check("import_batches_idempotency_length", sql`char_length(trim(${table.idempotencyKey})) between 1 and 200`),
+  check("import_batches_counts", sql`${table.totalRows} between 1 and 10000 and ${table.validRows} >= 0 and ${table.rejectedRows} >= 0 and ${table.duplicateRows} >= 0 and ${table.unresolvedRows} >= 0 and ${table.validRows}+${table.rejectedRows}+${table.duplicateRows}+${table.unresolvedRows}=${table.totalRows}`),
+]);
+
+export const importBatchRows = pgTable("import_batch_rows", {
+  id: text("id").primaryKey(), organizationId: text("organization_id").notNull(), batchId: text("batch_id").notNull(),
+  rowNumber: integer("row_number").notNull(), status: text("status").notNull(),
+  canonical: jsonb("canonical").$type<Record<string, string | number | boolean>>().notNull(),
+  issues: jsonb("issues").$type<readonly Record<string, unknown>[]>().default([]).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("import_batch_rows_organization_id_unique").on(table.organizationId, table.id),
+  uniqueIndex("import_batch_rows_number_unique").on(table.organizationId, table.batchId, table.rowNumber),
+  foreignKey({ columns: [table.organizationId, table.batchId], foreignColumns: [importBatches.organizationId, importBatches.id], name: "import_batch_rows_same_batch_fk" }),
+  check("import_batch_rows_id_format", sql`${table.id} ~ '^imr_[a-z0-9_-]{6,64}$'`),
+  check("import_batch_rows_number", sql`${table.rowNumber} between 1 and 10000`),
+  check("import_batch_rows_status", sql`${table.status} in ('valid','rejected','duplicate','needs-review')`),
+]);

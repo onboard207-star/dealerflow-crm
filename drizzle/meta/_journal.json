@@ -260,6 +260,13 @@
       "when": 1788130000000,
       "tag": "0036_governed_product_telemetry",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1788210000000,
+      "tag": "0037_persistent_import_staging",
+      "breakpoints": true
     }
   ]
 }

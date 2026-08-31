@@ -18,7 +18,9 @@ DealerFlow uses one preview-first import contract for Customer/Lead, Inventory, 
 
 Upload → Parse → Validate → Preview → Map → Dry Run → Import → Reconcile → Complete.
 
-The current repository implements the safe validation and preview authority only. Upload storage, persistent batches, authorized commit, reconciliation, and batch-owned reversal remain deferred. Therefore no real dealership file should be uploaded or imported yet.
+The current repository implements safe validation plus tenant-isolated persistent staging. An authorized administrator can stage bounded JSON rows through the organization import API. DealerFlow records a SHA-256 source checksum, immutable normalized row evidence, mapping provenance, duplicate/review quarantine, idempotency, and an audit event. Existing canonical customer, inventory, and tenant-user identities are checked before a batch can become ready.
+
+Authorized canonical commit, reconciliation, batch-owned reversal, and protected raw-file upload storage remain deferred. A `ready` batch means its staged rows passed validation; it does not mean production records were created. Therefore real dealership files must not be represented as migrated or reconciled yet.
 
 Preview behavior:
 
@@ -43,7 +45,6 @@ The recommended initial scope remains Sales, BDC, Sales Management, Inventory, a
 1. Resolve staging runtime configuration readiness.
 2. Complete the backup and isolated restore exercise.
 3. Configure external monitoring, alert ownership, and support escalation.
-4. Add persistent tenant-isolated implementation projects and import batches after the platform-implementation authority is modeled.
-5. Build protected upload storage, parser limits, authorized commit, reconciliation, and batch reversal.
+4. Add persistent tenant-isolated implementation projects and connect staged import batches to their launch gates.
+5. Build protected raw-file upload storage, authorized canonical commit, reconciliation, and batch reversal.
 6. Rehearse fictional onboarding through those real workflows before onboarding a real dealer.
-

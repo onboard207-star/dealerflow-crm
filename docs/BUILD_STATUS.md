@@ -1,5 +1,13 @@
 # DealerFlow AI Build Status
 
+## PILOT CLOSURE INTEGRATION — PERSISTENT IMPORT STAGING
+
+- Added tenant-isolated `import_batches` and immutable `import_batch_rows` persistence with source checksum, mapping provenance, bounded row counts, idempotency, review quarantine, audit evidence, and forced PostgreSQL row-level security.
+- Added an organization-scoped import staging API guarded by authentication and `organization.configure`. Preflight compares normalized customer, inventory, and tenant-user identities to canonical records and loads role mappings from tenant roles rather than trusting client approval claims.
+- Reused the existing preview validator and canonical CRM/inventory identity fields. No parallel customer, lead, vehicle, inventory, user, or role authority was introduced.
+- This closes the volatile-preview persistence gap only. Canonical commit, reconciliation, batch reversal, raw-file storage, and a controlled pilot rehearsal remain P1 work; pilot status remains **NO-GO**.
+- Full local gate passes: Drizzle migration validation, lint, strict TypeScript, 423 tests across 101 files, and the optimized production build.
+
 ## PILOT HYPERCARE TELEMETRY FOUNDATION
 
 - Added a governed append-only product usage event authority with forced tenant RLS, location integrity, release/feature attribution, idempotency, and explicit actor/data classification.
