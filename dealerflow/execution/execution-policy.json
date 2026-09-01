@@ -1,7 +1,10 @@
 {
   "schemaVersion": 1,
+  "authority": "execution-policy",
   "updatedAt": "2026-09-01",
   "workStates": ["Intake", "Triaged", "Ready", "In Progress", "In Review", "Verification", "Blocked", "Done", "Deferred", "Cancelled"],
+  "autonomyClasses": ["AUTO", "REVIEW", "HUMAN_GATE"],
+  "runnerStatuses": ["READY", "IN_PROGRESS", "COMPLETE", "BLOCKED", "WAITING", "SUPERSEDED", "DEFERRED", "FAILED"],
   "priorities": {
     "P0": "Critical security incident, data integrity event, or system outage.",
     "P1": "Verified pilot, release, or customer-critical blocker.",

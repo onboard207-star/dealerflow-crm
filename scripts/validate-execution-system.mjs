@@ -15,6 +15,8 @@ export function reconcileExecutionSystem(policy, workRegistry, evidenceRegistry,
   const states = new Set(policy?.workStates ?? []);
   const priorities = new Set(Object.keys(policy?.priorities ?? {}));
   const blockerTypes = new Set(policy?.blockerTypes ?? []);
+  const autonomyClasses = new Set(policy?.autonomyClasses ?? []);
+  const runnerStatuses = new Set(policy?.runnerStatuses ?? []);
   const lanes = new Map((policy?.lanes ?? []).map((lane) => [lane.id, lane]));
   const evidenceById = new Map();
   for (const evidence of evidenceRegistry?.evidence ?? []) {
@@ -39,8 +41,15 @@ export function reconcileExecutionSystem(policy, workRegistry, evidenceRegistry,
     if (!states.has(item.state)) errors.push(`${item.id} has an invalid state`);
     if (!priorities.has(item.priority)) errors.push(`${item.id} has an invalid priority`);
     if (!lanes.has(item.lane)) errors.push(`${item.id} has an invalid lane`);
+    if (!autonomyClasses.has(item.autonomy)) errors.push(`${item.id} has an invalid autonomy class`);
+    if (!runnerStatuses.has(item.runnerStatus)) errors.push(`${item.id} has an invalid runner status`);
     if (!item.title || !item.outcome || !item.ownerArea || !item.source?.type || !item.source?.ref) errors.push(`${item.id} is missing required governance fields`);
     if (!Array.isArray(item.acceptanceCriteria) || item.acceptanceCriteria.length === 0) errors.push(`${item.id} requires acceptance criteria`);
+    for (const field of ["requiredTests", "evidencePaths", "nextEligibleItems"]) if (!Array.isArray(item[field])) errors.push(`${item.id} requires ${field}`);
+    if (item.autonomy === "HUMAN_GATE" && !item.humanApprovalRequirement) errors.push(`${item.id} HUMAN_GATE requires an approval requirement`);
+    if (item.autonomy === "AUTO" && item.humanApprovalRequirement) errors.push(`${item.id} AUTO cannot require human approval`);
+    if (item.runnerStatus === "COMPLETE" && item.state !== "Done") errors.push(`${item.id} COMPLETE must have Done state`);
+    if (item.runnerStatus === "IN_PROGRESS" && item.state !== "In Progress") errors.push(`${item.id} IN_PROGRESS must have In Progress state`);
     for (const capabilityId of item.capabilityIds ?? []) if (!capabilityIds.has(capabilityId)) errors.push(`${item.id} references unknown capability ${capabilityId}`);
     for (const outcomeId of item.roadmapOutcomeIds ?? []) if (!roadmapIds.has(outcomeId)) errors.push(`${item.id} references unknown roadmap outcome ${outcomeId}`);
     for (const evidenceId of [...(item.evidenceRequirements ?? []), ...(item.closureEvidence ?? [])]) if (!evidenceById.has(evidenceId)) errors.push(`${item.id} references unknown evidence ${evidenceId}`);
@@ -57,6 +66,7 @@ export function reconcileExecutionSystem(policy, workRegistry, evidenceRegistry,
     if (item.targetRelease && !releaseById.has(item.targetRelease)) errors.push(`${item.id} references unknown target release ${item.targetRelease}`);
   }
   for (const item of workById.values()) for (const dependency of item.dependencies ?? []) if (!workById.has(dependency)) errors.push(`${item.id} references unknown work dependency ${dependency}`);
+  for (const item of workById.values()) for (const nextId of item.nextEligibleItems ?? []) if (!workById.has(nextId)) errors.push(`${item.id} references unknown next eligible item ${nextId}`);
 
   const wip = {};
   for (const [laneId, lane] of lanes) {
@@ -119,6 +129,17 @@ export function reconcileExecutionSystem(policy, workRegistry, evidenceRegistry,
   const aging = [...workById.values()].filter((item) => ["Ready", ...activeStates].includes(item.state) && daysBetween(item.lastEvidenceAt, workRegistry.updatedAt) >= 7).map((item) => item.id);
   const prioritiesSummary = Object.fromEntries([...priorities].map((priority) => [priority, [...workById.values()].filter((item) => item.priority === priority && !["Done", "Cancelled", "Deferred"].includes(item.state)).length]));
   return {valid: errors.length === 0, errors: [...new Set(errors)], wip, staleEvidence, aging, releaseBlockers, prioritiesSummary};
+}
+
+export function selectNextEligible(workRegistry) {
+  const priorityRank = {P0: 0, P1: 1, P2: 2, P3: 3};
+  const workById = new Map(workRegistry.items.map((item) => [item.id, item]));
+  const eligible = workRegistry.items.filter((item) => {
+    if (item.autonomy !== "AUTO" || !["READY", "IN_PROGRESS"].includes(item.runnerStatus)) return false;
+    return (item.dependencies ?? []).every((id) => workById.get(id)?.runnerStatus === "COMPLETE");
+  });
+  eligible.sort((left, right) => priorityRank[left.priority] - priorityRank[right.priority] || (left.runnerStatus === "IN_PROGRESS" ? -1 : 1) || left.openedAt.localeCompare(right.openedAt) || left.id.localeCompare(right.id));
+  return eligible[0] ?? null;
 }
 
 export function renderDailyBuildBrief(workRegistry, releaseRegistry, governance, result) {
@@ -257,8 +278,9 @@ ${release.customerSafeNotes.length ? release.customerSafeNotes.map((note) => `- 
 }
 
 async function loadRegistries() {
-  const read = async (name) => JSON.parse(await readFile(new URL(`../config/${name}`, import.meta.url), "utf8"));
-  return Promise.all([read("execution-policy.json"), read("delivery-work-registry.json"), read("delivery-evidence-registry.json"), read("release-train-registry.json"), read("execution-governance-registry.json"), read("capability-implementation-registry.json"), read("roadmap-outcome-registry.json")]);
+  const readConfig = async (name) => JSON.parse(await readFile(new URL(`../config/${name}`, import.meta.url), "utf8"));
+  const readExecution = async (name) => JSON.parse(await readFile(new URL(`../dealerflow/execution/${name}`, import.meta.url), "utf8"));
+  return Promise.all([readExecution("execution-policy.json"), readExecution("EXECUTION_QUEUE.yaml"), readExecution("EVIDENCE/registry.json"), readExecution("EVIDENCE/releases.json"), readExecution("governance-registry.json"), readConfig("capability-implementation-registry.json"), readConfig("roadmap-outcome-registry.json")]);
 }
 
 async function main() {
@@ -266,6 +288,11 @@ async function main() {
   const result = reconcileExecutionSystem(policy, work, evidence, releases, governance, portfolio, roadmap);
   if (!result.valid) throw new Error(result.errors.join("\n"));
   const view = process.argv.includes("--brief") ? "daily" : process.argv[process.argv.indexOf("--view") + 1];
+  if (process.argv.includes("--next")) {
+    const next = selectNextEligible(work);
+    process.stdout.write(next ? `${next.id}\t${next.priority}\t${next.autonomy}\t${next.runnerStatus}\t${next.title}\n` : "NO_ELIGIBLE_AUTO_WORK\n");
+    return;
+  }
   if (view === "daily") process.stdout.write(renderDailyBuildBrief(work, releases, governance, result));
   else if (view === "eod") process.stdout.write(renderEndOfDayHandoff(work, releases, governance, result));
   else if (["executive", "engineering", "implementation"].includes(view)) process.stdout.write(renderWeeklyViews(work, releases, governance, result, view));

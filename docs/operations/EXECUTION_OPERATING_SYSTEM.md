@@ -14,11 +14,11 @@ DealerFlow now has one checked-in execution model that converts portfolio truth 
 | Roadmap outcomes | `config/roadmap-outcome-registry.json` |
 | Architecture and product decisions | Architecture documentation and, when connected, Architecture Portal |
 | Code change execution | GitHub issue/PR linked by stable work-item ID |
-| Delivery state and cross-source reconciliation | `config/delivery-work-registry.json` |
-| Release evidence | `config/delivery-evidence-registry.json` |
-| Release train and gates | `config/release-train-registry.json` |
-| Decisions, risks, and milestones | `config/execution-governance-registry.json` |
-| Workflow policy | `config/execution-policy.json` |
+| Delivery state and cross-source reconciliation | `dealerflow/execution/EXECUTION_QUEUE.yaml` |
+| Release evidence | `dealerflow/execution/EVIDENCE/registry.json` |
+| Release train and gates | `dealerflow/execution/EVIDENCE/releases.json` |
+| Decisions, risks, and milestones | `dealerflow/execution/governance-registry.json` |
+| Workflow policy | `dealerflow/execution/execution-policy.json` |
 
 Google Docs, Airtable, founder requests, support reports, provider notices, and Codex batches are intake sources. They must link to a stable `DWI-*` ID rather than create parallel completion truth.
 
@@ -66,7 +66,7 @@ Before creating a work item:
 
 ## Definition of Ready and Done
 
-The complete rules are machine-readable in `config/execution-policy.json`. Ready requires a linked outcome/capability, bounded scope, acceptance criteria, known dependencies, authority, owner area, inputs, and evidence requirements.
+The complete rules are machine-readable in `dealerflow/execution/execution-policy.json`. Ready requires a linked outcome/capability, bounded scope, acceptance criteria, known dependencies, authority, owner area, inputs, and evidence requirements.
 
 Done varies by class:
 

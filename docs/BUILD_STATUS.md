@@ -373,7 +373,7 @@
 ## EXECUTION OPERATING SYSTEM — SEPTEMBER 1, 2026
 
 - Added a canonical delivery work registry with stable IDs, capability and roadmap linkage, source, owner area, priority, strategic horizon, lane, state, dependencies, acceptance, evidence, release, blocker, aging, and closure contracts.
-- Reconciled the current queue to five P1 pilot dependencies, one deferred P2 architecture item, and one triaged P3 catalog-maintenance item; no P0 exists and no broad feature family entered active build.
+- Reconciled the current queue to seven P1 pilot items after separating AUTO implementation from REVIEW dry runs/UAT and HUMAN_GATE ownership, plus one deferred P2 architecture item and one triaged P3 catalog-maintenance item; no P0 exists and no broad feature family entered active build.
 - Added executable work-state, blocker, intake, WIP, Ready/Done, autonomy, weekly cadence, evidence, provider, migration, incident, and maintenance policies without inventing capacity, velocity, dates, or story points.
 - Added commit/release/environment/tenant-scoped evidence freshness, a release-train record, separate Deployable/Deployed/Enabled/Supported dimensions, and fail-closed release gates.
 - Added decision, risk, and outcome-based milestone registries plus generated Daily Build Brief, EOD handoff, Founder/Executive, Engineering, Implementation/CS, and release-note views.
@@ -382,3 +382,12 @@
 - Exact first execution cycle is `DWI-PILOT-002`: transactional controlled-import commit, reconciliation, reversal, tenant-integrity tests, and a separately authorized pilot dry run.
 - No application route, runtime behavior, database schema, tenant data, provider configuration, deployment, feature enablement, or commercial support status changed in this governance batch.
 - Integrated validation passes: Drizzle migration check, product portfolio reconciliation, execution-system reconciliation, lint with no warnings, strict TypeScript, 477 tests across 113 files, optimized Next.js production build, script syntax, and whitespace integrity.
+
+## AUTONOMOUS EXECUTION CONTROL LAYER — SEPTEMBER 1, 2026
+
+- Consolidated the execution registries under `dealerflow/execution/` instead of creating a second tracking authority; the JSON-compatible YAML queue is canonical and evidence, releases, policy, governance, decisions, blockers, and human gates share one durable control layer.
+- Added AUTO, REVIEW, and HUMAN_GATE classification plus runner statuses, required tests/evidence, starting and ending commit contracts, completion-report paths, next-eligible linkage, and explicit approval requirements.
+- Split mixed-authority pilot work: controlled-import implementation is AUTO while its real pilot dry run is REVIEW; synthetic reset tooling is AUTO while required-role UAT is REVIEW; named operational ownership is HUMAN_GATE.
+- Added `pnpm execution:next`, which deterministically selects the highest-priority eligible AUTO item after dependency validation. The normalized queue selects `DWI-PILOT-002` and does not activate scale or future-state work.
+- Added the master execution plan, durable current-state handoff, batch-consumption index, completion-report contract, blocker queue, decision queue, and exact human-gate records.
+- No production action, provider configuration, tenant feature enablement, destructive data operation, customer communication, billing, deployment, or pilot GO was executed.

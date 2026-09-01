@@ -1,5 +1,6 @@
 {
   "schemaVersion": 1,
+  "authority": "delivery-evidence",
   "asOf": "2026-09-01",
   "evidence": [
     {"id": "EVD-REPO-653F1DF", "kind": "repository-gate", "status": "current", "commit": "653f1df483baaa3d4145e1017926e29dcb14ca47", "releaseId": "REL-CAND-20260901-001", "environment": "local", "tenantScope": null, "verifiedAt": "2026-09-01", "maxAgeDays": 7, "source": "docs/BUILD_STATUS.md", "summary": "Migration validation, portfolio check, lint, strict TypeScript, 470 tests across 112 files, build, and whitespace passed."},

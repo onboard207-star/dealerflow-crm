@@ -1,5 +1,6 @@
 {
   "schemaVersion": 1,
+  "authority": "execution-governance",
   "updatedAt": "2026-09-01",
   "decisions": [
     {"id": "DEC-PILOT-001", "state": "Waiting on Owner", "question": "Who owns pilot launch decisions, rollback execution, and the monitored support path?", "options": ["Assign named individuals with acknowledged coverage", "Keep pilot launch blocked"], "recommendation": "Assign named launch, rollback, and support owners before operational exercises.", "consequences": "Without accountable owners, recovery and support gates cannot be exercised or authorized.", "deadline": null, "noDecisionImpact": "DWI-PILOT-001 and DWI-PILOT-005 remain blocked.", "linkedWorkItemIds": ["DWI-PILOT-001", "DWI-PILOT-005"], "ownerArea": "Executive Operations"},
@@ -11,7 +12,7 @@
     {"id": "RSK-003", "state": "Active", "level": "Medium", "risk": "Provider configuration differs from repository assumptions and fails during pilot workflows.", "trigger": "Required provider path enabled without tenant-specific acceptance.", "mitigation": "Keep features disabled and complete DWI-PILOT-003.", "contingency": "Use documented degraded state; do not imply provider availability.", "ownerArea": "Integrations", "affectedMilestoneIds": ["MS-PILOT-RELIABLE"], "linkedWorkItemIds": ["DWI-PILOT-003"]}
   ],
   "milestones": [
-    {"id": "MS-PILOT-RELIABLE", "name": "First Pilot Reliable", "state": "Active", "requiredWorkItemIds": ["DWI-PILOT-001", "DWI-PILOT-002", "DWI-PILOT-003", "DWI-PILOT-004", "DWI-PILOT-005"], "completionRule": "All required work is Done with current evidence and pilot cutover gates are verified."},
+    {"id": "MS-PILOT-RELIABLE", "name": "First Pilot Reliable", "state": "Active", "requiredWorkItemIds": ["DWI-PILOT-001", "DWI-PILOT-002", "DWI-PILOT-003", "DWI-PILOT-004", "DWI-PILOT-005", "DWI-PILOT-006", "DWI-PILOT-007"], "completionRule": "All required work is Done with current evidence and pilot cutover gates are verified."},
     {"id": "MS-PILOT-LIVE", "name": "First Pilot Live", "state": "Locked", "requiredWorkItemIds": [], "completionRule": "First Pilot Reliable is evidenced and an authorized human records GO for a named cohort."},
     {"id": "MS-HYPERCARE-EXIT", "name": "Hypercare Exit", "state": "Locked", "requiredWorkItemIds": [], "completionRule": "Pilot operating window completes with accepted incident, adoption, and support evidence."},
     {"id": "MS-DEALER-002", "name": "Repeatable Dealer #2", "state": "Locked", "requiredWorkItemIds": [], "completionRule": "A second isolated dealership launches through the accepted repeatable process."},

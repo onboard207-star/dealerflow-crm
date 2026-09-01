@@ -1,5 +1,6 @@
 {
   "schemaVersion": 1,
+  "format": "JSON-compatible YAML 1.2",
   "updatedAt": "2026-09-01",
   "sourceAudit": {
     "observedAt": "2026-09-01",
@@ -20,6 +21,8 @@
       "priority": "P1",
       "strategicPriority": "Now",
       "lane": "pilot-closure",
+      "autonomy": "REVIEW",
+      "runnerStatus": "BLOCKED",
       "state": "Blocked",
       "dependencies": ["DWI-PILOT-005"],
       "acceptanceCriteria": ["Timed isolated restore succeeds", "External alert is delivered", "Escalation and support exercise completes", "Evidence is bound to the release and environment"],
@@ -30,6 +33,7 @@
       "lastEvidenceAt": "2026-08-30",
       "priorityChanges": 0,
       "closureEvidence": []
+      ,"requiredTests": ["restore exercise", "alert delivery exercise", "support escalation exercise"], "evidencePaths": ["dealerflow/execution/EVIDENCE/registry.json"], "startingCommit": null, "endingCommit": null, "completionReport": null, "nextEligibleItems": [], "humanApprovalRequirement": "Named operational owners and review before production exercises"
     },
     {
       "id": "DWI-PILOT-002",
@@ -42,16 +46,25 @@
       "priority": "P1",
       "strategicPriority": "Now",
       "lane": "pilot-closure",
+      "autonomy": "AUTO",
+      "runnerStatus": "IN_PROGRESS",
       "state": "In Progress",
       "dependencies": [],
-      "acceptanceCriteria": ["Transactional commit", "Idempotent reconciliation report", "Verified reversal", "Tenant and relationship integrity tests", "Controlled pilot dry run"],
-      "evidenceRequirements": ["EVD-IMPORT-TEST-001", "EVD-IMPORT-DRYRUN-001"],
+      "acceptanceCriteria": ["Transactional commit", "Idempotent reconciliation report", "Verified reversal", "Tenant and relationship integrity tests"],
+      "evidenceRequirements": ["EVD-IMPORT-TEST-001"],
       "targetRelease": null,
       "blocker": null,
       "openedAt": "2026-08-30",
       "lastEvidenceAt": "2026-09-01",
       "priorityChanges": 0,
-      "closureEvidence": []
+      "closureEvidence": [],
+      "requiredTests": ["import unit and integration", "tenant isolation", "duplicate replay", "partial failure rollback", "relationship integrity", "full repository gate"],
+      "evidencePaths": ["dealerflow/execution/EVIDENCE/registry.json", "dealerflow/execution/COMPLETION_REPORTS/DWI-PILOT-002.md"],
+      "startingCommit": "b5cf987f02740a0fe15dfcf9b3e7eddf3f63597d",
+      "endingCommit": null,
+      "completionReport": "dealerflow/execution/COMPLETION_REPORTS/DWI-PILOT-002.md",
+      "nextEligibleItems": ["DWI-PILOT-006"],
+      "humanApprovalRequirement": null
     },
     {
       "id": "DWI-PILOT-003",
@@ -64,6 +77,8 @@
       "priority": "P1",
       "strategicPriority": "Now",
       "lane": "pilot-closure",
+      "autonomy": "REVIEW",
+      "runnerStatus": "BLOCKED",
       "state": "Blocked",
       "dependencies": [],
       "acceptanceCriteria": ["Required credentials resolve without disclosure", "Success path verified", "Failure and degraded paths verified", "Tenant-specific acceptance recorded", "Provider health is observable"],
@@ -73,12 +88,13 @@
       "openedAt": "2026-08-28",
       "lastEvidenceAt": "2026-08-30",
       "priorityChanges": 0,
-      "closureEvidence": []
+      "closureEvidence": [],
+      "requiredTests": ["provider sandbox success", "provider failure path", "tenant acceptance"], "evidencePaths": ["dealerflow/execution/EVIDENCE/registry.json"], "startingCommit": null, "endingCommit": null, "completionReport": null, "nextEligibleItems": [], "humanApprovalRequirement": "Review required before credential/configuration changes and tenant activation"
     },
     {
       "id": "DWI-PILOT-004",
-      "title": "Complete reset and role golden-journey acceptance",
-      "outcome": "The controlled pilot scenario is repeatable and accepted across required dealership roles.",
+      "title": "Complete governed synthetic reset and acceptance harness",
+      "outcome": "The controlled synthetic pilot scenario can be reset safely without affecting non-demo tenants.",
       "capabilityIds": ["CAP-CRM-001", "CAP-CRM-002", "CAP-INV-001", "CAP-DEAL-001", "CAP-RPT-001"],
       "roadmapOutcomeIds": ["OUT-NOW-004"],
       "source": {"type": "pilot-readiness", "ref": "docs/operations/SYNTHETIC_PILOT_HARNESS.md"},
@@ -86,16 +102,19 @@
       "priority": "P1",
       "strategicPriority": "Now",
       "lane": "pilot-closure",
+      "autonomy": "AUTO",
+      "runnerStatus": "BLOCKED",
       "state": "Blocked",
       "dependencies": ["DWI-PILOT-002"],
-      "acceptanceCriteria": ["Governed reset cannot affect non-demo tenants", "Required role journeys pass", "Desktop and mobile acceptance recorded", "Known limitations disclosed", "Pilot acceptance record completed"],
-      "evidenceRequirements": ["EVD-RESET-001", "EVD-ROLE-UAT-001"],
+      "acceptanceCriteria": ["Governed reset cannot affect non-demo tenants", "Scenario identities and version are deterministic", "Reset and reseed integrity tests pass", "Known limitations are disclosed"],
+      "evidenceRequirements": ["EVD-RESET-001"],
       "targetRelease": null,
       "blocker": {"type": "migration", "reason": "Reset and UAT must follow an accepted reversible import path.", "unblockCondition": "DWI-PILOT-002 is Done with current commit, reconciliation, and reversal evidence.", "nextAction": "Complete DWI-PILOT-002, then move this item to Ready.", "ownerArea": "Quality and Implementation"},
       "openedAt": "2026-08-30",
       "lastEvidenceAt": "2026-08-30",
       "priorityChanges": 0,
-      "closureEvidence": []
+      "closureEvidence": [],
+      "requiredTests": ["synthetic tenant guard", "reset idempotency", "relationship integrity", "full repository gate"], "evidencePaths": ["dealerflow/execution/EVIDENCE/registry.json"], "startingCommit": null, "endingCommit": null, "completionReport": "dealerflow/execution/COMPLETION_REPORTS/DWI-PILOT-004.md", "nextEligibleItems": ["DWI-PILOT-007"], "humanApprovalRequirement": null
     },
     {
       "id": "DWI-PILOT-005",
@@ -108,6 +127,8 @@
       "priority": "P1",
       "strategicPriority": "Now",
       "lane": "pilot-closure",
+      "autonomy": "HUMAN_GATE",
+      "runnerStatus": "WAITING",
       "state": "Blocked",
       "dependencies": [],
       "acceptanceCriteria": ["Launch decision owner named", "Rollback owner named", "Monitored support contact named", "Coverage and escalation policy acknowledged"],
@@ -117,7 +138,46 @@
       "openedAt": "2026-08-30",
       "lastEvidenceAt": "2026-08-30",
       "priorityChanges": 0,
-      "closureEvidence": []
+      "closureEvidence": [],
+      "requiredTests": ["owner acknowledgment"], "evidencePaths": ["dealerflow/execution/HUMAN_GATES.md"], "startingCommit": null, "endingCommit": null, "completionReport": null, "nextEligibleItems": ["DWI-PILOT-001"], "humanApprovalRequirement": "Authorized owner must name launch, rollback, and monitored support owners"
+    },
+    {
+      "id": "DWI-PILOT-006",
+      "title": "Run controlled pilot import dry run",
+      "outcome": "The reversible import is accepted against an explicitly authorized pilot tenant.",
+      "capabilityIds": ["CAP-DATA-001"],
+      "roadmapOutcomeIds": ["OUT-NOW-002"],
+      "source": {"type": "pilot-readiness", "ref": "docs/operations/FIRST_PILOT_GO_LIVE.md"},
+      "ownerArea": "Data Migration",
+      "priority": "P1",
+      "strategicPriority": "Now",
+      "lane": "pilot-closure",
+      "autonomy": "REVIEW",
+      "runnerStatus": "WAITING",
+      "state": "Blocked",
+      "dependencies": ["DWI-PILOT-002"],
+      "acceptanceCriteria": ["Authorized target tenant", "Preview reviewed", "Commit and reconciliation succeed", "Reversal succeeds", "Evidence bound to exact release and tenant scope"],
+      "evidenceRequirements": ["EVD-IMPORT-DRYRUN-001"],
+      "targetRelease": null,
+      "blocker": {"type": "external-dependency", "reason": "Import implementation and an authorized pilot tenant are required.", "unblockCondition": "DWI-PILOT-002 is Done and a pilot tenant/operator is explicitly authorized.", "nextAction": "Prepare the dry-run command and evidence form; do not execute against a real tenant without review.", "ownerArea": "Data Migration"},
+      "openedAt": "2026-09-01", "lastEvidenceAt": "2026-09-01", "priorityChanges": 0, "closureEvidence": [],
+      "requiredTests": ["pilot dry run", "reconciliation", "reversal"], "evidencePaths": ["dealerflow/execution/EVIDENCE/registry.json"], "startingCommit": null, "endingCommit": null, "completionReport": "dealerflow/execution/COMPLETION_REPORTS/DWI-PILOT-006.md", "nextEligibleItems": [], "humanApprovalRequirement": "Review and tenant authorization required before executing the pilot dry run"
+    },
+    {
+      "id": "DWI-PILOT-007",
+      "title": "Complete required-role pilot UAT",
+      "outcome": "Required dealership roles accept the golden journeys on desktop and mobile.",
+      "capabilityIds": ["CAP-CRM-001", "CAP-CRM-002", "CAP-INV-001", "CAP-DEAL-001", "CAP-RPT-001"],
+      "roadmapOutcomeIds": ["OUT-NOW-004"],
+      "source": {"type": "pilot-readiness", "ref": "docs/operations/FIRST_PILOT_GO_LIVE.md"},
+      "ownerArea": "Implementation",
+      "priority": "P1", "strategicPriority": "Now", "lane": "pilot-closure", "autonomy": "REVIEW", "runnerStatus": "WAITING", "state": "Blocked",
+      "dependencies": ["DWI-PILOT-004", "DWI-PILOT-006"],
+      "acceptanceCriteria": ["Required role journeys pass", "Desktop and mobile acceptance recorded", "Known limitations acknowledged", "Pilot acceptance record completed"],
+      "evidenceRequirements": ["EVD-ROLE-UAT-001"], "targetRelease": null,
+      "blocker": {"type": "test-evidence", "reason": "Reset harness, pilot import dry run, and human UAT participants are required.", "unblockCondition": "Dependencies are Done and authorized role participants are scheduled.", "nextAction": "Keep the UAT checklist ready; do not fabricate human acceptance.", "ownerArea": "Implementation"},
+      "openedAt": "2026-09-01", "lastEvidenceAt": "2026-09-01", "priorityChanges": 0, "closureEvidence": [],
+      "requiredTests": ["role UAT", "desktop acceptance", "mobile acceptance"], "evidencePaths": ["dealerflow/execution/EVIDENCE/registry.json"], "startingCommit": null, "endingCommit": null, "completionReport": "dealerflow/execution/COMPLETION_REPORTS/DWI-PILOT-007.md", "nextEligibleItems": [], "humanApprovalRequirement": "Human role acceptance required"
     },
     {
       "id": "DWI-PROD-001",
@@ -130,6 +190,8 @@
       "priority": "P2",
       "strategicPriority": "Later",
       "lane": "research-later",
+      "autonomy": "AUTO",
+      "runnerStatus": "DEFERRED",
       "state": "Deferred",
       "dependencies": [],
       "acceptanceCriteria": ["Canonical catalog authority approved", "VIN and physical-unit reconciliation defined", "Migration and provider boundaries documented", "No duplicate configuration authority"],
@@ -139,7 +201,8 @@
       "openedAt": "2026-08-30",
       "lastEvidenceAt": "2026-08-30",
       "priorityChanges": 0,
-      "closureEvidence": []
+      "closureEvidence": [],
+      "requiredTests": [], "evidencePaths": [], "startingCommit": null, "endingCommit": null, "completionReport": null, "nextEligibleItems": [], "humanApprovalRequirement": null
     },
     {
       "id": "DWI-MAINT-001",
@@ -152,6 +215,8 @@
       "priority": "P3",
       "strategicPriority": "Later",
       "lane": "platform-reliability",
+      "autonomy": "AUTO",
+      "runnerStatus": "WAITING",
       "state": "Triaged",
       "dependencies": [],
       "acceptanceCriteria": ["All catalog consumers inventoried", "Generated projections preserve current fail-closed behavior", "Regression coverage", "Legacy files retired only after acceptance"],
@@ -161,7 +226,8 @@
       "openedAt": "2026-09-01",
       "lastEvidenceAt": "2026-09-01",
       "priorityChanges": 0,
-      "closureEvidence": []
+      "closureEvidence": [],
+      "requiredTests": ["catalog projection regression", "portfolio and execution reconciliation"], "evidencePaths": [], "startingCommit": null, "endingCommit": null, "completionReport": "dealerflow/execution/COMPLETION_REPORTS/DWI-MAINT-001.md", "nextEligibleItems": [], "humanApprovalRequirement": null
     }
   ]
 }

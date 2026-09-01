@@ -1,13 +1,14 @@
 import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
-import { reconcileExecutionSystem, renderDailyBuildBrief, renderEndOfDayHandoff, renderReleaseNotes, renderWeeklyViews } from "./validate-execution-system.mjs";
+import { reconcileExecutionSystem, renderDailyBuildBrief, renderEndOfDayHandoff, renderReleaseNotes, renderWeeklyViews, selectNextEligible } from "./validate-execution-system.mjs";
 
 const read = async (name) => JSON.parse(await readFile(new URL(`../config/${name}`, import.meta.url), "utf8"));
-const policy = await read("execution-policy.json");
-const work = await read("delivery-work-registry.json");
-const evidence = await read("delivery-evidence-registry.json");
-const releases = await read("release-train-registry.json");
-const governance = await read("execution-governance-registry.json");
+const readExecution = async (name) => JSON.parse(await readFile(new URL(`../dealerflow/execution/${name}`, import.meta.url), "utf8"));
+const policy = await readExecution("execution-policy.json");
+const work = await readExecution("EXECUTION_QUEUE.yaml");
+const evidence = await readExecution("EVIDENCE/registry.json");
+const releases = await readExecution("EVIDENCE/releases.json");
+const governance = await readExecution("governance-registry.json");
 const portfolio = await read("capability-implementation-registry.json");
 const roadmap = await read("roadmap-outcome-registry.json");
 
@@ -17,7 +18,8 @@ describe("execution operating system", () => {
   it("accepts the pilot-first execution inventory and renders a resumable brief", () => {
     const result = validate();
     expect(result.valid).toBe(true);
-    expect(result.prioritiesSummary).toEqual({P0: 0, P1: 5, P2: 0, P3: 1});
+    expect(result.prioritiesSummary).toEqual({P0: 0, P1: 7, P2: 0, P3: 1});
+    expect(selectNextEligible(work)?.id).toBe("DWI-PILOT-002");
     expect(renderDailyBuildBrief(work, releases, governance, result)).toContain("DWI-PILOT-002");
     expect(renderEndOfDayHandoff(work, releases, governance, result)).toContain("Safe Stopping Point");
     expect(renderWeeklyViews(work, releases, governance, result, "executive")).toContain("Pilot readiness: NO_GO");
@@ -26,11 +28,11 @@ describe("execution operating system", () => {
     expect(renderReleaseNotes(releases.releases[0])).toContain("No customer release is authorized");
   });
 
-  it("prevents Done when required pilot evidence is missing", () => {
-    const changed = {...work, items: work.items.map((item) => item.id === "DWI-PILOT-002" ? {...item, state: "Done", closureEvidence: ["EVD-IMPORT-TEST-001"]} : item)};
+  it("prevents Done when closure evidence is missing", () => {
+    const changed = {...work, items: work.items.map((item) => item.id === "DWI-PILOT-002" ? {...item, state: "Done", runnerStatus: "COMPLETE", closureEvidence: []} : item)};
     const result = validate({work: changed});
     expect(result.valid).toBe(false);
-    expect(result.errors).toContain("DWI-PILOT-002 Done requires current required evidence EVD-IMPORT-DRYRUN-001");
+    expect(result.errors).toContain("DWI-PILOT-002 Done requires closure evidence");
   });
 
   it("resumes provider work without creating a duplicate item once evidence arrives", () => {
