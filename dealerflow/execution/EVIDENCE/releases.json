@@ -127,7 +127,7 @@
         "observability": {"status": "blocked", "evidenceIds": ["EVD-ALERT-001"]},
         "backupRollback": {"status": "blocked", "evidenceIds": ["EVD-RESTORE-001"]}
       },
-      "knownIssues": ["Required runtime/email configuration and external providers remain intentionally unavailable.", "Human role UAT and authorized non-demo pilot import dry run are missing.", "Pilot cutover remains NO_GO."],
+      "knownIssues": ["Governed synthetic reset fails transactionally because deals are deleted before referencing deal-status events; rollback integrity passed.", "Required runtime/email configuration and external providers remain intentionally unavailable.", "Human role UAT and authorized non-demo pilot import dry run are missing.", "Pilot cutover remains NO_GO."],
       "rollback": "Use Render's isolated staging recovery controls for database recovery and redeploy the prior accepted image if necessary. Production resources are out of scope.",
       "documentation": ["docs/operations/STAGING_GATE_RESOLUTION_2026-09-01.md", "docs/operations/SYNTHETIC_PILOT_HARNESS.md"],
       "supportNotes": ["Exact commit and migration 0039 are verified in isolated staging; provider activation, non-demo tenants, and production remain unauthorized."],

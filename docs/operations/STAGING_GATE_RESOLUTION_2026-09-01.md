@@ -105,3 +105,11 @@ The authorized recovery/schema preflight completed against database `dpg-dabjm5e
 - Post-migration organization and production-class organization counts remained zero.
 
 No seed, reset, import, reversal, provider transaction, outbound communication, production action, or legacy deletion was part of this migration batch. Governed synthetic/demo staging work may proceed; all non-demo, provider, human-acceptance, and production gates remain closed.
+
+## Synthetic AUTO execution result
+
+The deterministic initial seed completed and reconciled the exact `pilot-demo-v1` fixture: 26 staff, 1,476 Leads, 432 delivered Deals, and 48 current available/held Inventory Units. The tenant is `org_demo_first_pilot_v1`, its class is `demo`, and no production-class organization exists.
+
+The subsequent guarded reset failed on `deal_status_events_same_organization_deal_fk` because the reset attempted to delete referenced Deals before their Deal status events. PostgreSQL rejected the operation and the enclosing transaction rolled back. Post-failure verification returned the same four fixture counts, zero `synthetic.reset_completed` events, and zero production-class organizations.
+
+This is a genuine P1 staging blocker. Reseed, import/reversal, and further acceptance mutation stopped. The required correction is to repair and regression-test deterministic reset dependency order without weakening foreign keys, RLS, tenant guards, or rollback behavior, deploy the reviewed fix to isolated staging, and then rerun the guarded reset once.

@@ -8,6 +8,10 @@ Resolved on September 1, 2026. `dealerflow-isolated-staging` (`srv-dabk8d610ojc7
 
 Backup evidence, monitoring destination, and named operational ownership are missing. Next: resolve `DEC-PILOT-001`, then run restore, alert, and support exercises under review.
 
+## DWI-PILOT-004 — P1 staging reset failure
+
+The exact-release synthetic seed reconciled successfully in isolated staging, but the guarded reset failed transactionally because `deals` are deleted before referencing `deal_status_events`. PostgreSQL enforced `deal_status_events_same_organization_deal_fk`; rollback preserved all fixture counts and no reset-completed audit event was written. Next: repair and regression-test deterministic reset deletion order without weakening constraints or tenant guards, deploy the reviewed fix, and rerun the single guarded reset.
+
 ## DWI-PILOT-003 — Provider
 
 R2 and restricted AI staging configuration are incomplete; customer communication acceptance is tenant-specific. Next: provision and review R2 configuration, then run upload/reorder/remove and failure-path acceptance.
