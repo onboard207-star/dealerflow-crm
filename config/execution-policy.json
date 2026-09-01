@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-01",
+  "workStates": ["Intake", "Triaged", "Ready", "In Progress", "In Review", "Verification", "Blocked", "Done", "Deferred", "Cancelled"],
+  "priorities": {
+    "P0": "Critical security incident, data integrity event, or system outage.",
+    "P1": "Verified pilot, release, or customer-critical blocker.",
+    "P2": "Material product or operational improvement.",
+    "P3": "Minor improvement, maintenance, or cleanup."
+  },
+  "blockerTypes": ["product-decision", "architecture-decision", "missing-data", "migration", "provider", "security-privacy", "permissions", "environment-infrastructure", "test-evidence", "ux-content", "commercial-legal", "external-dependency", "unknown"],
+  "triageOutcomes": ["Fix Now", "Schedule", "Investigate", "Defer", "Duplicate", "Reject/Not Planned"],
+  "lanes": [
+    {"id": "critical-incidents", "activeLimit": 1, "rule": "Only a genuine P0 or authorized P1 incident; interrupts other work."},
+    {"id": "pilot-closure", "activeLimit": 3, "rule": "Oldest highest-value pilot dependency first; blocked items do not consume implementation WIP."},
+    {"id": "productization", "activeLimit": 1, "rule": "May start only when required by the current Now outcome."},
+    {"id": "platform-reliability", "activeLimit": 1, "rule": "Security, supportability, provider, and data-health maintenance has protected access."},
+    {"id": "scale-enterprise", "activeLimit": 0, "rule": "Inactive until current pilot milestones are evidenced."},
+    {"id": "research-later", "activeLimit": 0, "rule": "Discovery may remain Triaged or Deferred but does not enter active build."}
+  ],
+  "expediteRule": "Expedite is permitted only for P0, genuine P1, or an explicitly authorized launch blocker. The reason and authorizer must be recorded.",
+  "agingRule": "Ready or active work without evidence for 7 calendar days is flagged for review; this is a workflow threshold, not a delivery estimate.",
+  "priorityInflationRule": "Two or more priority increases require a recorded rationale and operating review.",
+  "definitionOfReady": ["Linked roadmap outcome and capability", "Bounded scope and explicit non-goals", "Acceptance criteria", "Known hard dependencies", "Data and provider inputs available or explicitly identified as test substitutes", "Canonical authority identified", "Evidence requirements identified", "Owner area assigned"],
+  "definitionOfDone": {
+    "code": ["Acceptance criteria satisfied", "Relevant regression coverage", "Lint and strict TypeScript", "Production build", "Required environment verification", "Rollout and rollback recorded", "Capability and documentation reconciled"],
+    "migration": ["Consumer inventory", "Expand/backfill/verify/cutover evidence", "Tenant-isolation validation", "Reconciliation and rollback", "Destructive retirement separately authorized"],
+    "integration": ["Provider contract and credentials boundary", "Sandbox or staging success", "Failure and retry behavior", "Observability", "Tenant acceptance where required", "Provider change inventory"],
+    "template-content": ["Approved source", "Version identity", "Audience and permissions", "Rendering or delivery verification", "Rollback or supersession path"],
+    "documentation": ["Requested scope complete", "Canonical links valid", "Contradictions resolved", "Whitespace validation"],
+    "architecture-governance": ["Decision and consequences recorded", "Registries reconciled", "Validation coverage", "No implementation maturity claimed from documentation alone"],
+    "support-training": ["Named owner area", "Audience and scope", "Exercise or UAT evidence", "Escalation path", "Current capability limitations disclosed"]
+  },
+  "cadence": {
+    "weeklyPlanning": ["Current outcome and milestone", "Fresh evidence", "Ready queue", "WIP and protected maintenance", "Blockers", "Explicit commitments"],
+    "midweekReview": ["P0/P1 changes", "Blocker transitions", "Release impact", "New failures", "Decision needs"],
+    "weeklyClose": ["Shipped or proved", "Missed and why", "New evidence", "Carryover", "Decisions", "Roadmap and capability reconciliation"]
+  },
+  "intakeSources": ["support", "pilot-feedback", "product-request", "architecture-drift", "security-finding", "provider-failure", "technical-debt", "founder-request", "incident", "migration"],
+  "autonomousSafe": ["Bounded deterministic refactor", "Regression test", "Documentation reconciliation", "Safe additive migration with required gates", "Accessible UI correction", "Known-spec implementation", "Registry linkage and validation"],
+  "humanDecisionRequired": ["Production or pilot launch authorization", "Irreversible destructive action outside an approved gate", "Commercial or legal commitment", "Certification claim", "Security-risk acceptance", "Materially ambiguous architecture or product decision"],
+  "evidenceKinds": ["unit", "integration", "repository-gate", "staging", "pilot", "production", "provider", "exercise", "decision"],
+  "releaseDimensions": ["deployable", "deployed", "enabled", "supported"]
+}

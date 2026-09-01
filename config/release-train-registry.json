@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-01",
+  "releases": [
+    {
+      "id": "REL-CAND-20260901-001",
+      "version": null,
+      "branch": "codex/staging-deployment",
+      "tag": null,
+      "commit": "653f1df483baaa3d4145e1017926e29dcb14ca47",
+      "state": "Candidate Verified",
+      "targetEnvironment": "staging",
+      "targetCohort": [],
+      "capabilityIds": ["CAP-CRM-001", "CAP-CRM-002", "CAP-COM-001", "CAP-INV-001", "CAP-INV-002", "CAP-DEAL-001", "CAP-AI-001", "CAP-RPT-001", "CAP-PLT-001", "CAP-DATA-001"],
+      "workItemIds": [],
+      "migrations": {"changed": false, "latest": "0038_organization_data_class"},
+      "versions": {"providerConfig": "unverified", "tenantConfig": "unverified", "templates": "repository", "prompts": "repository", "featureFlags": "tenant-configuration"},
+      "dimensions": {"deployable": true, "deployed": false, "enabled": false, "supported": false},
+      "gates": {
+        "repositoryGate": {"status": "verified", "evidenceIds": ["EVD-REPO-653F1DF"]},
+        "requiredReview": {"status": "not-applicable", "evidenceIds": [], "reason": "No pull request exists; direct branch history is not production authorization."},
+        "migrationSafety": {"status": "verified", "evidenceIds": ["EVD-REPO-653F1DF"]},
+        "tenantIsolation": {"status": "verified", "evidenceIds": ["EVD-REPO-653F1DF"]},
+        "security": {"status": "verified", "evidenceIds": ["EVD-REPO-653F1DF"]},
+        "providerReadiness": {"status": "blocked", "evidenceIds": ["EVD-R2-001", "EVD-COMMS-001", "EVD-AI-PROVIDER-001"]},
+        "documentationTrainingSupport": {"status": "blocked", "evidenceIds": ["EVD-SUPPORT-001", "EVD-ROLE-UAT-001"]},
+        "observability": {"status": "blocked", "evidenceIds": ["EVD-ALERT-001"]},
+        "backupRollback": {"status": "blocked", "evidenceIds": ["EVD-RESTORE-001"]}
+      },
+      "knownIssues": ["Pilot cutover remains NO_GO.", "Provider readiness and operational evidence are incomplete."],
+      "rollback": "Revert the bounded commit and redeploy the previously accepted release; database restore is a separate provider exercise.",
+      "documentation": ["docs/BUILD_STATUS.md", "docs/operations/PRODUCT_PORTFOLIO_GOVERNANCE.md"],
+      "supportNotes": ["Not authorized for pilot or production support."],
+      "customerSafeNotes": [],
+      "hotfix": false,
+      "mainlineReconciled": true
+    }
+  ]
+}

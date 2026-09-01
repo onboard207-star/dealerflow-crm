@@ -369,3 +369,16 @@
 - Added `pnpm portfolio:check` and regression coverage for evidence promotion, commercial promotion, dependency integrity, domain mapping, hard-dependency cycles, and pilot-first roadmap sequencing.
 - No runtime behavior, database schema, tenant data, entitlements, deployment configuration, application routes, or commercial authorization changed in this batch.
 - Validation passes: Drizzle migration check, portfolio governance check, lint with no warnings, strict TypeScript, 470 tests across 112 files, optimized Next.js production build, and whitespace integrity.
+
+## EXECUTION OPERATING SYSTEM — SEPTEMBER 1, 2026
+
+- Added a canonical delivery work registry with stable IDs, capability and roadmap linkage, source, owner area, priority, strategic horizon, lane, state, dependencies, acceptance, evidence, release, blocker, aging, and closure contracts.
+- Reconciled the current queue to five P1 pilot dependencies, one deferred P2 architecture item, and one triaged P3 catalog-maintenance item; no P0 exists and no broad feature family entered active build.
+- Added executable work-state, blocker, intake, WIP, Ready/Done, autonomy, weekly cadence, evidence, provider, migration, incident, and maintenance policies without inventing capacity, velocity, dates, or story points.
+- Added commit/release/environment/tenant-scoped evidence freshness, a release-train record, separate Deployable/Deployed/Enabled/Supported dimensions, and fail-closed release gates.
+- Added decision, risk, and outcome-based milestone registries plus generated Daily Build Brief, EOD handoff, Founder/Executive, Engineering, Implementation/CS, and release-note views.
+- Added GitHub delivery-work and pull-request templates that require stable cross-references, acceptance evidence, migration/provider/security impact, rollout, and rollback.
+- Recorded source-audit limits truthfully: zero open GitHub issues, zero pull requests, zero milestones; GitHub Projects and Architecture Portal inventory remain unverified/unavailable rather than assumed empty.
+- Exact first execution cycle is `DWI-PILOT-002`: transactional controlled-import commit, reconciliation, reversal, tenant-integrity tests, and a separately authorized pilot dry run.
+- No application route, runtime behavior, database schema, tenant data, provider configuration, deployment, feature enablement, or commercial support status changed in this governance batch.
+- Integrated validation passes: Drizzle migration check, product portfolio reconciliation, execution-system reconciliation, lint with no warnings, strict TypeScript, 477 tests across 113 files, optimized Next.js production build, script syntax, and whitespace integrity.

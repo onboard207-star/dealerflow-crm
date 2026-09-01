@@ -1,0 +1,67 @@
+name: Delivery work item
+description: Create bounded engineering work linked to the DealerFlow execution and capability registries.
+title: "[DWI-] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: "Search existing DWI and CAP IDs before creating work. GitHub is code-execution authority; the checked-in delivery registry provides cross-source status."
+  - type: input
+    id: work-id
+    attributes:
+      label: Stable work item ID
+      description: Use the next approved DWI identifier from the delivery registry.
+      placeholder: DWI-PILOT-000
+    validations:
+      required: true
+  - type: input
+    id: capabilities
+    attributes:
+      label: Capability IDs
+      placeholder: CAP-CRM-001
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Observable outcome
+      description: State the result, not a list of implementation tasks.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and non-goals
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria and evidence
+      description: Distinguish unit, integration, repository, staging, pilot, production, provider, exercise, and decision evidence.
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies, blockers, and next deterministic action
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P0 — critical incident only
+        - P1 — pilot/release/customer-critical blocker
+        - P2 — material improvement
+        - P3 — minor/maintenance
+    validations:
+      required: true
+  - type: textarea
+    id: release
+    attributes:
+      label: Release, rollout, and rollback
+      description: Leave target release unknown when it is not established; do not invent a date.
+    validations:
+      required: true
