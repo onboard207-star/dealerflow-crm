@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "allowedClassifications": ["internal-only", "provider-private", "candidate", "supported-private", "supported-public", "retired"],
+  "surfaces": [
+    { "id": "organization-session-routes", "kind": "http-api", "classification": "internal-only", "path": "/api/organizations/{organizationId}/*", "consumer": "DealerFlow web application", "tenantScoped": true, "versionedDeveloperContract": false, "notes": "Session-authenticated application routes are not a public or partner API." },
+    { "id": "authentication-routes", "kind": "http-api", "classification": "internal-only", "path": "/api/auth/*", "consumer": "DealerFlow authentication UI", "tenantScoped": false, "versionedDeveloperContract": false, "notes": "Authentication runtime routes are not app authorization endpoints." },
+    { "id": "internal-job-routes", "kind": "job-control", "classification": "internal-only", "path": "/api/internal/jobs/*", "consumer": "DealerFlow deployment workers", "tenantScoped": false, "versionedDeveloperContract": false, "notes": "Protected worker controls are never extension execution APIs." },
+    { "id": "twilio-inbound-webhook", "kind": "provider-webhook", "classification": "provider-private", "path": "/api/webhooks/twilio/{webhookKey}", "consumer": "Twilio", "tenantScoped": true, "versionedDeveloperContract": false, "notes": "Account routing and Twilio signature verification do not make this a general webhook subscription surface." },
+    { "id": "health-readiness", "kind": "operations", "classification": "internal-only", "path": "/api/health and /api/ready", "consumer": "Deployment and monitoring", "tenantScoped": false, "versionedDeveloperContract": false, "notes": "Operational probes are not a developer resource API." },
+    { "id": "tenant-provisioning-script", "kind": "operator-cli", "classification": "internal-only", "path": "scripts/provision-tenant.mjs", "consumer": "Authorized DealerFlow operator", "tenantScoped": true, "versionedDeveloperContract": false, "notes": "Operator provisioning is not an SDK or partner CLI." },
+    { "id": "synthetic-acceptance-seed", "kind": "test-harness", "classification": "internal-only", "path": "scripts/seed-synthetic-pilot.mjs", "consumer": "DealerFlow staging acceptance", "tenantScoped": true, "versionedDeveloperContract": false, "notes": "Demo-only seeding cannot create developer sandboxes or production tenants." }
+  ]
+}

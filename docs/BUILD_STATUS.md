@@ -1,5 +1,12 @@
 # DealerFlow AI Build Status
 
+## DEVELOPER PLATFORM / MARKETPLACE — NO-GO
+
+- Added an extension-surface registry that classifies current session APIs, internal job controls, Twilio webhook, operational probes, provisioner, and synthetic harness as Internal Only or Provider Private—not supported developer contracts.
+- Added separate NO-GO gates for Private Apps, Partner Ecosystem, and Public Marketplace, requiring app/publisher/install identity, scoped authorization, sandbox credentials, API/event versioning, usage, certification, security, and operational controls.
+- Added safeguards against public-API inference, reseller-as-trusted-publisher, platform credentials, tenant/consent bypass, raw database access, arbitrary extension code, and canonical-record deletion on uninstall.
+- No SDK, public API, OAuth app flow, extension runtime, marketplace, credential, install, publisher, billing, or third-party access path was introduced. Runtime and production remain unchanged.
+
 ## MULTI-VERTICAL EXPANSION — NOT AUTHORIZED
 
 - Added an Industry Pack registry with Automotive as the single Pilot reference implementation. RV, Powersports, Marine, and Generic Inventory Sales remain Concept-only and commercially disabled.

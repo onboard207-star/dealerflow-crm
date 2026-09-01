@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-08-31T23:15:00-04:00",
+  "recommendations": {
+    "privateEcosystem": "NO_GO",
+    "partnerEcosystem": "NO_GO",
+    "publicMarketplace": "NO_GO"
+  },
+  "authorities": {
+    "appIdentity": false,
+    "publisherIdentity": false,
+    "tenantInstallation": false,
+    "oauthAppAuthorization": false,
+    "extensionScopes": false,
+    "developerSandboxCredentials": false,
+    "publicApiVersioning": false,
+    "developerEventSubscriptions": false,
+    "extensionUsageLedger": false,
+    "marketplaceBilling": false,
+    "certificationWorkflow": false
+  },
+  "activation": {
+    "privateAppsEnabled": false,
+    "partnerAppsEnabled": false,
+    "publicListingsEnabled": false,
+    "thirdPartyUiEnabled": false,
+    "thirdPartyAiToolsEnabled": false,
+    "arbitraryExtensionCodeEnabled": false
+  },
+  "boundaries": {
+    "internalRoutesArePublicApi": false,
+    "providerWebhookIsDeveloperWebhook": false,
+    "resellerIsTrustedPublisher": false,
+    "appMayUsePlatformCredentials": false,
+    "appMayBypassTenantAuthorization": false,
+    "appMayBypassConsent": false,
+    "appMayReadRawDatabase": false,
+    "uninstallDeletesCanonicalRecords": false
+  }
+}

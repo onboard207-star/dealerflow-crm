@@ -21,6 +21,7 @@
     "scale:check": "node scripts/validate-scale-capacity.mjs",
     "enterprise:check": "node scripts/validate-enterprise-readiness.mjs",
     "verticals:check": "node scripts/validate-vertical-expansion.mjs",
+    "developer-platform:check": "node scripts/validate-developer-platform.mjs",
     "smoke:deployment": "node scripts/smoke-deployment.mjs",
     "validate": "pnpm db:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
