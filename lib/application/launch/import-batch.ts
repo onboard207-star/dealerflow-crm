@@ -3,7 +3,7 @@ import { assertAuthorized, type AuthorizationActor } from "@/lib/platform/auth";
 
 import { previewImport, type ImportDomain, type ImportPreview, type ImportSourceRow } from "./import-preview";
 
-export const importBatchStatuses = ["review-required", "ready", "completed", "failed", "aborted"] as const;
+export const importBatchStatuses = ["review-required", "ready", "completed", "failed", "aborted", "reversed"] as const;
 export type ImportBatchStatus = (typeof importBatchStatuses)[number];
 
 export interface ImportBatch {
@@ -23,6 +23,16 @@ export interface ImportBatch {
 export interface ImportBatchProvider {
   findByIdempotencyKey(organizationId: string, idempotencyKey: string): Promise<ImportBatch | null>;
   create(batch: ImportBatch): Promise<ImportBatch>;
+  commit(input: { organizationId: string; batchId: string; actorId: string; idempotencyKey: string }): Promise<ImportBatchExecution>;
+  reverse(input: { organizationId: string; batchId: string; actorId: string; idempotencyKey: string; reason: string }): Promise<ImportBatchExecution>;
+}
+
+export interface ImportBatchExecution {
+  batchId: string;
+  status: Extract<ImportBatchStatus, "completed" | "reversed">;
+  appliedRows: number;
+  entityCounts: Readonly<Record<string, number>>;
+  completedAt: string;
 }
 
 export class ImportBatchValidationError extends Error {
@@ -30,6 +40,14 @@ export class ImportBatchValidationError extends Error {
     super("The import batch is invalid.");
     this.name = "ImportBatchValidationError";
   }
+}
+
+export class ImportBatchConflictError extends Error {
+  constructor(message: string) { super(message); this.name = "ImportBatchConflictError"; }
+}
+
+export class ImportBatchNotFoundError extends Error {
+  constructor() { super("The import batch was not found."); this.name = "ImportBatchNotFoundError"; }
 }
 
 export class ImportBatchService {
@@ -60,6 +78,22 @@ export class ImportBatchService {
       idempotencyKey: input.idempotencyKey.trim(), createdBy: input.actor.userId, createdAt: this.now().toISOString(),
     });
   }
+
+  async commit(input: { actor: AuthorizationActor; organizationId: string; batchId: string; idempotencyKey: string; confirmation: string }): Promise<ImportBatchExecution> {
+    assertAuthorized(input.actor, { organizationId: input.organizationId, capability: "organization.configure" });
+    validateAction(input.batchId, input.idempotencyKey);
+    if (input.confirmation !== `COMMIT ${input.batchId}`) throw new ImportBatchValidationError(["Commit confirmation does not match the batch ID."]);
+    return this.provider.commit({ organizationId: input.organizationId, batchId: input.batchId, actorId: input.actor.userId, idempotencyKey: input.idempotencyKey.trim() });
+  }
+
+  async reverse(input: { actor: AuthorizationActor; organizationId: string; batchId: string; idempotencyKey: string; confirmation: string; reason: string }): Promise<ImportBatchExecution> {
+    assertAuthorized(input.actor, { organizationId: input.organizationId, capability: "organization.configure" });
+    validateAction(input.batchId, input.idempotencyKey);
+    const reason = input.reason.trim();
+    if (input.confirmation !== `REVERSE ${input.batchId}`) throw new ImportBatchValidationError(["Reversal confirmation does not match the batch ID."]);
+    if (reason.length < 10 || reason.length > 500) throw new ImportBatchValidationError(["Reversal reason must be between 10 and 500 characters."]);
+    return this.provider.reverse({ organizationId: input.organizationId, batchId: input.batchId, actorId: input.actor.userId, idempotencyKey: input.idempotencyKey.trim(), reason });
+  }
 }
 
 function validateInput(input: { sourceName: string; sourceChecksum: string; rows: readonly ImportSourceRow[]; idempotencyKey: string }) {
@@ -69,4 +103,11 @@ function validateInput(input: { sourceName: string; sourceChecksum: string; rows
   if (!input.idempotencyKey.trim() || input.idempotencyKey.trim().length > 200) issues.push("Idempotency key must be between 1 and 200 characters.");
   if (!input.rows.length || input.rows.length > 10_000) issues.push("A batch must contain between 1 and 10,000 rows.");
   return issues;
+}
+
+function validateAction(batchId: string, idempotencyKey: string) {
+  const issues: string[] = [];
+  if (!/^imb_[a-z0-9_-]{6,64}$/.test(batchId)) issues.push("Import batch ID is invalid.");
+  if (!idempotencyKey.trim() || idempotencyKey.trim().length > 200) issues.push("Idempotency key must be between 1 and 200 characters.");
+  if (issues.length) throw new ImportBatchValidationError(issues);
 }

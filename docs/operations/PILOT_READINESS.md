@@ -31,7 +31,7 @@ This is not a verified P0 application defect. The current release has strong ten
 | Backup | Blocked | Hosting capability is documented, but an actual backup timestamp and retention inspection are not recorded |
 | Restore | Blocked | No isolated restore exercise with measured duration and record validation is recorded |
 | Mobile and accessibility | In progress | Prior 320–430 px acceptance exists; hardening-release browser matrix remains to be rerun |
-| Pilot data import | Blocked | Deterministic demo template is not a controlled real-customer import with preview, validation, error report, and abort |
+| Pilot data import | Blocked | Controlled commit/reconciliation/reversal are code complete for demo/pilot Customer/Lead and VIN-backed Inventory batches, but migration deployment, exact-release staging verification, and an authorized pilot dry run are missing; user access remains invitation-only. |
 | Support readiness | Blocked | Severity definitions are documented below, but named pilot owners and communication channels require founder approval |
 
 ## P0 security findings

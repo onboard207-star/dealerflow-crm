@@ -1467,7 +1467,7 @@ export const importBatches = pgTable("import_batches", {
   index("import_batches_status_idx").on(table.organizationId, table.status, table.createdAt),
   check("import_batches_id_format", sql`${table.id} ~ '^imb_[a-z0-9_-]{6,64}$'`),
   check("import_batches_domain", sql`${table.domain} in ('customer-lead','inventory','user')`),
-  check("import_batches_status", sql`${table.status} in ('review-required','ready','completed','failed','aborted')`),
+  check("import_batches_status", sql`${table.status} in ('review-required','ready','completed','failed','aborted','reversed')`),
   check("import_batches_checksum", sql`${table.sourceChecksum} ~ '^[a-f0-9]{64}$'`),
   check("import_batches_source_name_length", sql`char_length(trim(${table.sourceName})) between 1 and 255`),
   check("import_batches_idempotency_length", sql`char_length(trim(${table.idempotencyKey})) between 1 and 200`),
@@ -1487,4 +1487,20 @@ export const importBatchRows = pgTable("import_batch_rows", {
   check("import_batch_rows_id_format", sql`${table.id} ~ '^imr_[a-z0-9_-]{6,64}$'`),
   check("import_batch_rows_number", sql`${table.rowNumber} between 1 and 10000`),
   check("import_batch_rows_status", sql`${table.status} in ('valid','rejected','duplicate','needs-review')`),
+]);
+
+export const importAppliedRecords = pgTable("import_applied_records", {
+  id: text("id").primaryKey(), organizationId: text("organization_id").notNull(), batchId: text("batch_id").notNull(),
+  rowNumber: integer("row_number").notNull(), entityKind: text("entity_kind").notNull(), entityId: text("entity_id").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(), reversedAt: timestamp("reversed_at", { withTimezone: true }),
+  reversedBy: text("reversed_by").references(() => users.id, { onDelete: "restrict" }),
+}, (table) => [
+  uniqueIndex("import_applied_records_organization_id_unique").on(table.organizationId, table.id),
+  uniqueIndex("import_applied_records_entity_unique").on(table.organizationId, table.batchId, table.entityKind, table.entityId),
+  index("import_applied_records_batch_row_idx").on(table.organizationId, table.batchId, table.rowNumber),
+  foreignKey({ columns: [table.organizationId, table.batchId], foreignColumns: [importBatches.organizationId, importBatches.id], name: "import_applied_records_same_batch_fk" }),
+  check("import_applied_records_id_format", sql`${table.id} ~ '^iar_[a-z0-9_-]{6,64}$'`),
+  check("import_applied_records_row_number", sql`${table.rowNumber} between 1 and 10000`),
+  check("import_applied_records_entity_kind", sql`${table.entityKind} in ('customer','lead','vehicle','inventory-unit')`),
+  check("import_applied_records_reversal", sql`(${table.reversedAt} is null)=(${table.reversedBy} is null)`),
 ]);

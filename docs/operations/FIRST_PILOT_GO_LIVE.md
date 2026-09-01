@@ -14,7 +14,7 @@ DealerFlow's core application workflows are suitable for controlled staging demo
 
 | ID | Classification | Domain | Evidence | Required closure |
 | --- | --- | --- | --- | --- |
-| PB-001 | P1 | Import | Current authority validates and previews only. | Persistent tenant-isolated batches, bounded upload, approved mapping, transactional commit, row outcomes, reconciliation, and safe reversal. |
+| PB-001 | P1 | Import | Persistent staging plus demo/pilot-only transactional commit, applied-record reconciliation, and guarded reversal are code complete locally; no authorized pilot dry run exists. | Apply migration `0039`, verify exact-release staging behavior, authorize a disposable pilot tenant/operator, then capture commit, reconciliation, reversal, and isolation evidence. |
 | PB-002 | External P1 | Recovery | No captured Render backup or successful isolated restore evidence. | Record backup scope/time and restore representative tenant, Customer, Inventory, appointment, and communication records. |
 | PB-003 | External P1 | Monitoring | Application telemetry exists; external alert delivery/on-call response is unverified. | Configure receiver, run synthetic failure, record receipt and escalation owner. |
 | PB-004 | External P1 | Support | No monitored dealer intake, severity owner, or exercised escalation. | Name the support channel/owners and complete one synthetic P1 lifecycle. |
@@ -54,9 +54,9 @@ No repository authority currently persists this complete record. Until that auth
 | Dealer administration | IN PROGRESS | Users, roles, locations, branding, and integrations exist; support and billing view are absent. |
 | Pilot tenant | NOT STARTED | Demo tenant cannot become the pilot tenant. |
 | Pilot users and first-login role UAT | NOT STARTED | Invitation/admin mechanics exist; real pilot roster is unknown. |
-| Customer/Lead import | BLOCKED | Preview only. |
-| Inventory import | BLOCKED | Preview only; catalog configuration remains unresolved. |
-| User roster import | BLOCKED | Preview only; invitation must remain a separate approved action. |
+| Customer/Lead import | BLOCKED | Demo/pilot commit and reversal are code complete locally; exact-release staging and authorized dry-run evidence are missing. |
+| Inventory import | BLOCKED | VIN-backed demo/pilot commit and reversal are code complete locally; catalog configuration and authorized dry-run evidence remain unresolved. |
+| User roster import | BLOCKED | Direct commit is deliberately unavailable; user access remains review-only and must use invitations. |
 | Communications | BLOCKED | Pilot tenant routing/test destinations not verified. |
 | AI | OPTIONAL / NOT CONFIGURED | Deterministic briefs work; provider-backed generation must remain disabled until configured. |
 | Training assignment/completion | BLOCKED | Current catalog exists; durable assignment/completion does not. |
@@ -117,7 +117,7 @@ Pilot changes are classified as Critical Fix, Pilot Configuration, Post-Pilot En
 - Application rollback: deploy the last accepted immutable image/commit, then rerun smoke checks.
 - Feature/provider rollback: disable only the affected tenant feature or connector; preserve core records and failure evidence.
 - Bad configuration: restore versioned tenant configuration through the audited configuration authority.
-- Bad import: use batch-owned reversal only after verifying records have not been subsequently changed. This is not yet implemented.
+- Bad import: demo/pilot-only batch-owned reversal is implemented with exact confirmation, immutable applied-record evidence, dependency-ordered deletion, and atomic failure when records are missing or have downstream dependencies. Production use and an actual pilot dry run remain unauthorized.
 - Database recovery: restore to an isolated database, validate integrity, and follow an approved cutover. Never reverse migrations blindly.
 - Offboarding: suspend access, stop outbound sends, revoke integrations, preserve data, document export/retention, and avoid immediate deletion.
 

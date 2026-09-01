@@ -391,3 +391,14 @@
 - Added `pnpm execution:next`, which deterministically selects the highest-priority eligible AUTO item after dependency validation. The normalized queue selects `DWI-PILOT-002` and does not activate scale or future-state work.
 - Added the master execution plan, durable current-state handoff, batch-consumption index, completion-report contract, blocker queue, decision queue, and exact human-gate records.
 - No production action, provider configuration, tenant feature enablement, destructive data operation, customer communication, billing, deployment, or pilot GO was executed.
+
+## CONTROLLED IMPORT COMMIT AND REVERSAL — SEPTEMBER 1, 2026
+
+- Added migration `0039_import_commit_reversal` with tenant-forced RLS, immutable batch-to-entity applied-record evidence, one-time reversal evidence, and the explicit `reversed` batch lifecycle state.
+- Added authenticated capability-gated commit and reversal endpoints with exact batch confirmation, bounded idempotency keys, no-store responses, conflict-safe outcomes, and privacy-safe errors.
+- Customer/Lead commit requires an active canonical location, locks normalized identities against concurrent intake, rejects existing identities, verifies assignee rooftop access, and creates one Customer plus one open Lead with batch-bounded evidence.
+- Inventory commit requires a real VIN, active location, supported lifecycle state, exact-cent nonnegative price, identity locks, duplicate VIN/stock rejection, and creates one Vehicle plus physical Inventory Unit with batch-bounded evidence.
+- User access imports remain review-only even when role mapping is valid; accounts and memberships must continue through the governed invitation workflow.
+- Commit and reversal are restricted to tenants whose canonical data class is `demo` or `pilot`. Production-class tenants fail closed; no production activation or real tenant import occurred.
+- Reversal deletes only entity IDs recorded by the exact batch, in dependency order, retains immutable applied/reversal evidence, and rolls back atomically when any entity is missing or protected by downstream relationships.
+- Targeted validation passes 58 import/migration tests across four files plus strict TypeScript and Drizzle migration validation. The full suite initially experienced one unrelated showroom-test worker timeout; that file then passed 4/4 independently and the bounded full-suite rerun passed 487 tests across 113 files. The optimized production build passes.

@@ -191,7 +191,7 @@ This is credible presentation data, not a resettable Demo Control Center. A pres
 | FS-001 | P1 | Staging/Pilot | Runtime configuration readiness is unavailable. | Exact-release `/api/ready` HTTP 200 with all required checks. |
 | FS-002 | P1 | Pilot/Production | Backup and point-in-time recovery evidence is absent. | Provider settings capture and successful timed restore drill. |
 | FS-003 | P1 | Pilot/Production | External monitoring, alert receipt, and on-call ownership are unverified. | Synthetic check, delivered alert, escalation owner, and drill. |
-| FS-004 | P1 | Pilot | Controlled import stops at preview. | Transactional commit, reconciliation report, rollback, and pilot dry run. |
+| FS-004 | P1 | Pilot | Addendum September 1: transactional demo/pilot commit, applied-record reconciliation, and guarded reversal are code complete locally; exact-release migration/staging evidence and an authorized pilot dry run remain open. | Apply migration `0039`, verify commit/reconciliation/reversal and isolation in staging, then complete an authorized disposable-tenant dry run. |
 | FS-005 | Closed locally | Demo/Pilot | Calendar workspace was missing. | Implemented as a capability- and location-scoped canonical appointment view; staging acceptance remains. |
 | FS-006 | P1 | Pilot | Support ownership and incident intake are undefined. | Named coverage, monitored channel, severity/SLA policy, and runbook exercise. |
 | FS-007 | P1 | Inventory pilot | Staging R2 media storage is unconfigured. | Three-photo upload, verify, order, remove, and failure-path acceptance. |
