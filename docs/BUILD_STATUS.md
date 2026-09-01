@@ -1,5 +1,12 @@
 # DealerFlow AI Build Status
 
+## ENTERPRISE TRUST / PRIVACY — NO-GO
+
+- Added separate machine-readable Control and Evidence registries with status, owner role, scoped customer-safe statement, framework mapping, source, visibility, verification date, expiry, and independent-assessment metadata.
+- Registered repository-tested tenant isolation/RLS, authorization, Twilio signature, secrets/configuration, log privacy, invitation authentication, AI governance, and scoped accessibility controls without expanding their claims.
+- Explicitly records missing production backup, restore, external alert drill, privileged access review, and independent penetration-test evidence as blockers; expired or missing evidence cannot back a Tested/Monitored control.
+- No certification, legal/compliance conclusion, production recovery result, subprocessor assertion, residency claim, insurance status, or independent assessment was fabricated. Application and production behavior remains unchanged.
+
 ## DEVELOPER PLATFORM / MARKETPLACE — NO-GO
 
 - Added an extension-surface registry that classifies current session APIs, internal job controls, Twilio webhook, operational probes, provisioner, and synthetic harness as Internal Only or Provider Private—not supported developer contracts.

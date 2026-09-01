@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "asOf": "2026-09-01",
+  "evidence": [
+    { "id": "EVD-TENANT-001", "title": "Tenant isolation and authorization test suite", "type": "automated-test", "source": "lib/server/security/tenant-isolation-matrix.test.ts", "visibility": "internal-confidential", "status": "current", "verifiedAt": "2026-09-01", "maxAgeDays": 30, "independent": false },
+    { "id": "EVD-MIGRATION-001", "title": "Forced RLS and immutable authority migration assertions", "type": "automated-test", "source": "lib/server/database/migrations.test.ts", "visibility": "security-restricted", "status": "current", "verifiedAt": "2026-09-01", "maxAgeDays": 30, "independent": false },
+    { "id": "EVD-WEBHOOK-001", "title": "Twilio signature and tenant-route verification tests", "type": "automated-test", "source": "lib/integrations/twilio/webhook.test.ts", "visibility": "security-restricted", "status": "current", "verifiedAt": "2026-09-01", "maxAgeDays": 30, "independent": false },
+    { "id": "EVD-CONFIG-001", "title": "Production environment and secret contract tests", "type": "automated-test", "source": "lib/server/config/environment.test.ts", "visibility": "security-restricted", "status": "current", "verifiedAt": "2026-09-01", "maxAgeDays": 30, "independent": false },
+    { "id": "EVD-LOG-001", "title": "Sensitive telemetry attribute filtering tests", "type": "automated-test", "source": "lib/server/observability/telemetry.test.ts", "visibility": "internal-confidential", "status": "current", "verifiedAt": "2026-09-01", "maxAgeDays": 30, "independent": false },
+    { "id": "EVD-AUTH-001", "title": "Invitation-only authentication boundary tests", "type": "automated-test", "source": "lib/server/auth/invitation-signup.test.ts", "visibility": "internal-confidential", "status": "current", "verifiedAt": "2026-09-01", "maxAgeDays": 30, "independent": false },
+    { "id": "EVD-AI-001", "title": "Tenant-gated AI recommendation and review tests", "type": "automated-test", "source": "lib/application/ai/customer-recommendation.test.ts", "visibility": "internal-confidential", "status": "current", "verifiedAt": "2026-09-01", "maxAgeDays": 30, "independent": false },
+    { "id": "EVD-A11Y-001", "title": "Scoped design-system and responsive accessibility evidence", "type": "test-summary", "source": "docs/operations/FULL_SYSTEM_ACCEPTANCE.md", "visibility": "qualified-prospect", "status": "current", "verifiedAt": "2026-08-31", "maxAgeDays": 30, "independent": false },
+    { "id": "EVD-BACKUP-001", "title": "Production backup inventory", "type": "provider-evidence", "source": null, "visibility": "security-restricted", "status": "missing", "verifiedAt": null, "maxAgeDays": 30, "independent": false },
+    { "id": "EVD-RESTORE-001", "title": "Isolated production backup restore drill", "type": "exercise", "source": null, "visibility": "security-restricted", "status": "missing", "verifiedAt": null, "maxAgeDays": 90, "independent": false },
+    { "id": "EVD-ALERT-001", "title": "External alert receipt and escalation drill", "type": "exercise", "source": null, "visibility": "internal-confidential", "status": "missing", "verifiedAt": null, "maxAgeDays": 90, "independent": false },
+    { "id": "EVD-ACCESS-001", "title": "Privileged access review", "type": "access-review", "source": null, "visibility": "security-restricted", "status": "missing", "verifiedAt": null, "maxAgeDays": 90, "independent": false },
+    { "id": "EVD-PENTEST-001", "title": "Independent penetration test", "type": "independent-assessment", "source": null, "visibility": "security-restricted", "status": "missing", "verifiedAt": null, "maxAgeDays": 365, "independent": true }
+  ]
+}
