@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-08-31T21:22:30-04:00",
+  "decision": "NO_GO",
+  "environment": "production",
+  "release": {
+    "candidateCommit": "856c7a02284588330128c332cdb48db0f3fc2be0",
+    "tag": null,
+    "schemaVersion": "0038_organization_data_class",
+    "artifact": null,
+    "approvedBy": null,
+    "approvedAt": null
+  },
+  "pilot": {
+    "organizationId": null,
+    "rooftopIds": [],
+    "startWindow": null,
+    "launchDecisionOwner": null,
+    "rollbackOwner": null,
+    "supportContact": null,
+    "authorizedUsers": [],
+    "successMetricDefinition": null,
+    "explicitExclusions": [
+      "real billing",
+      "recording and transcription",
+      "lender or credit submission",
+      "e-signature",
+      "DMS posting",
+      "autonomous pricing",
+      "automated review solicitation"
+    ]
+  },
+  "featurePosture": {
+    "autonomousCustomerSends": false,
+    "longTermNurture": false,
+    "aiDestructiveOrBulkWrites": false,
+    "recordingOrTranscription": false,
+    "realBilling": false,
+    "resellerActivation": false,
+    "experimentation": false,
+    "lenderOrCreditSubmission": false,
+    "eSignature": false,
+    "dmsPosting": false,
+    "autonomousPricing": false,
+    "automatedReviewSolicitation": false
+  },
+  "gates": {
+    "zeroP0": { "status": "verified", "evidence": "docs/operations/PILOT_READINESS.md" },
+    "noPilotBlockingP1": { "status": "blocked", "evidence": "docs/operations/FIRST_PILOT_GO_LIVE.md" },
+    "tenantIsolationAndSecurity": { "status": "verified", "evidence": "docs/operations/PILOT_READINESS.md" },
+    "coreGoldenJourneys": { "status": "partial", "evidence": "docs/operations/P0_P1_CLOSURE.md" },
+    "providerDegradedBehavior": { "status": "blocked", "evidence": "docs/operations/FIRST_PILOT_GO_LIVE.md" },
+    "resetReseedAcceptance": { "status": "blocked", "evidence": "docs/operations/SYNTHETIC_PILOT_HARNESS.md" },
+    "backupRestore": { "status": "blocked", "evidence": "docs/operations/RECOVERY_RUNBOOK.md" },
+    "rollbackPath": { "status": "partial", "evidence": "docs/operations/RECOVERY_RUNBOOK.md" },
+    "approvedPilotScope": { "status": "blocked", "evidence": "docs/operations/FIRST_PILOT_GO_LIVE.md" },
+    "namedLaunchOwner": { "status": "blocked", "evidence": "docs/operations/FIRST_PILOT_GO_LIVE.md" },
+    "productionParity": { "status": "blocked", "evidence": null },
+    "roleAcceptance": { "status": "blocked", "evidence": "docs/operations/FIRST_PILOT_GO_LIVE.md" },
+    "monitoringAndAlertOwnership": { "status": "blocked", "evidence": "docs/operations/PILOT_READINESS.md" }
+  },
+  "productionInventory": {
+    "status": "not_verified",
+    "note": "Production configuration must be inventoried directly and must never be inferred from staging."
+  },
+  "cutover": {
+    "changeFreezeActive": false,
+    "deployDarkAuthorized": false,
+    "providersAuthorized": [],
+    "customerCommunicationsAuthorized": false,
+    "billingAuthorized": false
+  }
+}

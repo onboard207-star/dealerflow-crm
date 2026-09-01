@@ -15,6 +15,7 @@
     "tenant:provision": "node scripts/provision-tenant.mjs",
     "tenant:seed-template": "node scripts/seed-dealership-template.mjs",
     "synthetic:seed": "node scripts/seed-synthetic-pilot.mjs --confirm SYNTHETIC-DEMO",
+    "pilot:cutover:check": "node scripts/validate-pilot-cutover.mjs",
     "smoke:deployment": "node scripts/smoke-deployment.mjs",
     "validate": "pnpm db:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
