@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-01",
+  "domains": [
+    {"id": "customer-sales", "name": "Customer and Sales", "authority": "Customer identity and repeat Lead buying cycles", "capabilityIds": ["CAP-CRM-001", "CAP-CRM-002"]},
+    {"id": "communications", "name": "Communications", "authority": "Consent evidence, communication history, and provider attempts", "capabilityIds": ["CAP-COM-001"]},
+    {"id": "inventory", "name": "Inventory", "authority": "VIN identity, physical inventory cycles, and verified media metadata", "capabilityIds": ["CAP-INV-001", "CAP-INV-002"]},
+    {"id": "deal-finance", "name": "Deal and Retail Finance", "authority": "Deal, quote, trade, and delivery lifecycle; not DealerFlow company finance", "capabilityIds": ["CAP-DEAL-001"]},
+    {"id": "documents", "name": "Documents", "authority": "Versioned templates and governed generated artifacts when implemented", "capabilityIds": ["CAP-DOC-001"]},
+    {"id": "intelligence", "name": "Intelligence", "authority": "Evidence-backed recommendations and reviewed recommendation runs", "capabilityIds": ["CAP-AI-001"]},
+    {"id": "reporting-operations", "name": "Reporting and Operations", "authority": "Scoped projections over canonical operational records", "capabilityIds": ["CAP-RPT-001"]},
+    {"id": "platform", "name": "Tenant Platform", "authority": "Organizations, identity, memberships, permissions, locations, and configuration", "capabilityIds": ["CAP-PLT-001"]},
+    {"id": "data-migration", "name": "Data Migration", "authority": "Controlled source mapping, validation, commit, reconciliation, and reversal", "capabilityIds": ["CAP-DATA-001"]},
+    {"id": "reliability", "name": "Reliability", "authority": "Release readiness, recovery, monitoring, incident response, and support ownership", "capabilityIds": ["CAP-OPS-001"]},
+    {"id": "fixed-operations", "name": "Fixed Operations", "authority": "Future service and recon lifecycles", "capabilityIds": ["CAP-SVC-001"]},
+    {"id": "commercial", "name": "Commercial Operations", "authority": "Future DealerFlow account, contract, subscription, billing, and metering records", "capabilityIds": ["CAP-COMMERCIAL-001"]},
+    {"id": "ecosystem", "name": "Ecosystem", "authority": "Future public API, extensions, installations, and marketplace governance", "capabilityIds": ["CAP-EXT-001"]}
+  ]
+}

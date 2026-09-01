@@ -24,6 +24,7 @@
     "developer-platform:check": "node scripts/validate-developer-platform.mjs",
     "trust:check": "node scripts/validate-trust-program.mjs",
     "finance:check": "node scripts/validate-financial-operating-system.mjs",
+    "portfolio:check": "node scripts/validate-product-portfolio.mjs",
     "smoke:deployment": "node scripts/smoke-deployment.mjs",
     "validate": "pnpm db:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },

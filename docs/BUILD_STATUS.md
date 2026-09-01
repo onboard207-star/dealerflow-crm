@@ -359,3 +359,13 @@
 3. Provision a restricted OpenAI project key and calibrate evidence-grounding, refusal, cost, and latency behavior in staging.
 4. Connect a monitoring destination and verify signed alert delivery in staging.
 5. Reconcile Airtable authority mappings without destructive migration.
+
+## PRODUCT PORTFOLIO GOVERNANCE — SEPTEMBER 1, 2026
+
+- Added one canonical capability implementation registry with stable capability IDs, bounded domains, architecture and implementation references, evidence, ownership, dependencies, provider blockers, maturity, pilot relevance, commercial support, and verification dates.
+- Added one product-domain map so portfolio reporting cannot create duplicate data authorities, plus an outcome-based Now/Next/Later/Not Now roadmap that prioritizes recovery, monitoring, support, import, provider acceptance, and golden-journey evidence.
+- Added enforced maturity and commercial rules: staging verification does not imply pilot readiness, and no current capability is Pilot Ready, Pilot Proven, GA, Limited Availability, or commercially Supported.
+- Added architecture reconciliation, entitlement boundaries, coverage expectations, decision records, technical-debt/deprecation rules, and the current evidence-backed health view in `docs/operations/PRODUCT_PORTFOLIO_GOVERNANCE.md`.
+- Added `pnpm portfolio:check` and regression coverage for evidence promotion, commercial promotion, dependency integrity, domain mapping, hard-dependency cycles, and pilot-first roadmap sequencing.
+- No runtime behavior, database schema, tenant data, entitlements, deployment configuration, application routes, or commercial authorization changed in this batch.
+- Validation passes: Drizzle migration check, portfolio governance check, lint with no warnings, strict TypeScript, 470 tests across 112 files, optimized Next.js production build, and whitespace integrity.

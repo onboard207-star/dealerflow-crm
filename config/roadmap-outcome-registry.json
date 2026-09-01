@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-01",
+  "horizons": ["Now", "Next", "Later", "Not Now"],
+  "outcomes": [
+    {"id": "OUT-NOW-001", "horizon": "Now", "outcome": "Prove recoverability, external alert delivery, on-call escalation, and support intake.", "capabilityIds": ["CAP-OPS-001"], "successEvidence": ["Successful timed restore drill", "Delivered external alert", "Named escalation and support exercise"], "status": "blocked-external"},
+    {"id": "OUT-NOW-002", "horizon": "Now", "outcome": "Complete a reversible controlled pilot import.", "capabilityIds": ["CAP-DATA-001"], "successEvidence": ["Transactional commit", "Reconciliation report", "Verified reversal", "Pilot dry run"], "status": "in-progress"},
+    {"id": "OUT-NOW-003", "horizon": "Now", "outcome": "Accept required provider paths and exact-release readiness in staging.", "capabilityIds": ["CAP-COM-001", "CAP-INV-002", "CAP-AI-001", "CAP-PLT-001"], "successEvidence": ["Exact-release readiness HTTP 200", "Required tenant provider acceptance", "Failure-path acceptance"], "status": "blocked-external"},
+    {"id": "OUT-NOW-004", "horizon": "Now", "outcome": "Complete resettable scenario and role-based golden-journey acceptance for the controlled pilot.", "capabilityIds": ["CAP-CRM-001", "CAP-CRM-002", "CAP-INV-001", "CAP-DEAL-001", "CAP-RPT-001"], "successEvidence": ["Governed reset evidence", "Role journey results", "Pilot acceptance record"], "status": "in-progress"},
+    {"id": "OUT-NEXT-001", "horizon": "Next", "outcome": "Prove repeatable provisioning and launch for a second dealership without cross-tenant leakage.", "capabilityIds": ["CAP-PLT-001", "CAP-DATA-001", "CAP-OPS-001"], "successEvidence": ["Second-dealer launch record", "Isolation acceptance", "Repeatable operator runbook"], "status": "not-started"},
+    {"id": "OUT-LATER-001", "horizon": "Later", "outcome": "Establish durable commercial and enterprise operating authorities after pilot proof.", "capabilityIds": ["CAP-COMMERCIAL-001"], "successEvidence": ["Approved authority model", "Audited billing lifecycle", "Commercial support policy"], "status": "deferred"},
+    {"id": "OUT-NOTNOW-001", "horizon": "Not Now", "outcome": "Open a public developer ecosystem only after platform, reliability, and commercial prerequisites exist.", "capabilityIds": ["CAP-EXT-001"], "successEvidence": ["Public API authority", "SDK security acceptance", "Marketplace governance"], "status": "deferred"},
+    {"id": "OUT-NOTNOW-002", "horizon": "Not Now", "outcome": "Build authoritative service and recon workflows after the sales pilot is proven.", "capabilityIds": ["CAP-SVC-001"], "successEvidence": ["Approved domain authority", "Lifecycle and permission tests", "Workspace acceptance"], "status": "deferred"}
+  ]
+}
