@@ -146,6 +146,7 @@ export function renderDailyBuildBrief(workRegistry, releaseRegistry, governance,
   const active = workRegistry.items.filter((item) => ["Ready", "In Progress", "In Review", "Verification"].includes(item.state));
   const blocked = workRegistry.items.filter((item) => item.state === "Blocked");
   const release = releaseRegistry.releases.at(-1);
+  const nextAuto = selectNextEligible(workRegistry);
   const lines = [
     "# DealerFlow Daily Build Brief",
     "",
@@ -174,7 +175,7 @@ export function renderDailyBuildBrief(workRegistry, releaseRegistry, governance,
     "",
     "## Next Deterministic Actions",
     "",
-    "1. Continue DWI-PILOT-004: complete the governed synthetic reset/reseed harness with demo-only and relationship-integrity coverage.",
+    nextAuto ? `1. Continue ${nextAuto.id}: ${nextAuto.title}.` : "1. No AUTO item is eligible; preserve the human and external gates below.",
     "2. Resolve DEC-PILOT-001 so recovery, alert, and support exercises can run.",
     "3. Provision R2 and execute DWI-PILOT-003 media acceptance before optional AI provider calibration.",
     "4. Keep DWI-PILOT-006 and DWI-PILOT-007 behind tenant authorization and human review."
@@ -186,6 +187,7 @@ export function renderEndOfDayHandoff(workRegistry, releaseRegistry, governance,
   const release = releaseRegistry.releases.at(-1);
   const completed = workRegistry.items.filter((item) => item.state === "Done");
   const verification = workRegistry.items.filter((item) => ["In Review", "Verification"].includes(item.state));
+  const nextAuto = selectNextEligible(workRegistry);
   return `# DealerFlow End-of-Day Handoff
 
 **As of:** ${workRegistry.updatedAt}  
@@ -212,7 +214,7 @@ ${governance.decisions.filter((item) => item.state !== "Resolved").map((item) =>
 
 ## Next Tasks in Exact Order
 
-1. DWI-PILOT-004 — governed synthetic reset/reseed implementation and tests.
+1. ${nextAuto ? `${nextAuto.id} — ${nextAuto.title}.` : "No AUTO item is eligible; await the required reviewed or human-gated inputs."}
 2. DWI-PILOT-005 / DEC-PILOT-001 — assign operational owners.
 3. DWI-PILOT-003 — R2 acceptance, then required communications and AI provider paths.
 4. DWI-PILOT-006 and DWI-PILOT-007 — authorized import dry run and human role UAT.

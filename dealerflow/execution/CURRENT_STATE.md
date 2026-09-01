@@ -2,15 +2,15 @@
 
 **Updated:** September 1, 2026  
 **Branch:** `codex/staging-deployment`  
-**Latest completed implementation:** `DWI-PILOT-002` at `22c53e510f62e4d129369c67902d6228f68df53d`
+**Latest completed implementation:** `DWI-PILOT-004` at `40ae05dcaf7ecf3d85bb30aab38875fc19476ac3`
 **Pilot:** NO_GO  
 **Current milestone:** First Pilot Reliable
 
 ## Active Item
 
-`DWI-PILOT-004` — Complete governed synthetic reset and acceptance harness (`AUTO`, `P1`, `READY`).
+No AUTO item is currently eligible.
 
-The next bounded implementation must provide a deterministic reset/reseed path that is structurally unable to affect non-demo tenants, preserves scenario identity and version evidence, and passes relationship-integrity and repository gates. Human role UAT remains separate REVIEW item `DWI-PILOT-007`.
+The next pilot-critical items require review, external configuration, tenant authorization, or accountable human ownership. `DWI-PILOT-006` requires an authorized exact-release pilot import dry run; `DWI-PILOT-007` then requires human role UAT. Neither may be auto-completed from repository evidence.
 
 ## Queue Summary
 
@@ -18,7 +18,7 @@ The next bounded implementation must provide a deterministic reset/reseed path t
 - P1: 7 active/waiting/blocked
 - P2: 1 deferred
 - P3: 1 triaged
-- Eligible AUTO item: `DWI-PILOT-004`
+- Eligible AUTO item: none
 - Commercially supported capabilities: 0
 
 ## Safe Boundary

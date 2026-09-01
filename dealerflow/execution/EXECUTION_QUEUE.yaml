@@ -103,18 +103,18 @@
       "strategicPriority": "Now",
       "lane": "pilot-closure",
       "autonomy": "AUTO",
-      "runnerStatus": "READY",
-      "state": "Ready",
+      "runnerStatus": "COMPLETE",
+      "state": "Done",
       "dependencies": ["DWI-PILOT-002"],
       "acceptanceCriteria": ["Governed reset cannot affect non-demo tenants", "Scenario identities and version are deterministic", "Reset and reseed integrity tests pass", "Known limitations are disclosed"],
       "evidenceRequirements": ["EVD-RESET-001"],
-      "targetRelease": null,
+      "targetRelease": "REL-CAND-20260901-003",
       "blocker": null,
       "openedAt": "2026-08-30",
       "lastEvidenceAt": "2026-08-30",
       "priorityChanges": 0,
-      "closureEvidence": [],
-      "requiredTests": ["synthetic tenant guard", "reset idempotency", "relationship integrity", "full repository gate"], "evidencePaths": ["dealerflow/execution/EVIDENCE/registry.json"], "startingCommit": null, "endingCommit": null, "completionReport": "dealerflow/execution/COMPLETION_REPORTS/DWI-PILOT-004.md", "nextEligibleItems": ["DWI-PILOT-007"], "humanApprovalRequirement": null
+      "closureEvidence": ["EVD-RESET-001"],
+      "requiredTests": ["synthetic tenant guard", "reset idempotency", "relationship integrity", "full repository gate"], "evidencePaths": ["dealerflow/execution/EVIDENCE/registry.json", "dealerflow/execution/COMPLETION_REPORTS/DWI-PILOT-004.md"], "startingCommit": "e1bd583e3c048cdc54a6ffd585f78b2b0cc3b02f", "endingCommit": "40ae05dcaf7ecf3d85bb30aab38875fc19476ac3", "completionReport": "dealerflow/execution/COMPLETION_REPORTS/DWI-PILOT-004.md", "nextEligibleItems": ["DWI-PILOT-007"], "humanApprovalRequirement": null
     },
     {
       "id": "DWI-PILOT-005",
