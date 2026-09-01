@@ -23,6 +23,7 @@
     "verticals:check": "node scripts/validate-vertical-expansion.mjs",
     "developer-platform:check": "node scripts/validate-developer-platform.mjs",
     "trust:check": "node scripts/validate-trust-program.mjs",
+    "finance:check": "node scripts/validate-financial-operating-system.mjs",
     "smoke:deployment": "node scripts/smoke-deployment.mjs",
     "validate": "pnpm db:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },

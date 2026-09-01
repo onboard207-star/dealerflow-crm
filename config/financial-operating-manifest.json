@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-01T09:15:00-04:00",
+  "decision": "NOT_AUTHORIZED",
+  "formalAuthority": {
+    "accountingSystem": null,
+    "billingProvider": null,
+    "bankFeed": null,
+    "payrollSystem": null,
+    "expenseSystem": null,
+    "approvedFinanceOwner": null
+  },
+  "operationalAuthorities": {
+    "commercialAccounts": false,
+    "contracts": false,
+    "subscriptions": false,
+    "invoices": false,
+    "collections": false,
+    "providerCostLedger": false,
+    "usageCostLedger": false,
+    "implementationEffort": false,
+    "supportEffort": false,
+    "budgetVersions": false,
+    "forecastVersions": false,
+    "financePermissions": false
+  },
+  "activation": {
+    "actualFinancialMetricsEnabled": false,
+    "forecastingEnabled": false,
+    "billingEnabled": false,
+    "manualAdjustmentsEnabled": false,
+    "financeExportsEnabled": false,
+    "aiFinanceAssistantEnabled": false
+  },
+  "boundaries": {
+    "retailDealFinanceIsDealerFlowCompanyFinance": false,
+    "productUsageIsBillableUsage": false,
+    "bookingsAreCash": false,
+    "pipelineIsRevenue": false,
+    "implementationFeesAreArr": false,
+    "estimatesAreActuals": false,
+    "syntheticUsageIsProductionCost": false,
+    "aiMayApproveFinancialActions": false
+  }
+}

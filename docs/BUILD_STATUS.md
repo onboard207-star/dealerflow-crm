@@ -1,5 +1,12 @@
 # DealerFlow AI Build Status
 
+## FINANCIAL OPERATING SYSTEM — NOT AUTHORIZED
+
+- Added a machine-readable financial authority boundary separating formal accounting/bank/payroll/billing sources, operational commercial/cost authorities, and dealership retail Deal finance.
+- Added a metric dictionary for MRR, ARR, MRR bridge, recurring/implementation margin, NRR, GRR, CAC, LTV, cash, burn, runway, and provider cost with formulas, required sources, exclusions, owners, and allowed Actual/Booked/Billed/Collected/Estimate/Forecast/Scenario classes.
+- Every metric remains Unavailable; controls reject actual financial output without sources, billing activation, pipeline-as-revenue, bookings-as-cash, implementation-fees-as-ARR, synthetic-cost attribution, and AI financial approval.
+- No revenue, cost, customer economics, contract, invoice, collection, cash, payroll, budget, forecast, margin, runway, investor metric, or finance permission was fabricated. Runtime and production remain unchanged.
+
 ## ENTERPRISE TRUST / PRIVACY — NO-GO
 
 - Added separate machine-readable Control and Evidence registries with status, owner role, scoped customer-safe statement, framework mapping, source, visibility, verification date, expiry, and independent-assessment metadata.
