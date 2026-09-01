@@ -1,5 +1,14 @@
 # DealerFlow AI Build Status
 
+## SYNTHETIC PILOT HARNESS — SAFE FOUNDATION
+
+- Hardened the existing dealership template instead of creating a parallel fixture system: stable IDs now use a frozen clock, customer destinations use `.invalid`, and physical-unit fixtures carry an explicit `TEST` prefix.
+- Added a versioned synthetic manifest and one deterministic demo tenant/rooftop seed command with idempotent provisioning, expected-count reconciliation, and strict production/non-demo refusal.
+- Added database-owned organization data classification and a telemetry trigger preventing demo activity from being mislabeled as pilot or production evidence.
+- Destructive reset remains closed because append-only lifecycle evidence cannot safely be deleted. Snapshot restoration and governed scenario overlays remain required before reset/reseed acceptance can pass.
+- Golden journeys, browser evidence, provider failure injection, and recovery proof remain open; pilot status remains **NO-GO**.
+- Full local gate passes: migration validation, lint, strict TypeScript, 425 tests across 102 files, optimized production build, and whitespace validation.
+
 ## PILOT CLOSURE INTEGRATION — PERSISTENT IMPORT STAGING
 
 - Added tenant-isolated `import_batches` and immutable `import_batch_rows` persistence with source checksum, mapping provenance, bounded row counts, idempotency, review quarantine, audit evidence, and forced PostgreSQL row-level security.

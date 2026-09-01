@@ -1,5 +1,7 @@
 # Working Dealership Template
 
+> This template is synthetic-only and may be applied only to an organization whose database `data_class` is `demo`. See [Synthetic Pilot Harness](../operations/SYNTHETIC_PILOT_HARNESS.md).
+
 ## Purpose
 
 The DealerFlow working dealership template creates a coherent, populated tenant for onboarding, product review, training, and sales demonstrations. It uses the same relationships and permission model as a live dealership. It is not a separate demo application.

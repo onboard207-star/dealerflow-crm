@@ -1,0 +1,25 @@
+{
+  "version": "pilot-demo-v1",
+  "classification": "demo",
+  "referenceTime": "2026-08-31T12:00:00.000Z",
+  "organization": {
+    "id": "org_demo_first_pilot_v1",
+    "slug": "dealerflow-synthetic-pilot",
+    "name": "DealerFlow Synthetic Pilot"
+  },
+  "location": {
+    "id": "loc_demo_main_rooftop_v1",
+    "slug": "main-rooftop",
+    "name": "Synthetic Main Rooftop",
+    "timezone": "America/New_York"
+  },
+  "fixtureGroups": [
+    { "key": "staff", "purpose": "Permission-scoped dealership personas", "expectedCount": 26 },
+    { "key": "historical-leads", "purpose": "Two years of deterministic synthetic sales history", "expectedCount": 1440 },
+    { "key": "current-leads", "purpose": "Current Sales and BDC queues", "expectedCount": 36 },
+    { "key": "delivered-deals", "purpose": "Completed sales and ownership history", "expectedCount": 432 },
+    { "key": "current-inventory", "purpose": "Available and held physical-unit fixtures", "expectedCount": 48 }
+  ],
+  "analyticsPolicy": "Exclude this organization from live dealer, billing, coaching, benchmark, and pilot-adoption aggregates.",
+  "resetPolicy": "Reconcile deterministic records only. Production and pilot tenants are never eligible."
+}

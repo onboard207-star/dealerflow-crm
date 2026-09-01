@@ -169,6 +169,7 @@ export const organizations = pgTable(
     slug: text("slug").notNull(),
     name: text("name").notNull(),
     vertical: tenantVerticalEnum("vertical").notNull(),
+    dataClass: text("data_class").default("production").notNull(),
     active: boolean("active").default(true).notNull(),
     ...timestamps,
   },
@@ -176,6 +177,7 @@ export const organizations = pgTable(
     uniqueIndex("organizations_slug_unique").on(table.slug),
     check("organizations_id_format", sql`${table.id} ~ '^org_[a-z0-9_-]{6,64}$'`),
     check("organizations_slug_format", sql`${table.slug} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
+    check("organizations_data_class", sql`${table.dataClass} in ('demo','pilot','production')`),
   ],
 );
 
