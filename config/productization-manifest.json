@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-08-31T22:00:00-04:00",
+  "decision": "NOT_AUTHORIZED",
+  "sourcePilot": {
+    "release": null,
+    "tenantId": null,
+    "hypercareExitApprovedBy": null,
+    "hypercareExitApprovedAt": null
+  },
+  "prerequisites": {
+    "pilotFinalReport": { "status": "missing", "evidence": null },
+    "hypercareExit": { "status": "missing", "evidence": null },
+    "incidentReview": { "status": "missing", "evidence": null },
+    "supportCaseReview": { "status": "missing", "evidence": null },
+    "acceptanceMatrix": { "status": "partial", "evidence": "docs/operations/FULL_SYSTEM_ACCEPTANCE.md" },
+    "trainingFeedback": { "status": "missing", "evidence": null },
+    "dataQualityReview": { "status": "partial", "evidence": "docs/operations/P0_P1_CLOSURE.md" },
+    "providerHealthReview": { "status": "blocked", "evidence": "docs/operations/FIRST_PILOT_GO_LIVE.md" },
+    "architectureReconciliation": { "status": "partial", "evidence": "docs/operations/FULL_SYSTEM_ACCEPTANCE.md" },
+    "technicalDebtRegister": { "status": "missing", "evidence": null }
+  },
+  "productization": {
+    "baselineProfileApproved": false,
+    "pilotLessonsClassified": false,
+    "pilotHacksDispositioned": false,
+    "freshTenantE2ePassed": false,
+    "crossTenantE2ePassed": false,
+    "upgradeE2ePassed": false,
+    "rollbackE2ePassed": false,
+    "secondDealerGoAuthorized": false
+  },
+  "guardrails": {
+    "clonePilotTenant": false,
+    "copyPilotData": false,
+    "promotePilotSpecificConfiguration": false,
+    "enableRealBilling": false,
+    "enableAutonomousCustomerCommunication": false,
+    "inferProviderConfiguration": false,
+    "allowAiGoApproval": false
+  }
+}

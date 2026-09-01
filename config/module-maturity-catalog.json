@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-08-31T22:00:00-04:00",
+  "allowedStates": ["experimental", "pilot", "production-supported", "limited-availability", "planned"],
+  "modules": [
+    { "key": "crm", "name": "Core CRM and Lead Management", "state": "pilot", "entitlement": "crm", "evidence": "docs/operations/FULL_SYSTEM_ACCEPTANCE.md", "limitations": ["Real-pilot acceptance and production operations evidence are incomplete."] },
+    { "key": "appointments-showroom", "name": "Appointments and Showroom", "state": "pilot", "entitlement": "crm", "evidence": "docs/operations/FULL_SYSTEM_ACCEPTANCE.md", "limitations": ["Provider calendar synchronization is not production-accepted."] },
+    { "key": "communications", "name": "Communications", "state": "limited-availability", "entitlement": "crm", "evidence": "docs/operations/FIRST_PILOT_GO_LIVE.md", "limitations": ["Transactional account email is accepted in staging; customer email is excluded and SMS requires tenant-specific acceptance."] },
+    { "key": "inventory", "name": "Inventory", "state": "pilot", "entitlement": "inventory", "evidence": "docs/operations/FULL_SYSTEM_ACCEPTANCE.md", "limitations": ["Production media storage and provider acceptance remain open."] },
+    { "key": "recon", "name": "Recon", "state": "planned", "entitlement": null, "evidence": "docs/operations/FULL_SYSTEM_ACCEPTANCE.md", "limitations": ["No authoritative recon workflow is implemented."] },
+    { "key": "desking-documents-delivery", "name": "Desking, Documents, and Delivery", "state": "pilot", "entitlement": "finance", "evidence": "docs/operations/FULL_SYSTEM_ACCEPTANCE.md", "limitations": ["Printable proposals are not durable e-signature or document storage."] },
+    { "key": "ai-assistance", "name": "AI Assistance", "state": "experimental", "entitlement": "ai", "evidence": "docs/operations/PILOT_READINESS.md", "limitations": ["Provider-backed AI is optional and unconfigured; deterministic briefs do not prove production AI readiness."] },
+    { "key": "training-help-support", "name": "Training, Help, and Support", "state": "experimental", "entitlement": null, "evidence": "docs/operations/LEARNING_SYSTEM.md", "limitations": ["Durable assignment, completion, and operational support ownership remain incomplete."] },
+    { "key": "analytics", "name": "Analytics", "state": "pilot", "entitlement": "reporting", "evidence": "docs/operations/PILOT_HYPERCARE_TELEMETRY.md", "limitations": ["No live-pilot outcome or cross-dealer benchmark is claimed."] },
+    { "key": "service", "name": "Service", "state": "planned", "entitlement": "service", "evidence": "docs/operations/FULL_SYSTEM_ACCEPTANCE.md", "limitations": ["Only truthful unavailable states exist."] },
+    { "key": "marketing-social", "name": "Marketing and Social", "state": "planned", "entitlement": null, "evidence": "docs/operations/FULL_SYSTEM_ACCEPTANCE.md", "limitations": ["Disconnected workspaces do not constitute an integration."] },
+    { "key": "multi-rooftop", "name": "Multi-Rooftop", "state": "experimental", "entitlement": null, "evidence": "docs/operations/FULL_SYSTEM_ACCEPTANCE.md", "limitations": ["Location scoping exists; group rollout acceptance is incomplete."] },
+    { "key": "customer-portal", "name": "Customer Portal", "state": "planned", "entitlement": "customerPortal", "evidence": "docs/operations/FULL_SYSTEM_ACCEPTANCE.md", "limitations": ["No customer portal is implemented."] },
+    { "key": "dealer-portal", "name": "Dealer Portal", "state": "planned", "entitlement": "dealerPortal", "evidence": "docs/operations/FULL_SYSTEM_ACCEPTANCE.md", "limitations": ["No external dealer collaboration portal is implemented."] }
+  ]
+}

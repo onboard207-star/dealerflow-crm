@@ -1,5 +1,12 @@
 # DealerFlow AI Build Status
 
+## POST-PILOT PRODUCTIZATION — NOT AUTHORIZED
+
+- Added a machine-readable evidence gate that prevents productization, pilot cloning, second-dealer GO, unsafe communications/billing activation, or unsupported production-maturity claims before live-pilot and hypercare evidence exists.
+- Added an evidence-linked module maturity catalog. Current states are Experimental, Pilot, Limited Availability, or Planned; no module is represented as Production Supported.
+- Added the repeatable-rollout operating boundary, existing reusable foundations, standard-versus-override model, manual-step registry, fresh-tenant proof requirements, and second-dealer gate.
+- Existing tenant configuration, entitlement, launch-readiness, and idempotent provisioning behavior remains unchanged. No dealer data, production configuration, providers, or application runtime behavior changed.
+
 ## PRODUCTION CUTOVER READINESS — NO-GO
 
 - Added a machine-readable pilot launch manifest with the exact staging candidate, schema version, required gates, explicit exclusions, disabled risky-feature posture, approval fields, and deliberately unverified production inventory.
