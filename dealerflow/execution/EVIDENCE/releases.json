@@ -101,6 +101,39 @@
       "customerSafeNotes": [],
       "hotfix": false,
       "mainlineReconciled": true
+    },
+    {
+      "id": "REL-CAND-20260901-004",
+      "version": null,
+      "branch": "codex/staging-deployment",
+      "tag": null,
+      "commit": "028c198d226d1979ed539c671b0719410f8c0d33",
+      "state": "Deployed to Isolated Staging",
+      "targetEnvironment": "staging",
+      "targetCohort": ["synthetic-demo-only"],
+      "capabilityIds": ["CAP-CRM-001", "CAP-CRM-002", "CAP-INV-001", "CAP-DEAL-001", "CAP-RPT-001", "CAP-PLT-001", "CAP-DATA-001"],
+      "workItemIds": ["DWI-PILOT-002", "DWI-PILOT-004"],
+      "migrations": {"changed": true, "latest": "0039_import_commit_reversal"},
+      "versions": {"providerConfig": "unconfigured", "tenantConfig": "unconfigured", "templates": "pilot-demo-v1", "prompts": "repository", "featureFlags": "tenant-configuration"},
+      "dimensions": {"deployable": true, "deployed": true, "enabled": false, "supported": false},
+      "gates": {
+        "repositoryGate": {"status": "verified", "evidenceIds": ["EVD-STAGING-ISOLATION-001", "EVD-MIGRATION-0039-001"]},
+        "requiredReview": {"status": "verified", "evidenceIds": ["EVD-STAGING-ISOLATION-001", "EVD-MIGRATION-0039-001"], "reason": "Explicit authorization was limited to the isolated staging target and reviewed migration."},
+        "migrationSafety": {"status": "verified", "evidenceIds": ["EVD-MIGRATION-0039-001"]},
+        "tenantIsolation": {"status": "verified", "evidenceIds": ["EVD-STAGING-ISOLATION-001"]},
+        "security": {"status": "verified", "evidenceIds": ["EVD-STAGING-ISOLATION-001"]},
+        "providerReadiness": {"status": "blocked", "evidenceIds": ["EVD-R2-001", "EVD-COMMS-001", "EVD-AI-PROVIDER-001"]},
+        "documentationTrainingSupport": {"status": "blocked", "evidenceIds": ["EVD-SUPPORT-001", "EVD-ROLE-UAT-001"]},
+        "observability": {"status": "blocked", "evidenceIds": ["EVD-ALERT-001"]},
+        "backupRollback": {"status": "blocked", "evidenceIds": ["EVD-RESTORE-001"]}
+      },
+      "knownIssues": ["Required runtime/email configuration and external providers remain intentionally unavailable.", "Human role UAT and authorized non-demo pilot import dry run are missing.", "Pilot cutover remains NO_GO."],
+      "rollback": "Use Render's isolated staging recovery controls for database recovery and redeploy the prior accepted image if necessary. Production resources are out of scope.",
+      "documentation": ["docs/operations/STAGING_GATE_RESOLUTION_2026-09-01.md", "docs/operations/SYNTHETIC_PILOT_HARNESS.md"],
+      "supportNotes": ["Exact commit and migration 0039 are verified in isolated staging; provider activation, non-demo tenants, and production remain unauthorized."],
+      "customerSafeNotes": [],
+      "hotfix": false,
+      "mainlineReconciled": true
     }
   ]
 }

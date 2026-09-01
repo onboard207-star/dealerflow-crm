@@ -10,7 +10,7 @@
 
 No AUTO item is currently eligible.
 
-Staging preflight is blocked by `HG-STG-001`: Render labels the enclosing environment `Production`, and the database contains an active production-class tenant alongside the demo tenant. The next pilot-critical items also require review, external configuration, tenant authorization, or accountable human ownership. `DWI-PILOT-006` requires an authorized exact-release pilot import dry run; `DWI-PILOT-007` then requires human role UAT. None may be auto-completed from repository or stale-release evidence.
+The isolated Render target is active in `DealerFlow Staging`: web service `srv-dabk8d610ojc73ds3afg` uses database `dpg-dabjm5e1egvs73b1s92g-a` and runs exact commit `028c198d226d1979ed539c671b0719410f8c0d33`. Liveness and private database connectivity pass. The fresh database contained no organizations or production-class data; the reviewed chain was applied and validated through migration `0039_import_commit_reversal` with final hash `8c70e7a35a2d3836500859acb17e08df26bbf97ca5840e02d9589d4b886354f7`. Required runtime/email configuration and optional providers remain intentionally unavailable. Governed synthetic staging seed/reset/reseed is the next authorized AUTO path. Non-demo import, provider activation, human UAT, and pilot GO remain reviewed or human-gated.
 
 ## Queue Summary
 
@@ -23,4 +23,4 @@ Staging preflight is blocked by `HG-STG-001`: Render labels the enclosing enviro
 
 ## Safe Boundary
 
-No deployment, migration, seed/reset, import, provider credential change, real customer send, destructive cleanup, or pilot GO is authorized on the current mixed/Production-labeled Render environment. Resume after an isolated Render Staging service and database are identified, then run `pnpm execution:check`, `pnpm execution:next`, and the gate matrix.
+The isolated staging service may receive only governed synthetic/demo AUTO actions. Migration `0039` is complete. No non-demo import/reversal, provider activation, real customer send, destructive cleanup, or pilot GO is authorized. The old mixed/Production-labeled service and database remain closed to mutation. Continue the guarded synthetic seed/reset/reseed and available non-provider acceptance checks, then stop at the next REVIEW/HUMAN_GATE or when no AUTO item remains eligible.

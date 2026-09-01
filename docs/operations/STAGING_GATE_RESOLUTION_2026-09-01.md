@@ -71,3 +71,37 @@ This proves only current-runtime health. It is not exact-release deployment or p
 Create or designate an explicit isolated Render **Staging** environment and database that contain no production-class tenant data. Provide the resulting web-service and database identifiers. After that isolation is proved, Codex can deploy the exact reviewed descendant, apply migration 0039, verify health, seed/reset the demo fixture, and run the synthetic import/reversal and acceptance sequence authorized by the packet.
 
 Production remains closed and pilot cutover remains `NO_GO`.
+
+## Isolated staging activation addendum
+
+An isolated Render target was established after the original mixed-environment preflight stopped:
+
+- Render project: `DealerFlow AI` (`prj-dabjgncs728c73fhi4t0`).
+- Render environment: `DealerFlow Staging` (`evm-dabjhoss728c73fhllk0`).
+- Web service: `dealerflow-isolated-staging` (`srv-dabk8d610ojc73ds3afg`).
+- PostgreSQL database: `dealerflow-isolated-staging-db` (`dpg-dabjm5e1egvs73b1s92g-a`).
+- Staging URL: `https://dealerflow-isolated-staging.onrender.com`.
+- Deployed branch and commit: `codex/staging-deployment` at `028c198d226d1979ed539c671b0719410f8c0d33`.
+- Runtime: Docker from `./Dockerfile`, final `runner` stage, Starter compute, Virginia region, `/api/health`, auto-deploy disabled.
+- Environment identity: `APP_ENV=staging`; database connectivity uses only the new database's private internal URL with `DATABASE_SSL_MODE=disable`.
+- `GET /api/health`: HTTP 200 with the exact staging commit.
+- `GET /api/ready`: HTTP 503; database is `ready`, required runtime/email configuration is `unavailable`, and AI, media, and alerting are `not-configured`.
+- Provider isolation: no Resend, Twilio, OpenAI, Cloudflare R2, Slack, calendar, or other production/provider credentials were copied or enabled.
+
+The database was created fresh without production data. No migration, seed, reset, import, reversal, provider transaction, or outbound communication ran. Migration `0039_import_commit_reversal` remains unapplied. The prior `dealerflow-staging` service and its production-class database were not modified.
+
+The exact next gate is recovery/schema preflight and explicit authorization to apply migration `0039` to this isolated database. Pilot cutover remains `NO_GO`.
+
+## Recovery and migration activation
+
+The authorized recovery/schema preflight completed against database `dpg-dabjm5e1egvs73b1s92g-a`:
+
+- Render exposes point-in-time recovery for the prior three days.
+- The target database name was `dealerflow_staging_nvzi`; it contained no application schema, migration ledger, organizations, or production-class data before activation.
+- Migration `0039_import_commit_reversal.sql` was unchanged from commit `028c198d226d1979ed539c671b0719410f8c0d33` and had SHA-256 `8c70e7a35a2d3836500859acb17e08df26bbf97ca5840e02d9589d4b886354f7`.
+- The repository runner applied the fresh schema chain through `0039` and reported success.
+- The Drizzle ledger contains 40 entries and its final hash matches the reviewed migration hash.
+- `import_applied_records` has row-level security enabled and forced, one tenant-isolation policy, immutable/reversal constraints, and its same-batch foreign key.
+- Post-migration organization and production-class organization counts remained zero.
+
+No seed, reset, import, reversal, provider transaction, outbound communication, production action, or legacy deletion was part of this migration batch. Governed synthetic/demo staging work may proceed; all non-demo, provider, human-acceptance, and production gates remain closed.

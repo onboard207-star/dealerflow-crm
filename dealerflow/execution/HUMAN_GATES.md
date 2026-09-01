@@ -33,3 +33,13 @@ No command is currently eligible. GO requires every mandatory gate, a named coho
 - Required human action: provision or move the service and database into an explicit isolated Render Staging environment with no production-class tenant data, then confirm the new service/database identifiers.
 - Until resolved: do not deploy, migrate, seed, reset, import, or activate providers on the current mixed environment. Non-destructive health inspection remains allowed.
 - Production remains NO_GO.
+
+### Resolution evidence — September 1, 2026
+
+- Isolated Render environment: `DealerFlow Staging` / `evm-dabjhoss728c73fhllk0`.
+- Isolated service: `dealerflow-isolated-staging` / `srv-dabk8d610ojc73ds3afg`.
+- Isolated database: `dealerflow-isolated-staging-db` / `dpg-dabjm5e1egvs73b1s92g-a`.
+- Exact deployed commit: `028c198d226d1979ed539c671b0719410f8c0d33`.
+- The fresh database contained no application tables or organizations before migration and no production-class organizations afterward.
+- The reviewed migration chain applied through `0039`; its final ledger hash matches the repository file.
+- This resolves staging isolation and migration activation only. Provider, non-demo pilot, human UAT, operational-owner, and production gates remain closed.
