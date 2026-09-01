@@ -21,5 +21,12 @@
     { "key": "current-inventory", "purpose": "Available and held physical-unit fixtures", "expectedCount": 48 }
   ],
   "analyticsPolicy": "Exclude this organization from live dealer, billing, coaching, benchmark, and pilot-adoption aggregates.",
-  "resetPolicy": "Reconcile deterministic records only. Production and pilot tenants are never eligible."
+  "resetPolicy": {
+    "mode": "atomic-deterministic-owned-record-reseed",
+    "requiredDataClass": "demo",
+    "requiredConfirmation": "RESET-SYNTHETIC-DEMO",
+    "requiredFixtureVersion": "pilot-demo-v1",
+    "refuseUnexpectedTenantRecords": true,
+    "productionAndPilotEligible": false
+  }
 }

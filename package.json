@@ -15,6 +15,7 @@
     "tenant:provision": "node scripts/provision-tenant.mjs",
     "tenant:seed-template": "node scripts/seed-dealership-template.mjs",
     "synthetic:seed": "node scripts/seed-synthetic-pilot.mjs --confirm SYNTHETIC-DEMO",
+    "synthetic:reset": "node scripts/seed-synthetic-pilot.mjs --mode reset --confirm RESET-SYNTHETIC-DEMO --fixture-version pilot-demo-v1",
     "pilot:cutover:check": "node scripts/validate-pilot-cutover.mjs",
     "productization:check": "node scripts/validate-productization.mjs",
     "commercial:check": "node scripts/validate-commercial-launch.mjs",

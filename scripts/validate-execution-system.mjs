@@ -145,7 +145,7 @@ export function selectNextEligible(workRegistry) {
 export function renderDailyBuildBrief(workRegistry, releaseRegistry, governance, result) {
   const active = workRegistry.items.filter((item) => ["Ready", "In Progress", "In Review", "Verification"].includes(item.state));
   const blocked = workRegistry.items.filter((item) => item.state === "Blocked");
-  const release = releaseRegistry.releases[0];
+  const release = releaseRegistry.releases.at(-1);
   const lines = [
     "# DealerFlow Daily Build Brief",
     "",
@@ -174,16 +174,16 @@ export function renderDailyBuildBrief(workRegistry, releaseRegistry, governance,
     "",
     "## Next Deterministic Actions",
     "",
-    "1. Continue DWI-PILOT-002: implement transactional import commit, reconciliation, and reversal with tenant-integrity regression coverage.",
+    "1. Continue DWI-PILOT-004: complete the governed synthetic reset/reseed harness with demo-only and relationship-integrity coverage.",
     "2. Resolve DEC-PILOT-001 so recovery, alert, and support exercises can run.",
     "3. Provision R2 and execute DWI-PILOT-003 media acceptance before optional AI provider calibration.",
-    "4. Unblock DWI-PILOT-004 only after reversible import evidence is current."
+    "4. Keep DWI-PILOT-006 and DWI-PILOT-007 behind tenant authorization and human review."
   ];
   return `${lines.join("\n")}\n`;
 }
 
 export function renderEndOfDayHandoff(workRegistry, releaseRegistry, governance, result) {
-  const release = releaseRegistry.releases[0];
+  const release = releaseRegistry.releases.at(-1);
   const completed = workRegistry.items.filter((item) => item.state === "Done");
   const verification = workRegistry.items.filter((item) => ["In Review", "Verification"].includes(item.state));
   return `# DealerFlow End-of-Day Handoff
@@ -212,10 +212,10 @@ ${governance.decisions.filter((item) => item.state !== "Resolved").map((item) =>
 
 ## Next Tasks in Exact Order
 
-1. DWI-PILOT-002 — transactional import commit, reconciliation, reversal, and tests.
+1. DWI-PILOT-004 — governed synthetic reset/reseed implementation and tests.
 2. DWI-PILOT-005 / DEC-PILOT-001 — assign operational owners.
 3. DWI-PILOT-003 — R2 acceptance, then required communications and AI provider paths.
-4. DWI-PILOT-004 — reset and role UAT after import acceptance.
+4. DWI-PILOT-006 and DWI-PILOT-007 — authorized import dry run and human role UAT.
 5. DWI-PILOT-001 — complete recovery, alert, escalation, and support exercises as dependencies become available.
 
 ## Safe Stopping Point
@@ -225,7 +225,7 @@ The repository candidate remains un-deployed and unsupported. Pilot cutover rema
 }
 
 export function renderWeeklyViews(workRegistry, releaseRegistry, governance, result, audience) {
-  const release = releaseRegistry.releases[0];
+  const release = releaseRegistry.releases.at(-1);
   if (audience === "executive") return `# Founder and Executive Weekly View
 
 - Current outcome: make the first controlled pilot reliable.
@@ -296,7 +296,7 @@ async function main() {
   if (view === "daily") process.stdout.write(renderDailyBuildBrief(work, releases, governance, result));
   else if (view === "eod") process.stdout.write(renderEndOfDayHandoff(work, releases, governance, result));
   else if (["executive", "engineering", "implementation"].includes(view)) process.stdout.write(renderWeeklyViews(work, releases, governance, result, view));
-  else if (view === "release-notes") process.stdout.write(renderReleaseNotes(releases.releases[0]));
+  else if (view === "release-notes") process.stdout.write(renderReleaseNotes(releases.releases.at(-1)));
   else process.stdout.write(`Execution system valid. Work items: ${work.items.length}. P0/P1/P2/P3 active: ${result.prioritiesSummary.P0}/${result.prioritiesSummary.P1}/${result.prioritiesSummary.P2}/${result.prioritiesSummary.P3}. Aging active: ${result.aging.length}.\n`);
 }
 

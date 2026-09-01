@@ -402,3 +402,12 @@
 - Commit and reversal are restricted to tenants whose canonical data class is `demo` or `pilot`. Production-class tenants fail closed; no production activation or real tenant import occurred.
 - Reversal deletes only entity IDs recorded by the exact batch, in dependency order, retains immutable applied/reversal evidence, and rolls back atomically when any entity is missing or protected by downstream relationships.
 - Targeted validation passes 58 import/migration tests across four files plus strict TypeScript and Drizzle migration validation. The full suite initially experienced one unrelated showroom-test worker timeout; that file then passed 4/4 independently and the bounded full-suite rerun passed 487 tests across 113 files. The optimized production build passes.
+
+## GOVERNED SYNTHETIC RESET HARNESS — SEPTEMBER 1, 2026
+
+- Added a version-bound `pnpm synthetic:reset` command that rejects production, requires the exact synthetic confirmation and fixture version, and can target only the canonical active `demo` organization.
+- Added an in-transaction fixture-ownership preflight. Any non-fixture Customer, Lead, Inventory, Deal, related lifecycle record, or membership makes the reset fail before deletion.
+- The reset deletes only deterministic fixture-owned lifecycle IDs in dependency order and reseeds the complete two-year scenario inside the same transaction; dependency or reseed failures roll back atomically.
+- Organizations, locations, staff users, roles, memberships, and append-only audit history are not deleted. Every successful reset appends a versioned `synthetic.reset_completed` audit record.
+- No reset was executed against staging or any shared database in this code batch. Exact-release database execution remains a reviewed acceptance step.
+- Validation passes: Drizzle migration check, portfolio and execution reconciliation, lint with no warnings, strict TypeScript, 492 tests across 113 files, optimized production build, and whitespace integrity.

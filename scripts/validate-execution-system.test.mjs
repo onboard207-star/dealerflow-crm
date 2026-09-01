@@ -18,14 +18,14 @@ describe("execution operating system", () => {
   it("accepts the pilot-first execution inventory and renders a resumable brief", () => {
     const result = validate();
     expect(result.valid).toBe(true);
-    expect(result.prioritiesSummary).toEqual({P0: 0, P1: 7, P2: 0, P3: 1});
-    expect(selectNextEligible(work)?.id).toBe("DWI-PILOT-002");
-    expect(renderDailyBuildBrief(work, releases, governance, result)).toContain("DWI-PILOT-002");
+    expect(result.prioritiesSummary).toEqual({P0: 0, P1: 6, P2: 0, P3: 1});
+    expect(selectNextEligible(work)?.id).toBe("DWI-PILOT-004");
+    expect(renderDailyBuildBrief(work, releases, governance, result)).toContain("DWI-PILOT-004");
     expect(renderEndOfDayHandoff(work, releases, governance, result)).toContain("Safe Stopping Point");
     expect(renderWeeklyViews(work, releases, governance, result, "executive")).toContain("Pilot readiness: NO_GO");
     expect(renderWeeklyViews(work, releases, governance, result, "engineering")).toContain("Open pull requests: 0");
     expect(renderWeeklyViews(work, releases, governance, result, "implementation")).toContain("no pilot cohort is authorized");
-    expect(renderReleaseNotes(releases.releases[0])).toContain("No customer release is authorized");
+    expect(renderReleaseNotes(releases.releases.at(-1))).toContain("No customer release is authorized");
   });
 
   it("prevents Done when closure evidence is missing", () => {
