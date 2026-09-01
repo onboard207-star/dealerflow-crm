@@ -1,5 +1,12 @@
 # DealerFlow AI Build Status
 
+## 100+ ROOFTOP ENTERPRISE / PARTNER SCALE — NO-GO
+
+- Added separate evidence gates for 100-rooftop capacity, enterprise dealer-group rollout, and partner/reseller activation; all remain NO-GO and require the 50-rooftop gate first.
+- Codified the current safe boundary: Organization is the canonical tenant; no enterprise/group/partner, delegated administration, Platform Admin, cross-tenant support, SSO/SCIM, partner API, usage ledger, enterprise billing, or regional routing authority exists.
+- Added an explicit configuration inheritance registry. Current inheritance is Platform Default to Organization; partner/group/rooftop/user layers remain deferred, and platform security controls cannot be overridden for branding.
+- No enterprise customers, groups, partners, contracts, certifications, regions, capacity, costs, economics, or access paths were fabricated. Runtime and production behavior remains unchanged.
+
 ## 25–50 ROOFTOP SCALE — NO-GO
 
 - Added a machine-readable capacity inventory covering rooftop/user load, CRM ingestion, communications, Inventory/media, AI, jobs, webhooks, imports, documents, support, database connections, and API latency. Every unmeasured capacity and threshold remains explicitly Unknown.

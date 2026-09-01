@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "currentLayers": ["platform-default", "organization"],
+  "deferredLayers": ["partner-brand", "enterprise-group", "rooftop", "user-preference"],
+  "fields": [
+    { "key": "brand.productName", "currentOverrideLayer": "organization", "versioned": true, "securityRequired": false },
+    { "key": "brand.logoUrl", "currentOverrideLayer": "organization", "versioned": true, "securityRequired": false },
+    { "key": "brand.logoDarkUrl", "currentOverrideLayer": "organization", "versioned": true, "securityRequired": false },
+    { "key": "brand.faviconUrl", "currentOverrideLayer": "organization", "versioned": true, "securityRequired": false },
+    { "key": "brand.colors", "currentOverrideLayer": "organization", "versioned": true, "securityRequired": false },
+    { "key": "brand.supportEmail", "currentOverrideLayer": "organization", "versioned": true, "securityRequired": false },
+    { "key": "brand.supportPhone", "currentOverrideLayer": "organization", "versioned": true, "securityRequired": false },
+    { "key": "customDomain", "currentOverrideLayer": null, "versioned": true, "securityRequired": false, "status": "deferred-until-domain-verification" },
+    { "key": "features", "currentOverrideLayer": "organization", "versioned": true, "securityRequired": false },
+    { "key": "terminology", "currentOverrideLayer": "organization", "versioned": true, "securityRequired": false },
+    { "key": "tenantIsolation", "currentOverrideLayer": null, "versioned": false, "securityRequired": true },
+    { "key": "authorization", "currentOverrideLayer": null, "versioned": false, "securityRequired": true },
+    { "key": "auditIdentity", "currentOverrideLayer": null, "versioned": false, "securityRequired": true },
+    { "key": "providerSignatureVerification", "currentOverrideLayer": null, "versioned": false, "securityRequired": true },
+    { "key": "consentAndOptOut", "currentOverrideLayer": null, "versioned": false, "securityRequired": true }
+  ]
+}

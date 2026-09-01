@@ -19,6 +19,7 @@
     "productization:check": "node scripts/validate-productization.mjs",
     "commercial:check": "node scripts/validate-commercial-launch.mjs",
     "scale:check": "node scripts/validate-scale-capacity.mjs",
+    "enterprise:check": "node scripts/validate-enterprise-readiness.mjs",
     "smoke:deployment": "node scripts/smoke-deployment.mjs",
     "validate": "pnpm db:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },

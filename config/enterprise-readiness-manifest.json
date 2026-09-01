@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-08-31T22:45:00-04:00",
+  "lowerScaleGate": {
+    "twentyFiveRooftops": "NO_GO",
+    "fiftyRooftops": "NO_GO"
+  },
+  "recommendations": {
+    "oneHundredRooftops": "NO_GO",
+    "enterpriseGroupRollout": "NO_GO",
+    "partnerResellerActivation": "NO_GO"
+  },
+  "authorities": {
+    "enterpriseAccounts": false,
+    "dealerGroups": false,
+    "partnerOrganizations": false,
+    "delegatedAdministration": false,
+    "platformAdministration": false,
+    "crossTenantSupport": false,
+    "enterpriseSso": false,
+    "scim": false,
+    "partnerApis": false,
+    "enterpriseBilling": false,
+    "usageLedger": false,
+    "regionalTenantRouting": false
+  },
+  "existingBoundaries": {
+    "organizationTenantIsCanonicalBoundary": true,
+    "rooftopIsOrganizationScoped": true,
+    "tenantBrandingIsVersioned": true,
+    "customDomainOwnershipVerified": false,
+    "partnerHasImplicitCustomerAccess": false,
+    "enterpriseContractGrantsRuntimeAccess": false,
+    "brandingMayRemoveSecurityControls": false,
+    "largeTenantMayBypassFairness": false,
+    "certificationClaimsAuthorized": false
+  },
+  "requiredEvidence": {
+    "fiftyRooftopGatePassed": false,
+    "measuredHundredRooftopLoad": false,
+    "enterpriseNoisyNeighborPassed": false,
+    "failureDomainPassed": false,
+    "crossGroupIsolationPassed": false,
+    "partnerDelegationSecurityPassed": false,
+    "whiteLabelIsolationPassed": false,
+    "enterpriseRolloutPassed": false,
+    "enterpriseRecoveryPassed": false,
+    "providerCapacityProven": false,
+    "supportImplementationCapacityProven": false,
+    "costAllocationVerified": false,
+    "enterpriseIdentityAccepted": false,
+    "apiWebhookGovernanceAccepted": false,
+    "partnerCommercialTermsApproved": false
+  }
+}
