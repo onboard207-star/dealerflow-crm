@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "recordId": "HGR-20260901-001",
+  "packet": "DealerFlow Codex Gate Resolution — Staging Activation, Human Approval Matrix & Autonomous Resume — 2026-09-01",
+  "startingCommit": "03d09bdfd511f1c83b5bef6d457ce54c35df808a",
+  "branch": "codex/staging-deployment",
+  "environmentScope": "staging-only",
+  "productionGo": false,
+  "observedPreflight": {
+    "renderServiceId": "srv-da70hdc9v7es739ona0g",
+    "renderServiceName": "dealerflow-staging",
+    "renderDatabaseId": "dpg-da70e5ifngtc73bt7cs0-a",
+    "renderDatabaseName": "dealerflow-staging-db",
+    "renderEnvironmentLabel": "Production",
+    "applicationEnvironment": "staging",
+    "branch": "codex/staging-deployment",
+    "deployedCommit": "856c7a02284588330128c332cdb48db0f3fc2be0",
+    "reviewedCommit": "03d09bdfd511f1c83b5bef6d457ce54c35df808a",
+    "databaseMigrationHead": "0038_organization_data_class",
+    "databaseMigrationHeadHash": "cb3b916e4436f4fef45fad7a46e6f9f0e981aac20aae0e1369d3b10a3f432222",
+    "pendingReviewedMigration": "0039_import_commit_reversal",
+    "recovery": "Render point-in-time recovery available for the prior 3 days; no restore exercise was executed.",
+    "tenantClasses": ["demo", "production"],
+    "syntheticTenant": {"id":"org_demo_first_pilot_v1","dataClass":"demo","active":true},
+    "nonDemoTenantPresent": true,
+    "smoke": {"release":"856c7a02284588330128c332cdb48db0f3fc2be0","health":true,"readiness":true,"login":true,"anonymousJobRejection":true,"securityHeaders":true},
+    "stopReason": "The deployment system labels the environment Production and the database contains a production-class tenant. APP_ENV=staging and resource names do not resolve that conflict."
+  },
+  "providerClassifications": [
+    {"provider":"Resend transactional email","classification":"LIVE/PRODUCTION — DO NOT USE","reason":"Credential is configured and sender/reply identities are not reserved test addresses; recipient isolation was not proved."},
+    {"provider":"Twilio SMS/voice","classification":"CREDENTIAL MISSING","reason":"No tenant credential or callback URL is configured."},
+    {"provider":"Cloudflare R2","classification":"CONFIG MISSING","reason":"Provider, bucket, credentials, and public host are not configured."},
+    {"provider":"OpenAI","classification":"CREDENTIAL MISSING","reason":"No provider, model, or restricted project credential is configured."},
+    {"provider":"External alert webhook","classification":"CONFIG MISSING","reason":"No destination or signing secret is configured."},
+    {"provider":"Slack","classification":"NOT REQUIRED FOR CURRENT STAGING PROOF","reason":"Explicitly excluded from the first pilot and not configured."},
+    {"provider":"External calendar synchronization","classification":"NOT REQUIRED FOR CURRENT STAGING PROOF","reason":"Internal calendar workflows exist; external synchronization is not production-accepted or required for this proof."},
+    {"provider":"Synthetic connector stubs","classification":"MOCK READY","reason":"Deterministic repository tests exist, but mock results are not provider acceptance evidence."}
+  ],
+  "decisions": [
+    {"gateId":"HG-STG-001","description":"Deploy the exact reviewed candidate to a provably staging Render service","lane":"staging-activation","currentState":"BLOCKED_AMBIGUOUS_ENVIRONMENT","evidence":["REL-CAND-20260901-003"],"missingRequirement":"A Render environment explicitly isolated and labeled staging, with no production-class tenant data, or a separately authorized remediation plan.","risk":"high","recommendedDecision":"NEEDS_HUMAN_DECISION","exactAction":"Provision or move the service and database into an explicit Render Staging environment and use an isolated staging database before deployment.","rollbackContainment":"Do not deploy to the current mixed/Production-labeled environment; current healthy release remains live.","dependentWorkItems":["DWI-PILOT-003","DWI-PILOT-006","DWI-PILOT-007"]},
+    {"gateId":"HG-STG-002","description":"Apply validated migration 0039 to the proved staging database","lane":"staging-activation","currentState":"BLOCKED_AMBIGUOUS_ENVIRONMENT","evidence":["EVD-IMPORT-TEST-001"],"missingRequirement":"Resolve HG-STG-001. The actual schema matches reviewed migration 0038 and Render offers three-day PITR, but no isolated staging target is proved.","risk":"high","recommendedDecision":"NEEDS_HUMAN_DECISION","exactAction":"After isolation is proved, capture a fresh recovery point and apply migration 0039 through the reviewed pre-deploy path.","rollbackContainment":"No migration was applied; preserve migration head 0038 on the current database.","dependentWorkItems":["DWI-PILOT-006"]},
+    {"gateId":"HG-STG-003","description":"Seed and reconcile the canonical synthetic demo tenant","lane":"pilot-closure","currentState":"BLOCKED_EXACT_RELEASE_NOT_DEPLOYED","evidence":["EVD-RESET-001"],"missingRequirement":"Resolve HG-STG-001, deploy the exact release, and prove the target database contains no non-demo tenant data.","risk":"high","recommendedDecision":"APPROVE_WITH_CONDITION","exactAction":"Seed only org_demo_first_pilot_v1 after isolated staging activation.","rollbackContainment":"No seed ran; current demo tenant remains unchanged.","dependentWorkItems":["DWI-PILOT-007"]},
+    {"gateId":"HG-STG-004","description":"Run one guarded synthetic reset and deterministic reseed","lane":"pilot-closure","currentState":"BLOCKED_EXACT_RELEASE_NOT_DEPLOYED","evidence":["EVD-RESET-001"],"missingRequirement":"Resolve HG-STG-001 and HG-STG-003; the deployed commit predates the reviewed guarded reset harness.","risk":"high","recommendedDecision":"APPROVE_WITH_CONDITION","exactAction":"Run once only after isolated exact-release staging seed reconciliation.","rollbackContainment":"No reset ran; no tenant data changed.","dependentWorkItems":["DWI-PILOT-007"]},
+    {"gateId":"HG-STG-005","description":"Exercise synthetic import, commit, reconciliation, guarded reversal, and replay","lane":"pilot-closure","currentState":"BLOCKED_EXACT_RELEASE_NOT_DEPLOYED","evidence":["EVD-IMPORT-TEST-001"],"missingRequirement":"Resolve HG-STG-001 and HG-STG-002, deploy the import endpoints, and use an isolated demo database.","risk":"high","recommendedDecision":"APPROVE_WITH_CONDITION","exactAction":"Execute only after exact-release isolation; capture batch-bounded evidence.","rollbackContainment":"No import ran; no canonical records changed.","dependentWorkItems":["DWI-PILOT-006"]},
+    {"gateId":"HG-STG-006","description":"Run non-destructive staging smoke and available acceptance journeys","lane":"pilot-closure","currentState":"PARTIAL_STALE_RELEASE_SMOKE_PASSED","evidence":[],"missingRequirement":"Exact reviewed release and an authenticated synthetic-only workspace for golden-journey and responsive acceptance.","risk":"low","recommendedDecision":"APPROVE_WITH_CONDITION","exactAction":"Health, readiness, login, anonymous job rejection, and security-header smoke passed on deployed commit 856c7a0; repeat on the exact candidate after isolation.","rollbackContainment":"No mutation occurred; stale-release smoke is not promotion evidence.","dependentWorkItems":["DWI-PILOT-003","DWI-PILOT-007"]},
+    {"gateId":"HG-STG-007","description":"Activate or exercise staging providers","lane":"provider-acceptance","currentState":"NEEDS_CONFIGURATION","evidence":["EVD-R2-001","EVD-COMMS-001","EVD-AI-PROVIDER-001"],"missingRequirement":"R2, Twilio, AI, alerting, and test recipient/sink configuration. Existing Resend identity is not test-isolated.","risk":"high","recommendedDecision":"NEEDS_CONFIGURATION","exactAction":"Configure only restricted sandbox/test providers in the future isolated staging environment; keep current Resend sends disabled for this exercise.","rollbackContainment":"No provider transaction or outbound send occurred.","dependentWorkItems":["DWI-PILOT-003"]},
+    {"gateId":"HG-PILOT-001","description":"Assign launch, rollback, and monitored support owners","lane":"human-gate","currentState":"BLOCKED","evidence":["EVD-OWNER-DECISION-001"],"missingRequirement":"Named accountable people, acknowledged coverage, and monitored support path.","risk":"high","recommendedDecision":"NEEDS_HUMAN_DECISION","exactAction":"An authorized owner records the three accountable roles and acknowledges the escalation policy.","rollbackContainment":"Keep pilot cutover NO_GO.","dependentWorkItems":["DWI-PILOT-005","DWI-PILOT-001"]},
+    {"gateId":"HG-PILOT-002","description":"Use a non-demo pilot tenant for import dry-run acceptance","lane":"human-gate","currentState":"BLOCKED","evidence":["EVD-IMPORT-DRYRUN-001"],"missingRequirement":"Exact pilot tenant/operator authorization and exact-release staging evidence.","risk":"high","recommendedDecision":"NEEDS_HUMAN_DECISION","exactAction":"Authorize the named pilot tenant and operator separately; this packet authorizes only synthetic/demo staging use.","rollbackContainment":"Retain preview-only behavior for non-demo tenants.","dependentWorkItems":["DWI-PILOT-006","DWI-PILOT-007"]},
+    {"gateId":"HG-PROD-001","description":"Production deployment, migration, activation, communications, financial actions, destructive cleanup, or broad security changes","lane":"production","currentState":"CLOSED","evidence":[],"missingRequirement":"Separate explicit production authorization and every applicable readiness gate.","risk":"critical","recommendedDecision":"KEEP_CLOSED","exactAction":"None.","rollbackContainment":"Production remains unchanged and pilot cutover remains NO_GO.","dependentWorkItems":[]}
+  ]
+}

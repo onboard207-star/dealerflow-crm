@@ -24,3 +24,12 @@
 ## HG-PILOT-003 — Pilot and Production GO
 
 No command is currently eligible. GO requires every mandatory gate, a named cohort, exact release evidence, and explicit authorized approval. Deployment and activation remain prohibited.
+
+## HG-STG-001 — Resolve Render Environment Isolation
+
+- Observed service: `dealerflow-staging` / `srv-da70hdc9v7es739ona0g`, with `APP_ENV=staging`.
+- Conflicting authority: Render places the service and `dealerflow-staging-db` under an environment labeled `Production`; the database contains both an active `demo` tenant and an active `production`-class tenant.
+- Current release: `856c7a02284588330128c332cdb48db0f3fc2be0`, not the reviewed gate-resolution candidate.
+- Required human action: provision or move the service and database into an explicit isolated Render Staging environment with no production-class tenant data, then confirm the new service/database identifiers.
+- Until resolved: do not deploy, migrate, seed, reset, import, or activate providers on the current mixed environment. Non-destructive health inspection remains allowed.
+- Production remains NO_GO.

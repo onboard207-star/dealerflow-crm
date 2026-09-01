@@ -1,5 +1,9 @@
 # DealerFlow Execution Blockers
 
+## HG-STG-001 — Ambiguous Render environment identity
+
+The staging-named service reports `APP_ENV=staging`, but Render places the service/database under an environment labeled `Production`, and the database contains an active production-class tenant. No deployment, migration, seed/reset, or import is permitted there under the staging authorization packet. Next: provision or designate an isolated Render Staging environment/database containing no production-class tenant data and provide its resource identifiers.
+
 ## DWI-PILOT-001 — External dependency
 
 Backup evidence, monitoring destination, and named operational ownership are missing. Next: resolve `DEC-PILOT-001`, then run restore, alert, and support exercises under review.

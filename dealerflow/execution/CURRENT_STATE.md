@@ -10,7 +10,7 @@
 
 No AUTO item is currently eligible.
 
-The next pilot-critical items require review, external configuration, tenant authorization, or accountable human ownership. `DWI-PILOT-006` requires an authorized exact-release pilot import dry run; `DWI-PILOT-007` then requires human role UAT. Neither may be auto-completed from repository evidence.
+Staging preflight is blocked by `HG-STG-001`: Render labels the enclosing environment `Production`, and the database contains an active production-class tenant alongside the demo tenant. The next pilot-critical items also require review, external configuration, tenant authorization, or accountable human ownership. `DWI-PILOT-006` requires an authorized exact-release pilot import dry run; `DWI-PILOT-007` then requires human role UAT. None may be auto-completed from repository or stale-release evidence.
 
 ## Queue Summary
 
@@ -23,4 +23,4 @@ The next pilot-critical items require review, external configuration, tenant aut
 
 ## Safe Boundary
 
-No production deployment, tenant enablement, provider credential change, real customer send, destructive cleanup, or pilot GO is authorized. Resume with `pnpm execution:check`, `pnpm execution:next`, and the active item inspection.
+No deployment, migration, seed/reset, import, provider credential change, real customer send, destructive cleanup, or pilot GO is authorized on the current mixed/Production-labeled Render environment. Resume after an isolated Render Staging service and database are identified, then run `pnpm execution:check`, `pnpm execution:next`, and the gate matrix.

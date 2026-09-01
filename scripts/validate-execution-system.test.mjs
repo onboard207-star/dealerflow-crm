@@ -9,12 +9,21 @@ const work = await readExecution("EXECUTION_QUEUE.yaml");
 const evidence = await readExecution("EVIDENCE/registry.json");
 const releases = await readExecution("EVIDENCE/releases.json");
 const governance = await readExecution("governance-registry.json");
+const gateResolution = await readExecution("HUMAN_GATE_RESOLUTION.json");
 const portfolio = await read("capability-implementation-registry.json");
 const roadmap = await read("roadmap-outcome-registry.json");
 
 const validate = (overrides = {}) => reconcileExecutionSystem(overrides.policy ?? policy, overrides.work ?? work, overrides.evidence ?? evidence, overrides.releases ?? releases, overrides.governance ?? governance, portfolio, roadmap);
 
 describe("execution operating system", () => {
+  it("keeps the staging gate packet machine-readable and production closed", () => {
+    expect(gateResolution.schemaVersion).toBe(1);
+    expect(gateResolution.productionGo).toBe(false);
+    expect(gateResolution.observedPreflight.stopReason).toContain("Production");
+    expect(gateResolution.decisions.find((gate) => gate.gateId === "HG-STG-001")?.recommendedDecision).toBe("NEEDS_HUMAN_DECISION");
+    expect(gateResolution.decisions.find((gate) => gate.gateId === "HG-PROD-001")?.recommendedDecision).toBe("KEEP_CLOSED");
+    expect(gateResolution.providerClassifications.some((provider) => provider.classification === "LIVE/PRODUCTION — DO NOT USE")).toBe(true);
+  });
   it("accepts the pilot-first execution inventory and renders a resumable brief", () => {
     const result = validate();
     expect(result.valid).toBe(true);

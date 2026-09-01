@@ -411,3 +411,14 @@
 - Organizations, locations, staff users, roles, memberships, and append-only audit history are not deleted. Every successful reset appends a versioned `synthetic.reset_completed` audit record.
 - No reset was executed against staging or any shared database in this code batch. Exact-release database execution remains a reviewed acceptance step.
 - Validation passes: Drizzle migration check, portfolio and execution reconciliation, lint with no warnings, strict TypeScript, 492 tests across 113 files, optimized production build, and whitespace integrity.
+
+## STAGING GATE RESOLUTION — SEPTEMBER 1, 2026
+
+- Added a consolidated machine-readable human-gate resolution record and human-readable approval matrix without converting REVIEW or HUMAN_GATE items into AUTO.
+- Verified the Render service, branch, deployed release, application environment, database identity, migration head, tenant data classes, recovery capability, runtime providers, and callback/recipient isolation without disclosing secret values.
+- Stopped deployment and every mutation because Render labels the enclosing environment `Production` and the database contains an active production-class tenant alongside the demo tenant. The deployed commit is also older than the reviewed candidate.
+- Confirmed actual migration history matches repository migration `0038`; migration `0039` was not applied.
+- The stale deployed release passed non-destructive health, readiness, login, anonymous-job rejection, and security-header smoke. It was not promoted to exact-release evidence.
+- Resend is configured but not test-recipient isolated; all sends remained off. R2, Twilio, OpenAI, and external alerting remain unconfigured. No provider transaction occurred.
+- No deployment, migration, seed, reset, import, provider activation, outbound communication, production action, or pilot GO occurred.
+- Validation passes: Drizzle migration check, portfolio and execution reconciliation, lint with no warnings, strict TypeScript, 493 tests across 113 files, optimized production build, runner inspection, and whitespace integrity.
