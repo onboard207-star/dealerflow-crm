@@ -20,6 +20,7 @@
     "commercial:check": "node scripts/validate-commercial-launch.mjs",
     "scale:check": "node scripts/validate-scale-capacity.mjs",
     "enterprise:check": "node scripts/validate-enterprise-readiness.mjs",
+    "verticals:check": "node scripts/validate-vertical-expansion.mjs",
     "smoke:deployment": "node scripts/smoke-deployment.mjs",
     "validate": "pnpm db:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },

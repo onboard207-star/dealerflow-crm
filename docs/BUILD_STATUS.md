@@ -1,5 +1,12 @@
 # DealerFlow AI Build Status
 
+## MULTI-VERTICAL EXPANSION — NOT AUTHORIZED
+
+- Added an Industry Pack registry with Automotive as the single Pilot reference implementation. RV, Powersports, Marine, and Generic Inventory Sales remain Concept-only and commercially disabled.
+- Explicitly separated the existing marine/powersports/inventory-sales terminology options from actual pack support; labels do not create schema, workflow, integration, training, or commercial authority.
+- Added gates preventing pack installation, upgrades, commercialization, cross-vertical benchmarking, arbitrary tenant extensions, entitlement-as-authorization, and skipped automotive regressions before automotive prerequisites pass.
+- No vertical schema, workflow, fixture, provider, data, UI, or runtime path was introduced. Automotive behavior and production remain unchanged.
+
 ## 100+ ROOFTOP ENTERPRISE / PARTNER SCALE — NO-GO
 
 - Added separate evidence gates for 100-rooftop capacity, enterprise dealer-group rollout, and partner/reseller activation; all remain NO-GO and require the 50-rooftop gate first.

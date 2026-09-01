@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "compatibilityVersion": "dealerflow-core-0.1",
+  "allowedStatuses": ["concept", "synthetic", "internal-alpha", "design-partner", "pilot", "supported-ga", "deprecated"],
+  "packs": [
+    {
+      "id": "automotive",
+      "name": "Automotive",
+      "version": "0.1.0",
+      "status": "pilot",
+      "commerciallyEnabled": false,
+      "referenceImplementation": true,
+      "terminologyOnlyVerticalKeys": [],
+      "evidence": "docs/operations/FULL_SYSTEM_ACCEPTANCE.md",
+      "limitations": ["Live-pilot, productization, commercial, and scale gates remain open."]
+    },
+    {
+      "id": "rv",
+      "name": "RV",
+      "version": "0.0.0",
+      "status": "concept",
+      "commerciallyEnabled": false,
+      "referenceImplementation": false,
+      "terminologyOnlyVerticalKeys": [],
+      "evidence": "docs/operations/MULTI_VERTICAL_EXPANSION.md",
+      "limitations": ["No schema extensions, workflows, providers, fixtures, training, or acceptance evidence exist."]
+    },
+    {
+      "id": "powersports",
+      "name": "Powersports",
+      "version": "0.0.0",
+      "status": "concept",
+      "commerciallyEnabled": false,
+      "referenceImplementation": false,
+      "terminologyOnlyVerticalKeys": ["powersports"],
+      "evidence": "docs/operations/MULTI_VERTICAL_EXPANSION.md",
+      "limitations": ["The existing tenant vertical value changes terminology only and is not an industry pack."]
+    },
+    {
+      "id": "marine",
+      "name": "Marine",
+      "version": "0.0.0",
+      "status": "concept",
+      "commerciallyEnabled": false,
+      "referenceImplementation": false,
+      "terminologyOnlyVerticalKeys": ["marine"],
+      "evidence": "docs/operations/MULTI_VERTICAL_EXPANSION.md",
+      "limitations": ["The existing tenant vertical value changes terminology only and is not an industry pack."]
+    },
+    {
+      "id": "generic-inventory-sales",
+      "name": "Generic Inventory Sales",
+      "version": "0.0.0",
+      "status": "concept",
+      "commerciallyEnabled": false,
+      "referenceImplementation": false,
+      "terminologyOnlyVerticalKeys": ["inventory-sales"],
+      "evidence": "docs/operations/MULTI_VERTICAL_EXPANSION.md",
+      "limitations": ["Generic terminology is an architectural compatibility hook, not a supported vertical product."]
+    }
+  ]
+}

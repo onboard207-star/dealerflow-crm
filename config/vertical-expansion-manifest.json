@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-08-31T23:00:00-04:00",
+  "decision": "NOT_AUTHORIZED",
+  "automotivePriority": true,
+  "prerequisites": {
+    "automotivePilotPassed": false,
+    "automotiveProductizationAuthorized": false,
+    "repeatableAutomotiveRolloutPassed": false,
+    "automotiveScaleEvidenceAccepted": false,
+    "industryDemandValidated": false,
+    "providerFeasibilityValidated": false,
+    "supportReadinessValidated": false,
+    "unitEconomicsValidated": false
+  },
+  "activation": {
+    "packInstallationEnabled": false,
+    "packUpgradeEnabled": false,
+    "packCommercializationEnabled": false,
+    "crossVerticalBenchmarkingEnabled": false,
+    "tenantExecutableExtensionsEnabled": false,
+    "multiPackGroupsEnabled": false
+  },
+  "boundaries": {
+    "terminologyCreatesSchemaAuthority": false,
+    "entitlementCreatesAuthorization": false,
+    "genericVerticalEnumMeansSupported": false,
+    "packMayBypassCoreSafety": false,
+    "packMayExecuteArbitraryTenantCode": false,
+    "crossTenantIdentityMergeEnabled": false,
+    "automotiveRegressionMayBeSkipped": false
+  }
+}
