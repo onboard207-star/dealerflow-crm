@@ -201,17 +201,17 @@
       "productModule": "crm",
       "portfolioClass": "launch-critical",
       "architectureRefs": ["docs/operations/FIRST_PILOT_GO_LIVE.md"],
-      "implementationRefs": ["lib/application/launch", "lib/server/launch", "app/api/organizations/[organizationId]/imports/route.ts"],
-      "maturity": "In Build",
-      "evidence": [{"kind": "test", "ref": "docs/BUILD_STATUS.md"}],
+      "implementationRefs": ["lib/application/launch", "lib/server/launch", "app/api/organizations/[organizationId]/imports/route.ts", "app/api/organizations/[organizationId]/imports/[batchId]/commit/route.ts", "app/api/organizations/[organizationId]/imports/[batchId]/reverse/route.ts"],
+      "maturity": "Code Complete",
+      "evidence": [{"kind": "test", "ref": "dealerflow/execution/COMPLETION_REPORTS/DWI-PILOT-002.md"}],
       "ownerArea": "Data Migration",
       "pilotRelevance": "blocker",
       "commercialSupport": "Unsupported",
       "hardDependencies": ["CAP-PLT-001", "CAP-CRM-001", "CAP-INV-001"],
       "softDependencies": [],
       "providerDependencies": [],
-      "blockers": ["Transactional commit, reconciliation, reversal, and pilot dry run are incomplete."],
-      "lastVerified": "2026-08-30"
+      "blockers": ["Migration 0039 deployment, exact-release staging verification, and an authorized pilot dry run remain incomplete."],
+      "lastVerified": "2026-09-01"
     },
     {
       "id": "CAP-OPS-001",

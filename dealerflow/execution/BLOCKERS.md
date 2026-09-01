@@ -8,17 +8,13 @@ Backup evidence, monitoring destination, and named operational ownership are mis
 
 R2 and restricted AI staging configuration are incomplete; customer communication acceptance is tenant-specific. Next: provision and review R2 configuration, then run upload/reorder/remove and failure-path acceptance.
 
-## DWI-PILOT-004 — Migration dependency
-
-Synthetic reset tooling follows reversible import implementation. Next: finish `DWI-PILOT-002`.
-
 ## DWI-PILOT-005 — Human gate
 
 Launch, rollback, and support owners are unnamed. Next: authorized owner resolves `DEC-PILOT-001`.
 
 ## DWI-PILOT-006 — Review and tenant authorization
 
-Pilot dry run requires completed import implementation and an explicitly authorized target tenant/operator.
+Pilot dry run requires an explicitly authorized target tenant/operator and deployment of the exact release containing migration `0039`.
 
 ## DWI-PILOT-007 — Human UAT
 

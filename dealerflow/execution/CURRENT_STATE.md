@@ -2,15 +2,15 @@
 
 **Updated:** September 1, 2026  
 **Branch:** `codex/staging-deployment`  
-**Run starting commit:** `b5cf987f02740a0fe15dfcf9b3e7eddf3f63597d`  
+**Latest completed implementation:** `DWI-PILOT-002` at `22c53e510f62e4d129369c67902d6228f68df53d`
 **Pilot:** NO_GO  
 **Current milestone:** First Pilot Reliable
 
 ## Active Item
 
-`DWI-PILOT-002` — Complete reversible controlled pilot import (`AUTO`, `P1`, `IN_PROGRESS`).
+`DWI-PILOT-004` — Complete governed synthetic reset and acceptance harness (`AUTO`, `P1`, `READY`).
 
-The implementation must provide transactional commit, deterministic reconciliation, verified reversal, tenant isolation, duplicate replay safety, partial-failure rollback, relationship integrity, and full repository validation. A real pilot dry run is separated into REVIEW item `DWI-PILOT-006`.
+The next bounded implementation must provide a deterministic reset/reseed path that is structurally unable to affect non-demo tenants, preserves scenario identity and version evidence, and passes relationship-integrity and repository gates. Human role UAT remains separate REVIEW item `DWI-PILOT-007`.
 
 ## Queue Summary
 
@@ -18,7 +18,7 @@ The implementation must provide transactional commit, deterministic reconciliati
 - P1: 7 active/waiting/blocked
 - P2: 1 deferred
 - P3: 1 triaged
-- Eligible AUTO item: `DWI-PILOT-002`
+- Eligible AUTO item: `DWI-PILOT-004`
 - Commercially supported capabilities: 0
 
 ## Safe Boundary
