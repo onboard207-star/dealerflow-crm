@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-08-31T22:15:00-04:00",
+  "allowedSellStates": ["sell", "conditional-sell", "stop-sell", "unavailable"],
+  "capabilities": [
+    { "moduleKey": "crm", "sellState": "stop-sell", "customerSafeLabel": "Core CRM and Lead Management", "reason": "Pilot maturity; production and productization gates remain open." },
+    { "moduleKey": "appointments-showroom", "sellState": "stop-sell", "customerSafeLabel": "Appointments and Showroom", "reason": "Pilot maturity; live operating evidence is incomplete." },
+    { "moduleKey": "communications", "sellState": "stop-sell", "customerSafeLabel": "Communications", "reason": "Provider- and tenant-specific readiness remains incomplete." },
+    { "moduleKey": "inventory", "sellState": "stop-sell", "customerSafeLabel": "Inventory", "reason": "Pilot maturity and production media acceptance remain open." },
+    { "moduleKey": "recon", "sellState": "unavailable", "customerSafeLabel": "Recon", "reason": "No authoritative workflow is implemented." },
+    { "moduleKey": "desking-documents-delivery", "sellState": "stop-sell", "customerSafeLabel": "Desking, Documents, and Delivery", "reason": "Pilot maturity; e-signature and durable document storage are not supported." },
+    { "moduleKey": "ai-assistance", "sellState": "stop-sell", "customerSafeLabel": "AI Assistance", "reason": "Experimental and provider-backed production acceptance is incomplete." },
+    { "moduleKey": "training-help-support", "sellState": "stop-sell", "customerSafeLabel": "Training, Help, and Support", "reason": "Experimental; durable completion and support operations are incomplete." },
+    { "moduleKey": "analytics", "sellState": "stop-sell", "customerSafeLabel": "Analytics", "reason": "Pilot maturity; no live outcome or benchmark claim is authorized." },
+    { "moduleKey": "service", "sellState": "unavailable", "customerSafeLabel": "Service", "reason": "No authoritative service workflow is implemented." },
+    { "moduleKey": "marketing-social", "sellState": "unavailable", "customerSafeLabel": "Marketing and Social", "reason": "Disconnected placeholders are not integrations." },
+    { "moduleKey": "multi-rooftop", "sellState": "stop-sell", "customerSafeLabel": "Multi-Rooftop", "reason": "Experimental; rollout acceptance is incomplete." },
+    { "moduleKey": "customer-portal", "sellState": "unavailable", "customerSafeLabel": "Customer Portal", "reason": "Not implemented." },
+    { "moduleKey": "dealer-portal", "sellState": "unavailable", "customerSafeLabel": "Dealer Portal", "reason": "Not implemented." }
+  ]
+}

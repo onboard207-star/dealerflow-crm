@@ -1,5 +1,12 @@
 # DealerFlow AI Build Status
 
+## COMMERCIAL LAUNCH AND FIRST TEN — NOT AUTHORIZED
+
+- Added cross-catalog commercial controls that require every product module to have an explicit sell posture and prohibit selling anything below Production Supported maturity.
+- All current modules are truthfully classified Stop-Sell or Unavailable. Broad selling, proposal/contract execution, billing, customer outreach, and first-ten rollout remain disabled.
+- Added machine-readable evidence gates for productization, pilot stability, capacity, provider/reliability proof, first-ten isolation/load, and authoritative unit economics.
+- No commercial accounts, prospects, contracts, prices, billing records, customer claims, or first-ten dealer records were fabricated. Application and production behavior remains unchanged.
+
 ## POST-PILOT PRODUCTIZATION — NOT AUTHORIZED
 
 - Added a machine-readable evidence gate that prevents productization, pilot cloning, second-dealer GO, unsafe communications/billing activation, or unsupported production-maturity claims before live-pilot and hypercare evidence exists.

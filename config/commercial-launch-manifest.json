@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-08-31T22:15:00-04:00",
+  "decision": "NOT_AUTHORIZED",
+  "productizationDecision": "NOT_AUTHORIZED",
+  "commercialAuthority": {
+    "approvedBy": null,
+    "approvedAt": null,
+    "pricingVersion": null,
+    "packagingVersion": null,
+    "contractTemplateVersion": null,
+    "billingProvider": null
+  },
+  "scaleEvidence": {
+    "freshSecondDealerPassed": false,
+    "firstPilotStable": false,
+    "supportCapacityProven": false,
+    "implementationCapacityProven": false,
+    "providerReliabilityProven": false,
+    "productionReliabilityProven": false,
+    "firstTenIsolationPassed": false,
+    "firstTenLoadPassed": false,
+    "unitEconomicsAuthoritative": false
+  },
+  "activation": {
+    "broadSellingEnabled": false,
+    "proposalExecutionEnabled": false,
+    "contractExecutionEnabled": false,
+    "billingEnabled": false,
+    "customerOutreachEnabled": false,
+    "firstTenRolloutEnabled": false
+  },
+  "boundaries": {
+    "demoTenantMayBecomeProduction": false,
+    "commercialStatusMayOverrideLaunchGate": false,
+    "salesMayOverrideStopSell": false,
+    "estimatedUsageMayTriggerBilling": false,
+    "aiMayApprovePricingOrGo": false,
+    "unsupportedCapabilitiesMayAppearInProposal": false
+  }
+}
