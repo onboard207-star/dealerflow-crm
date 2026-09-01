@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-08-31T22:30:00-04:00",
+  "commercialLaunchDecision": "NOT_AUTHORIZED",
+  "recommendations": {
+    "twentyFiveRooftops": "NO_GO",
+    "fiftyRooftops": "NO_GO"
+  },
+  "measuredEnvironment": null,
+  "measuredRelease": null,
+  "measurements": [
+    { "key": "active-rooftops", "unit": "count", "measuredCapacity": null, "normalUtilization": null, "warningThreshold": null, "criticalThreshold": null, "headroom": null, "status": "unknown" },
+    { "key": "concurrent-users", "unit": "users", "measuredCapacity": null, "normalUtilization": null, "warningThreshold": null, "criticalThreshold": null, "headroom": null, "status": "unknown" },
+    { "key": "lead-ingestion", "unit": "leads/minute", "measuredCapacity": null, "normalUtilization": null, "warningThreshold": null, "criticalThreshold": null, "headroom": null, "status": "unknown" },
+    { "key": "communications", "unit": "attempts/minute", "measuredCapacity": null, "normalUtilization": null, "warningThreshold": null, "criticalThreshold": null, "headroom": null, "status": "unknown" },
+    { "key": "inventory-units", "unit": "records", "measuredCapacity": null, "normalUtilization": null, "warningThreshold": null, "criticalThreshold": null, "headroom": null, "status": "unknown" },
+    { "key": "media-uploads", "unit": "uploads/minute", "measuredCapacity": null, "normalUtilization": null, "warningThreshold": null, "criticalThreshold": null, "headroom": null, "status": "unknown" },
+    { "key": "ai-requests", "unit": "requests/minute", "measuredCapacity": null, "normalUtilization": null, "warningThreshold": null, "criticalThreshold": null, "headroom": null, "status": "unknown" },
+    { "key": "background-jobs", "unit": "jobs/minute", "measuredCapacity": null, "normalUtilization": null, "warningThreshold": null, "criticalThreshold": null, "headroom": null, "status": "unknown" },
+    { "key": "webhooks", "unit": "callbacks/minute", "measuredCapacity": null, "normalUtilization": null, "warningThreshold": null, "criticalThreshold": null, "headroom": null, "status": "unknown" },
+    { "key": "imports", "unit": "rows/minute", "measuredCapacity": null, "normalUtilization": null, "warningThreshold": null, "criticalThreshold": null, "headroom": null, "status": "unknown" },
+    { "key": "document-generation", "unit": "documents/minute", "measuredCapacity": null, "normalUtilization": null, "warningThreshold": null, "criticalThreshold": null, "headroom": null, "status": "unknown" },
+    { "key": "support-cases", "unit": "cases/rooftop/week", "measuredCapacity": null, "normalUtilization": null, "warningThreshold": null, "criticalThreshold": null, "headroom": null, "status": "unknown" },
+    { "key": "database-connections", "unit": "connections", "measuredCapacity": null, "normalUtilization": null, "warningThreshold": null, "criticalThreshold": null, "headroom": null, "status": "unknown" },
+    { "key": "api-latency-p95", "unit": "milliseconds", "measuredCapacity": null, "normalUtilization": null, "warningThreshold": null, "criticalThreshold": null, "headroom": null, "status": "unknown" }
+  ],
+  "configuredBounds": [
+    { "key": "outbound-worker-batch", "value": 100, "unit": "attempts/run", "evidence": "lib/application/communications/outbound-worker.ts", "note": "Configured request bound, not measured throughput." },
+    { "key": "transactional-email-worker-batch", "value": 100, "unit": "messages/run", "evidence": "app/api/internal/jobs/transactional-email/route.ts", "note": "Configured request bound, not measured throughput." },
+    { "key": "import-request-size", "value": 5000000, "unit": "bytes/request", "evidence": "app/api/organizations/[organizationId]/imports/route.ts", "note": "Validation limit, not sustained import capacity." },
+    { "key": "import-row-count", "value": 10000, "unit": "rows/request", "evidence": "app/api/organizations/[organizationId]/imports/route.ts", "note": "Validation limit, not measured processing capacity." },
+    { "key": "directory-page-size", "value": 100, "unit": "records/request", "evidence": "lib/server/crm/directory-reader.ts", "note": "Pagination bound, not query capacity." }
+  ],
+  "requiredEvidence": {
+    "firstTenStable": false,
+    "productionMetricsAudited": false,
+    "providerQuotasAudited": false,
+    "twentyFiveRooftopLoadPassed": false,
+    "fiftyRooftopLoadPassed": false,
+    "noisyNeighborPassed": false,
+    "providerSaturationPassed": false,
+    "migrationAtScalePassed": false,
+    "recoveryAtScalePassed": false,
+    "crossTenantScaleIsolationPassed": false,
+    "supportCapacityProven": false,
+    "implementationCapacityProven": false,
+    "costInstrumentationVerified": false,
+    "releaseCohortRollbackPassed": false
+  }
+}

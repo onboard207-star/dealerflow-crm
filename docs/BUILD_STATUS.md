@@ -1,5 +1,12 @@
 # DealerFlow AI Build Status
 
+## 25–50 ROOFTOP SCALE — NO-GO
+
+- Added a machine-readable capacity inventory covering rooftop/user load, CRM ingestion, communications, Inventory/media, AI, jobs, webhooks, imports, documents, support, database connections, and API latency. Every unmeasured capacity and threshold remains explicitly Unknown.
+- Separated configured safety bounds from measured throughput so worker batch, import, and pagination limits cannot be misrepresented as scale evidence.
+- Added independent 25- and 50-rooftop evidence gates covering first-ten stability, production/provider audits, load, noisy-neighbor behavior, saturation, migration/recovery, isolation, capacity, costs, and cohort rollback.
+- Current recommendations remain NO-GO for both 25 and 50 rooftops. No load result, provider quota, SLO, support capacity, cost, or production metric was fabricated; no runtime or production change occurred.
+
 ## COMMERCIAL LAUNCH AND FIRST TEN — NOT AUTHORIZED
 
 - Added cross-catalog commercial controls that require every product module to have an explicit sell posture and prohibit selling anything below Production Supported maturity.
