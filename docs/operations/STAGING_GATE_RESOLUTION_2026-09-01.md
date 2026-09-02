@@ -113,3 +113,13 @@ The deterministic initial seed completed and reconciled the exact `pilot-demo-v1
 The subsequent guarded reset failed on `deal_status_events_same_organization_deal_fk` because the reset attempted to delete referenced Deals before their Deal status events. PostgreSQL rejected the operation and the enclosing transaction rolled back. Post-failure verification returned the same four fixture counts, zero `synthetic.reset_completed` events, and zero production-class organizations.
 
 This is a genuine P1 staging blocker. Reseed, import/reversal, and further acceptance mutation stopped. The required correction is to repair and regression-test deterministic reset dependency order without weakening foreign keys, RLS, tenant guards, or rollback behavior, deploy the reviewed fix to isolated staging, and then rerun the guarded reset once.
+
+## Migration 0040 and second guarded reset
+
+Commit `0dbcd70d2cbd31bfac399b2120575e940b232ff4` deployed successfully to isolated service `srv-dabk8d610ojc73ds3afg`. Preflight reconfirmed `APP_ENV=staging`, database host `dpg-dabjm5e1egvs73b1s92g-a`, the canonical active `demo` organization, no configured Resend, Twilio, OpenAI, or R2 credentials, and three-day point-in-time recovery.
+
+Migration `0040_synthetic_reset_maintenance_role` applied as ledger entry 41 with SHA-256 `d3aa4b95d9e4b395107a58ad41bf9991b9cadabfc8e4eeae85c07a11d0b74ca2`, matching the repository file. `deal_status_events` and `deal_deliveries` retained enabled and forced RLS. The ordinary service identity could see 432 Deal status events but deleted zero. A separately credentialed maintenance login inherited the `NOLOGIN`, `NOBYPASSRLS` executor role and deleted exactly one Deal status event in a proof transaction that was rolled back.
+
+The one authorized governed reset then failed closed before parent deletion because `deal_deliveries` returned zero of 432 expected fixture-owned deletions. The surrounding transaction rolled back. Verification returned 26 staff, 1,476 Leads, 432 delivered Deals, 48 current Inventory Units, 432 deliveries, 432 Deal status events, and zero `synthetic.reset_completed` events. No reseed or further acceptance mutation ran. The transient maintenance login was changed to `NOLOGIN`, and its temporary credential file was removed.
+
+This is a new P1 policy-evaluation divergence. Another migration or reset is not authorized by this evidence. The next gate is a read-only diagnosis of why the dedicated login satisfies the Deal-status DELETE policy but not the structurally equivalent delivery DELETE policy, followed by reviewed remediation and explicit authorization for a new single reset attempt.

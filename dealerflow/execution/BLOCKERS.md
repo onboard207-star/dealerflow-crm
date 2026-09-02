@@ -10,7 +10,7 @@ Backup evidence, monitoring destination, and named operational ownership are mis
 
 ## DWI-PILOT-004 — P1 staging reset failure
 
-The exact-release synthetic seed reconciled successfully in isolated staging, but the guarded reset failed transactionally because `deals` are deleted before referencing `deal_status_events`. PostgreSQL enforced `deal_status_events_same_organization_deal_fk`; rollback preserved all fixture counts and no reset-completed audit event was written. Next: repair and regression-test deterministic reset deletion order without weakening constraints or tenant guards, deploy the reviewed fix, and rerun the single guarded reset.
+Migration `0040` and exact commit `0dbcd70` are deployed to isolated staging. Ordinary-session lifecycle DELETE denial and a rolled-back privileged Deal-status deletion passed, but the single governed reset failed closed when the same maintenance identity deleted zero of 432 fixture-owned `deal_deliveries` rows. Rollback preserved every baseline count and wrote no reset-completed event; the transient maintenance login is disabled. Next: diagnose the difference between the successful status-event policy proof and suppressed delivery deletion before authorizing another migration or reset.
 
 ## DWI-PILOT-003 — Provider
 

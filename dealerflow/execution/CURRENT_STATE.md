@@ -10,7 +10,7 @@
 
 No AUTO item is currently eligible.
 
-The isolated Render target is active in `DealerFlow Staging`: web service `srv-dabk8d610ojc73ds3afg` uses database `dpg-dabjm5e1egvs73b1s92g-a` and runs exact commit `028c198d226d1979ed539c671b0719410f8c0d33`. Liveness and private database connectivity pass. Migration `0039_import_commit_reversal` is validated with final hash `8c70e7a35a2d3836500859acb17e08df26bbf97ca5840e02d9589d4b886354f7`. Initial synthetic seed reconciled 26 staff, 1,476 leads, 432 delivered deals, and 48 current inventory units with zero production-class organizations. The guarded reset then failed transactionally on `deal_status_events_same_organization_deal_fk`; rollback preserved every reconciled count and wrote no reset-completed event. This is a P1 staging blocker. Non-demo import, provider activation, human UAT, and pilot GO remain reviewed or human-gated.
+The isolated Render target is active in `DealerFlow Staging`: web service `srv-dabk8d610ojc73ds3afg` uses database `dpg-dabjm5e1egvs73b1s92g-a` and runs exact commit `0dbcd70d2cbd31bfac399b2120575e940b232ff4`. Migration `0040_synthetic_reset_maintenance_role` is ledger entry 41 with hash `d3aa4b95d9e4b395107a58ad41bf9991b9cadabfc8e4eeae85c07a11d0b74ca2`; forced RLS and ordinary-session DELETE denial passed. The dedicated maintenance identity could delete a Deal status event in a rolled-back proof transaction, but the single governed reset then failed closed because its `deal_deliveries` DELETE returned zero of 432 expected fixture rows. Transactional rollback preserved 26 staff, 1,476 leads, 432 delivered Deals, 48 current Inventory Units, 432 deliveries, and 432 Deal status events; zero reset-completed events exist. The transient maintenance login was disabled and its credential removed. This remains a P1 staging blocker. No reseed or further AUTO mutation ran.
 
 ## Queue Summary
 
@@ -23,4 +23,4 @@ The isolated Render target is active in `DealerFlow Staging`: web service `srv-d
 
 ## Safe Boundary
 
-Stop synthetic AUTO mutation until the reset dependency-order defect is repaired, regression-tested, reviewed, and deployed to isolated staging. No non-demo import/reversal, provider activation, real customer send, destructive cleanup, or pilot GO is authorized. The old mixed/Production-labeled service and database remain closed to mutation.
+Stop synthetic AUTO mutation until the dedicated-role `deal_deliveries` policy divergence is diagnosed, corrected, regression-tested, reviewed, and separately authorized for another isolated-staging reset. No non-demo import/reversal, provider activation, real customer send, destructive cleanup, or pilot GO is authorized. The old mixed/Production-labeled service and database remain closed to mutation.
