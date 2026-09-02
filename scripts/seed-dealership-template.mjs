@@ -76,6 +76,7 @@ export function templateOwnedIds(plan) {
 }
 
 async function resetTemplateRows(client, plan, organizationId) {
+  await client.query("SELECT set_config('app.synthetic_fixture_version',$1,true)", [template.version]);
   const ownedIds = templateOwnedIds(plan);
   for (const [table, key] of resetOrder) {
     const existing = await client.query(`SELECT id FROM ${table} WHERE organization_id=$1`, [organizationId]);
@@ -87,7 +88,10 @@ async function resetTemplateRows(client, plan, organizationId) {
   if (memberships.rows.some((record) => !membershipIds.has(record.id))) throw new Error(`Synthetic reset refused: organization_memberships contains records outside fixture ${template.version}.`);
   for (const [table, key] of resetOrder) {
     const ids = ownedIds[key];
-    if (ids.length) await client.query(`DELETE FROM ${table} WHERE organization_id=$1 AND id=ANY($2::text[])`, [organizationId, ids]);
+    if (ids.length) {
+      const deleted = await client.query(`DELETE FROM ${table} WHERE organization_id=$1 AND id=ANY($2::text[]) RETURNING id`, [organizationId, ids]);
+      if (deleted.rows.length !== ids.length) throw new Error(`Synthetic reset refused: ${table} deleted ${deleted.rows.length} of ${ids.length} fixture-owned records.`);
+    }
   }
 }
 

@@ -259,4 +259,19 @@ describe("tenant database migrations", () => {
     expect(migration).toContain('"data_class" in (\'demo\',\'pilot\',\'production\')');
     expect(migration).toContain('current_setting(\'app.organization_id\', true)');
   });
+
+  it("restricts synthetic lifecycle deletion to a dedicated, versioned demo-reset role", () => {
+    const migration = readFileSync(join(migrationDirectory, "0040_synthetic_reset_maintenance_role.sql"), "utf8");
+    expect(migration).toContain("dealerflow_synthetic_reset_executor NOLOGIN");
+    expect(migration).toContain("NOBYPASSRLS");
+    expect(migration).toContain('FOR DELETE\nTO dealerflow_synthetic_reset_executor');
+    expect(migration).toContain("organization_id = 'org_demo_first_pilot_v1'");
+    expect(migration).toContain("app.synthetic_fixture_version");
+    expect(migration).toContain("= 'pilot-demo-v1'");
+    expect(migration).toContain("organization.data_class = 'demo'");
+    expect(migration).toContain("pg_has_role(session_user");
+    expect(migration).not.toMatch(/FOR DELETE\s+TO (PUBLIC|CURRENT_USER)/);
+    expect(migration).not.toMatch(/GRANT dealerflow_synthetic_reset_executor TO (PUBLIC|CURRENT_USER)/);
+    expect(migration.match(/CREATE POLICY/g)).toHaveLength(2);
+  });
 });

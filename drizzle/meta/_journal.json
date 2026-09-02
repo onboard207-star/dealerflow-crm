@@ -281,6 +281,13 @@
       "when": 1788220000000,
       "tag": "0039_import_commit_reversal",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1788264000000,
+      "tag": "0040_synthetic_reset_maintenance_role",
+      "breakpoints": true
     }
   ]
 }

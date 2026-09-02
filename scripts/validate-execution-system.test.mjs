@@ -27,7 +27,7 @@ describe("execution operating system", () => {
   it("accepts the pilot-first execution inventory and renders a resumable brief", () => {
     const result = validate();
     expect(result.valid).toBe(true);
-    expect(result.prioritiesSummary).toEqual({P0: 0, P1: 5, P2: 0, P3: 1});
+    expect(result.prioritiesSummary).toEqual({P0: 0, P1: 6, P2: 0, P3: 1});
     expect(selectNextEligible(work)).toBeNull();
     expect(renderDailyBuildBrief(work, releases, governance, result)).toContain("No AUTO item is eligible");
     expect(renderEndOfDayHandoff(work, releases, governance, result)).toContain("Safe Stopping Point");
