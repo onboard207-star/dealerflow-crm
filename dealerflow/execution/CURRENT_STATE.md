@@ -10,7 +10,7 @@
 
 No AUTO item is currently eligible.
 
-The isolated Render target is active in `DealerFlow Staging`: web service `srv-dabk8d610ojc73ds3afg` uses database `dpg-dabjm5e1egvs73b1s92g-a` and runs exact commit `0dbcd70d2cbd31bfac399b2120575e940b232ff4`. Migration `0040_synthetic_reset_maintenance_role` is ledger entry 41 with hash `d3aa4b95d9e4b395107a58ad41bf9991b9cadabfc8e4eeae85c07a11d0b74ca2`; forced RLS and ordinary-session DELETE denial passed. The dedicated maintenance identity could delete a Deal status event in a rolled-back proof transaction, but the single governed reset then failed closed because its `deal_deliveries` DELETE returned zero of 432 expected fixture rows. Transactional rollback preserved 26 staff, 1,476 leads, 432 delivered Deals, 48 current Inventory Units, 432 deliveries, and 432 Deal status events; zero reset-completed events exist. The transient maintenance login was disabled and its credential removed. This remains a P1 staging blocker. No reseed or further AUTO mutation ran.
+The isolated Render target is active in `DealerFlow Staging`: web service `srv-dabk8d610ojc73ds3afg` uses database `dpg-dabjm5e1egvs73b1s92g-a` and runs exact commit `715f3f9489e31a33ea4387b2108f54a5b69c4b06`. The code-only fix now proves the reset transaction uses governed fixture version `pilot-demo-v1`, distinct from internal template version `v1`. The single authorized reset failed closed on missing EXECUTE permission for `notification_recipient_is_active` under the dedicated maintenance identity. Transactional rollback preserved 26 staff, 1,476 leads, 432 delivered Deals, 48 current Inventory Units, 432 deliveries, and 432 Deal status events; zero reset-completed events exist. Forced RLS remains enabled on both protected lifecycle tables. The transient maintenance login was disabled and its credential removed. This remains a P1 staging blocker. No reseed or further AUTO mutation ran.
 
 ## Queue Summary
 
@@ -23,4 +23,4 @@ The isolated Render target is active in `DealerFlow Staging`: web service `srv-d
 
 ## Safe Boundary
 
-Stop synthetic AUTO mutation until the dedicated-role `deal_deliveries` policy divergence is diagnosed, corrected, regression-tested, reviewed, and separately authorized for another isolated-staging reset. No non-demo import/reversal, provider activation, real customer send, destructive cleanup, or pilot GO is authorized. The old mixed/Production-labeled service and database remain closed to mutation.
+Stop synthetic AUTO mutation until the maintenance identity receives the narrowly required function permission through reviewed schema/security remediation, regression tests pass, and another isolated-staging reset is separately authorized. No non-demo import/reversal, provider activation, real customer send, destructive cleanup, or pilot GO is authorized. The old mixed/Production-labeled service and database remain closed to mutation.

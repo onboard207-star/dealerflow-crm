@@ -10,7 +10,7 @@ Backup evidence, monitoring destination, and named operational ownership are mis
 
 ## DWI-PILOT-004 — P1 staging reset failure
 
-Migration `0040` and exact commit `0dbcd70` are deployed to isolated staging. Ordinary-session lifecycle DELETE denial and a rolled-back privileged Deal-status deletion passed, but the single governed reset failed closed when the same maintenance identity deleted zero of 432 fixture-owned `deal_deliveries` rows. Rollback preserved every baseline count and wrote no reset-completed event; the transient maintenance login is disabled. Next: diagnose the difference between the successful status-event policy proof and suppressed delivery deletion before authorizing another migration or reset.
+Exact code-only fix commit `715f3f9` is deployed to isolated staging and proves governed fixture context `pilot-demo-v1` is used instead of internal template version `v1`. The single authorized reset then failed closed because the dedicated maintenance identity lacks EXECUTE permission on `notification_recipient_is_active`. Rollback preserved every baseline count and wrote no reset-completed event; the transient maintenance login and credential are disabled and removed. Next: review the function's role in reset-time constraints/policies and add only the minimum required privilege through a reviewed migration before authorizing another reset.
 
 ## DWI-PILOT-003 — Provider
 

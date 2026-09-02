@@ -109,12 +109,12 @@
       "acceptanceCriteria": ["Governed reset cannot affect non-demo tenants", "Scenario identities and version are deterministic", "Reset and reseed integrity tests pass", "Known limitations are disclosed"],
       "evidenceRequirements": ["EVD-RESET-001"],
       "targetRelease": "REL-CAND-20260901-003",
-      "blocker": {"type": "migration", "reason": "Migration 0040 preserves ordinary DELETE denial, but the dedicated staging maintenance identity deleted zero fixture-owned deal_deliveries rows during the governed reset.", "unblockCondition": "Diagnose and regression-test the deal_deliveries policy divergence, then obtain authorization for any follow-up migration and one new reset attempt.", "nextAction": "Compare the delivery and status-event policy evaluation paths under the dedicated login without mutating fixture data; keep the maintenance login disabled.", "ownerArea": "Quality and Implementation"},
+      "blocker": {"type": "migration", "reason": "The fixture-version fix is deployed and correct, but the dedicated staging maintenance identity lacks EXECUTE permission on notification_recipient_is_active during reset.", "unblockCondition": "Review and regression-test the minimum function privilege required by reset-time database enforcement, then obtain authorization for a follow-up migration and one new reset attempt.", "nextAction": "Trace notification_recipient_is_active under the maintenance identity read-only, prepare a least-privilege migration for review, and keep the maintenance login disabled.", "ownerArea": "Quality and Implementation"},
       "openedAt": "2026-08-30",
       "lastEvidenceAt": "2026-08-30",
       "priorityChanges": 0,
-      "closureEvidence": ["EVD-RESET-001"],
-      "requiredTests": ["synthetic tenant guard", "reset idempotency", "relationship integrity", "full repository gate"], "evidencePaths": ["dealerflow/execution/EVIDENCE/registry.json", "dealerflow/execution/COMPLETION_REPORTS/DWI-PILOT-004.md"], "startingCommit": "e1bd583e3c048cdc54a6ffd585f78b2b0cc3b02f", "endingCommit": "40ae05dcaf7ecf3d85bb30aab38875fc19476ac3", "completionReport": "dealerflow/execution/COMPLETION_REPORTS/DWI-PILOT-004.md", "nextEligibleItems": ["DWI-PILOT-007"], "humanApprovalRequirement": null
+      "closureEvidence": ["EVD-RESET-001", "EVD-RESET-STAGING-FUNCTION-003"],
+      "requiredTests": ["synthetic tenant guard", "reset idempotency", "relationship integrity", "full repository gate"], "evidencePaths": ["dealerflow/execution/EVIDENCE/registry.json", "dealerflow/execution/COMPLETION_REPORTS/DWI-PILOT-004.md"], "startingCommit": "e1bd583e3c048cdc54a6ffd585f78b2b0cc3b02f", "endingCommit": "715f3f9489e31a33ea4387b2108f54a5b69c4b06", "completionReport": "dealerflow/execution/COMPLETION_REPORTS/DWI-PILOT-004.md", "nextEligibleItems": ["DWI-PILOT-007"], "humanApprovalRequirement": null
     },
     {
       "id": "DWI-PILOT-005",
