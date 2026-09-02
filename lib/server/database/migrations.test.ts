@@ -267,6 +267,8 @@ describe("tenant database migrations", () => {
     expect(migration).toContain('FOR DELETE\nTO dealerflow_synthetic_reset_executor');
     expect(migration).toContain("organization_id = 'org_demo_first_pilot_v1'");
     expect(migration).toContain("app.synthetic_fixture_version");
+    expect(migration.match(/nullif\(current_setting\('app\.synthetic_fixture_version', true\), ''\) = 'pilot-demo-v1'/g)).toHaveLength(2);
+    expect(migration).not.toContain("= 'v1'");
     expect(migration).toContain("= 'pilot-demo-v1'");
     expect(migration).toContain("organization.data_class = 'demo'");
     expect(migration).toContain("pg_has_role(session_user");

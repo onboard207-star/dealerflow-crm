@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 import template from "../config/dealership-template.json" with { type: "json" };
 import systemRoles from "../config/system-roles.json" with { type: "json" };
-import { buildTemplatePlan, deterministicId, parseArguments, seedDealershipTemplate, templateOwnedIds } from "./seed-dealership-template.mjs";
+import { assertGovernedFixtureVersion, buildTemplatePlan, deterministicId, parseArguments, seedDealershipTemplate, templateOwnedIds } from "./seed-dealership-template.mjs";
 
 describe("dealership template seed", () => {
   const organizationId = "org_ae339ff94d8461ef4630e7aa1c320f28", locationId = "loc_ae339ff94d8461ef4630e7aa1c320f28";
+  const resetOptions = { reset: true, governedFixtureVersion: "pilot-demo-v1" };
 
   it("requires an explicit organization", () => { expect(parseArguments(["--organization-id", organizationId])).toEqual({ organizationId }); expect(() => parseArguments([])).toThrow("organization-id"); expect(() => parseArguments(["--organization-id", "unsafe"])).toThrow("valid DealerFlow"); });
 
@@ -22,9 +23,9 @@ describe("dealership template seed", () => {
   });
 
   it("resets and reseeds in one transaction with demo classification locked", async () => {
-    const statements = [];
-    const client = { query: async (sql, values) => { statements.push(sql); if (sql.includes("FROM organizations")) return { rows: [{ id: organizationId }] }; if (sql.includes("FROM audit_logs")) return { rows: [{ id: "aud_existing" }] }; if (sql.includes("FROM locations")) return { rows: [{ id: locationId }] }; if (sql.startsWith("DELETE FROM ")) return { rows: values[1].map((id) => ({ id })) }; return { rows: [] }; }, release: () => {} };
-    const result = await seedDealershipTemplate({ connect: async () => client }, organizationId, { reset: true });
+    const statements = [], calls = [];
+    const client = { query: async (sql, values) => { statements.push(sql); calls.push({ sql, values }); if (sql.includes("FROM organizations")) return { rows: [{ id: organizationId }] }; if (sql.includes("FROM audit_logs")) return { rows: [{ id: "aud_existing" }] }; if (sql.includes("FROM locations")) return { rows: [{ id: locationId }] }; if (sql.startsWith("DELETE FROM ")) return { rows: values[1].map((id) => ({ id })) }; return { rows: [] }; }, release: () => {} };
+    const result = await seedDealershipTemplate({ connect: async () => client }, organizationId, resetOptions);
     expect(result.reset).toBe(true);
     expect(result.resetAuditId).toMatch(/^aud_[a-f0-9]{32}$/);
     expect(statements[0]).toBe("BEGIN");
@@ -34,14 +35,28 @@ describe("dealership template seed", () => {
     expect(statements.findIndex((sql) => sql.startsWith("DELETE FROM deal_deliveries"))).toBeLessThan(statements.findIndex((sql) => sql.startsWith("DELETE FROM deals")));
     expect(statements.findIndex((sql) => sql.startsWith("DELETE FROM deal_status_events"))).toBeLessThan(statements.findIndex((sql) => sql.startsWith("DELETE FROM deals")));
     expect(statements.some((sql) => sql.includes("app.synthetic_fixture_version"))).toBe(true);
+    expect(calls.find(({ sql }) => sql.includes("app.synthetic_fixture_version")).values).toEqual(["pilot-demo-v1"]);
+    expect(calls.find(({ sql }) => sql.includes("synthetic.reset_completed")).values[2]).toBe("synthetic-reset:pilot-demo-v1");
     expect(statements.some((sql) => sql.includes("synthetic.reset_completed"))).toBe(true);
     expect(statements.at(-1)).toBe("COMMIT");
+  });
+
+  it("fails closed before DELETE when governed fixture authorization is missing, malformed, or wrong", async () => {
+    for (const governedFixtureVersion of [undefined, "pilot demo v1", "v1"]) {
+      const statements = [];
+      const client = { query: async (sql) => { statements.push(sql); if (sql.includes("FROM organizations")) return { rows: [{ id: organizationId }] }; if (sql.includes("FROM audit_logs")) return { rows: [{ id: "aud_existing" }] }; if (sql.includes("FROM locations")) return { rows: [{ id: locationId }] }; return { rows: [] }; }, release: () => {} };
+      await expect(seedDealershipTemplate({ connect: async () => client }, organizationId, { reset: true, governedFixtureVersion })).rejects.toThrow("governed fixture version");
+      expect(statements.some((sql) => sql.startsWith("DELETE FROM "))).toBe(false);
+      expect(statements.at(-1)).toBe("ROLLBACK");
+    }
+    expect(assertGovernedFixtureVersion("pilot-demo-v1")).toBe("pilot-demo-v1");
+    expect(() => assertGovernedFixtureVersion("v1")).toThrow("must match");
   });
 
   it("rolls back the entire reset when a dependency prevents deletion", async () => {
     const statements = [];
     const client = { query: async (sql, values) => { statements.push(sql); if (sql.includes("FROM organizations")) return { rows: [{ id: organizationId }] }; if (sql.includes("FROM audit_logs")) return { rows: [{ id: "aud_existing" }] }; if (sql.includes("FROM locations")) return { rows: [{ id: locationId }] }; if (sql.startsWith("DELETE FROM deals")) throw new Error("dependent record"); if (sql.startsWith("DELETE FROM ")) return { rows: values[1].map((id) => ({ id })) }; return { rows: [] }; }, release: () => {} };
-    await expect(seedDealershipTemplate({ connect: async () => client }, organizationId, { reset: true })).rejects.toThrow("dependent record");
+    await expect(seedDealershipTemplate({ connect: async () => client }, organizationId, resetOptions)).rejects.toThrow("dependent record");
     expect(statements.at(-1)).toBe("ROLLBACK");
     expect(statements).not.toContain("COMMIT");
   });
@@ -49,7 +64,7 @@ describe("dealership template seed", () => {
   it("fails closed and writes no completion event when RLS suppresses a fixture delete", async () => {
     const statements = [];
     const client = { query: async (sql, values) => { statements.push(sql); if (sql.includes("FROM organizations")) return { rows: [{ id: organizationId }] }; if (sql.includes("FROM audit_logs")) return { rows: [{ id: "aud_existing" }] }; if (sql.includes("FROM locations")) return { rows: [{ id: locationId }] }; if (sql.startsWith("DELETE FROM deal_deliveries")) return { rows: [] }; if (sql.startsWith("DELETE FROM ")) return { rows: values[1].map((id) => ({ id })) }; return { rows: [] }; }, release: () => {} };
-    await expect(seedDealershipTemplate({ connect: async () => client }, organizationId, { reset: true })).rejects.toThrow("deleted 0 of");
+    await expect(seedDealershipTemplate({ connect: async () => client }, organizationId, resetOptions)).rejects.toThrow("deleted 0 of");
     expect(statements.at(-1)).toBe("ROLLBACK");
     expect(statements.some((sql) => sql.includes("synthetic.reset_completed"))).toBe(false);
   });
@@ -57,7 +72,7 @@ describe("dealership template seed", () => {
   it("refuses a reset when the tenant contains non-fixture records", async () => {
     const statements = [];
     const client = { query: async (sql) => { statements.push(sql); if (sql.includes("FROM organizations")) return { rows: [{ id: organizationId }] }; if (sql.includes("FROM audit_logs")) return { rows: [{ id: "aud_existing" }] }; if (sql.includes("FROM locations")) return { rows: [{ id: locationId }] }; if (sql.startsWith("SELECT id FROM customers")) return { rows: [{ id: "cus_not_fixture_owned" }] }; return { rows: [] }; }, release: () => {} };
-    await expect(seedDealershipTemplate({ connect: async () => client }, organizationId, { reset: true })).rejects.toThrow("outside fixture");
+    await expect(seedDealershipTemplate({ connect: async () => client }, organizationId, resetOptions)).rejects.toThrow("outside fixture");
     expect(statements.at(-1)).toBe("ROLLBACK");
     expect(statements.some((sql) => sql.startsWith("DELETE FROM "))).toBe(false);
   });
