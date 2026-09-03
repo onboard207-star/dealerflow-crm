@@ -115,6 +115,12 @@ export const dealStatusEnum = pgEnum("deal_status", [
 export const purchaseTypeEnum = pgEnum("purchase_type", ["cash", "finance", "lease"]);
 export const quoteStatusEnum = pgEnum("quote_status", ["draft", "presented", "accepted", "rejected", "expired"]);
 export const quoteLineCategoryEnum = pgEnum("quote_line_category", ["vehicle", "product", "accessory", "fee", "tax", "discount"]);
+export const quoteApprovalStatusEnum = pgEnum("quote_approval_status", ["pending", "approved", "declined"]);
+export const financeTermSourceTypeEnum = pgEnum("finance_term_source_type", ["manual-entry", "lender-quote", "oem-program", "dealer-program"]);
+export const leaseTermSourceTypeEnum = pgEnum("lease_term_source_type", ["manual-entry", "lender-quote", "oem-program", "dealer-program"]);
+export const incentiveSourceTypeEnum = pgEnum("incentive_source_type", ["oem-program", "dealer-program", "lender-program", "government-program"]);
+export const incentiveEligibilityStatusEnum = pgEnum("incentive_eligibility_status", ["pending", "verified", "ineligible"]);
+export const backendProductTypeEnum = pgEnum("backend_product_type", ["service-contract", "gap", "maintenance", "tire-wheel", "appearance", "key-replacement", "accessory", "other"]);
 export const tradeAppraisalStatusEnum = pgEnum("trade_appraisal_status", ["draft", "presented", "accepted", "rejected", "expired", "acquired"]);
 export const deliveryStatusEnum = pgEnum("delivery_status", ["scheduled", "ready", "completed", "cancelled"]);
 export const transactionalEmailKindEnum = pgEnum("transactional_email_kind", ["email-verification", "password-reset", "organization-invitation"]);
@@ -1503,4 +1509,235 @@ export const importAppliedRecords = pgTable("import_applied_records", {
   check("import_applied_records_row_number", sql`${table.rowNumber} between 1 and 10000`),
   check("import_applied_records_entity_kind", sql`${table.entityKind} in ('customer','lead','vehicle','inventory-unit')`),
   check("import_applied_records_reversal", sql`(${table.reversedAt} is null)=(${table.reversedBy} is null)`),
+]);
+
+export const dealQuoteApprovals = pgTable("deal_quote_approvals", {
+  id: text("id").primaryKey(),
+  organizationId: text("organization_id").notNull(),
+  quoteId: text("quote_id").notNull(),
+  status: quoteApprovalStatusEnum("status").default("pending").notNull(),
+  requestReason: text("request_reason"),
+  decisionReason: text("decision_reason"),
+  requestedBy: text("requested_by").references(() => users.id, { onDelete: "set null" }),
+  requestedAt: timestamp("requested_at", { withTimezone: true }).defaultNow().notNull(),
+  decidedBy: text("decided_by").references(() => users.id, { onDelete: "set null" }),
+  decidedAt: timestamp("decided_at", { withTimezone: true }),
+  requestIdempotencyKey: text("request_idempotency_key").notNull(),
+  decisionIdempotencyKey: text("decision_idempotency_key"),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("quote_approvals_organization_id_unique").on(table.organizationId, table.id),
+  uniqueIndex("quote_approvals_one_per_quote_unique").on(table.organizationId, table.quoteId),
+  uniqueIndex("quote_approvals_request_idempotency_unique").on(table.organizationId, table.requestIdempotencyKey),
+  index("quote_approvals_status_time_idx").on(table.organizationId, table.status, table.requestedAt),
+  foreignKey({ columns: [table.organizationId, table.quoteId], foreignColumns: [dealQuotes.organizationId, dealQuotes.id], name: "quote_approvals_same_organization_quote_fk" }),
+]);
+
+export const quoteApprovalPolicies = pgTable("quote_approval_policies", {
+  id: text("id").primaryKey(),
+  organizationId: text("organization_id").notNull(),
+  locationId: text("location_id"),
+  enabled: boolean("enabled").default(true).notNull(),
+  alwaysRequireApproval: boolean("always_require_approval").default(false).notNull(),
+  discountThresholdCents: integer("discount_threshold_cents"),
+  version: integer("version").default(1).notNull(),
+  createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
+  updatedBy: text("updated_by").references(() => users.id, { onDelete: "set null" }),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("quote_approval_policies_organization_id_unique").on(table.organizationId, table.id),
+  index("quote_approval_policies_lookup_idx").on(table.organizationId, table.locationId, table.enabled),
+  foreignKey({ columns: [table.organizationId, table.locationId], foreignColumns: [locations.organizationId, locations.id], name: "quote_approval_policies_same_organization_location_fk" }),
+]);
+
+export const quoteCommercialTerms = pgTable("quote_commercial_terms", {
+  quoteId: text("quote_id").primaryKey(),
+  organizationId: text("organization_id").notNull(),
+  tradeAppraisalId: text("trade_appraisal_id"),
+  tradeAllowanceCents: integer("trade_allowance_cents").default(0).notNull(),
+  tradePayoffCents: integer("trade_payoff_cents").default(0).notNull(),
+  tradeEquityCents: integer("trade_equity_cents").default(0).notNull(),
+  cashDownCents: integer("cash_down_cents").default(0).notNull(),
+  amountFinancedCents: integer("amount_financed_cents"),
+  createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("quote_commercial_terms_org_quote_unique").on(table.organizationId, table.quoteId),
+  foreignKey({ columns: [table.organizationId, table.quoteId], foreignColumns: [dealQuotes.organizationId, dealQuotes.id], name: "quote_commercial_terms_same_organization_quote_fk" }),
+  foreignKey({ columns: [table.organizationId, table.tradeAppraisalId], foreignColumns: [tradeAppraisals.organizationId, tradeAppraisals.id], name: "quote_commercial_terms_same_organization_trade_fk" }),
+]);
+
+export const quoteFinanceTerms = pgTable("quote_finance_terms", {
+  quoteId: text("quote_id").primaryKey(),
+  organizationId: text("organization_id").notNull(),
+  aprBasisPoints: integer("apr_basis_points").notNull(),
+  termMonths: integer("term_months").notNull(),
+  estimatedPaymentCents: integer("estimated_payment_cents").notNull(),
+  sourceType: financeTermSourceTypeEnum("source_type").notNull(),
+  sourceLabel: text("source_label").notNull(),
+  sourceReference: text("source_reference"),
+  capturedBy: text("captured_by").references(() => users.id, { onDelete: "set null" }),
+  capturedAt: timestamp("captured_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("quote_finance_terms_org_quote_unique").on(table.organizationId, table.quoteId),
+  foreignKey({ columns: [table.organizationId, table.quoteId], foreignColumns: [dealQuotes.organizationId, dealQuotes.id], name: "quote_finance_terms_same_organization_quote_fk" }),
+]);
+
+export const quoteLeaseTerms = pgTable("quote_lease_terms", {
+  quoteId: text("quote_id").primaryKey(),
+  organizationId: text("organization_id").notNull(),
+  adjustedCapCostCents: integer("adjusted_cap_cost_cents").notNull(),
+  residualValueCents: integer("residual_value_cents").notNull(),
+  moneyFactorPpm: integer("money_factor_ppm").notNull(),
+  termMonths: integer("term_months").notNull(),
+  annualMileage: integer("annual_mileage"),
+  acquisitionFeeCents: integer("acquisition_fee_cents").default(0).notNull(),
+  capCostReductionCents: integer("cap_cost_reduction_cents").default(0).notNull(),
+  rebateCents: integer("rebate_cents").default(0).notNull(),
+  basePaymentCents: integer("base_payment_cents").notNull(),
+  sourceType: leaseTermSourceTypeEnum("source_type").notNull(),
+  sourceLabel: text("source_label").notNull(),
+  sourceReference: text("source_reference"),
+  capturedBy: text("captured_by").references(() => users.id, { onDelete: "set null" }),
+  capturedAt: timestamp("captured_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("quote_lease_terms_org_quote_unique").on(table.organizationId, table.quoteId),
+  foreignKey({ columns: [table.organizationId, table.quoteId], foreignColumns: [dealQuotes.organizationId, dealQuotes.id], name: "quote_lease_terms_same_organization_quote_fk" }),
+]);
+
+export const incentivePrograms = pgTable("incentive_programs", {
+  id: text("id").primaryKey(),
+  organizationId: text("organization_id").notNull(),
+  locationId: text("location_id"),
+  code: text("code").notNull(),
+  name: text("name").notNull(),
+  sourceType: incentiveSourceTypeEnum("source_type").notNull(),
+  sourceLabel: text("source_label").notNull(),
+  sourceReference: text("source_reference"),
+  startsAt: timestamp("starts_at", { withTimezone: true }),
+  endsAt: timestamp("ends_at", { withTimezone: true }),
+  active: boolean("active").default(true).notNull(),
+  createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
+  updatedBy: text("updated_by").references(() => users.id, { onDelete: "set null" }),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("incentive_programs_org_id_unique").on(table.organizationId, table.id),
+  foreignKey({ columns: [table.organizationId, table.locationId], foreignColumns: [locations.organizationId, locations.id], name: "incentive_programs_same_organization_location_fk" }),
+]);
+
+export const quoteIncentiveApplications = pgTable("quote_incentive_applications", {
+  id: text("id").primaryKey(),
+  organizationId: text("organization_id").notNull(),
+  quoteId: text("quote_id").notNull(),
+  quoteLineId: text("quote_line_id").notNull(),
+  programId: text("program_id").notNull(),
+  amountCents: integer("amount_cents").notNull(),
+  eligibilityStatus: incentiveEligibilityStatusEnum("eligibility_status").default("pending").notNull(),
+  eligibilityBasis: text("eligibility_basis"),
+  verifiedBy: text("verified_by").references(() => users.id, { onDelete: "set null" }),
+  verifiedAt: timestamp("verified_at", { withTimezone: true }),
+  createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("quote_incentives_org_id_unique").on(table.organizationId, table.id),
+  uniqueIndex("quote_incentives_line_program_unique").on(table.organizationId, table.quoteLineId, table.programId),
+  foreignKey({ columns: [table.organizationId, table.quoteId], foreignColumns: [dealQuotes.organizationId, dealQuotes.id], name: "quote_incentives_same_organization_quote_fk" }),
+  foreignKey({ columns: [table.organizationId, table.quoteId, table.quoteLineId], foreignColumns: [dealQuoteLines.organizationId, dealQuoteLines.quoteId, dealQuoteLines.id], name: "quote_incentives_same_organization_line_fk" }),
+  foreignKey({ columns: [table.organizationId, table.programId], foreignColumns: [incentivePrograms.organizationId, incentivePrograms.id], name: "quote_incentives_same_organization_program_fk" }),
+]);
+
+export const backendProductCatalog = pgTable("backend_product_catalog", {
+  id: text("id").primaryKey(),
+  organizationId: text("organization_id").notNull(),
+  locationId: text("location_id"),
+  code: text("code").notNull(),
+  name: text("name").notNull(),
+  productType: backendProductTypeEnum("product_type").notNull(),
+  quoteLineCategory: quoteLineCategoryEnum("quote_line_category").notNull(),
+  providerName: text("provider_name"),
+  active: boolean("active").default(true).notNull(),
+  defaultCostCents: integer("default_cost_cents"),
+  createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
+  updatedBy: text("updated_by").references(() => users.id, { onDelete: "set null" }),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("backend_product_catalog_org_id_unique").on(table.organizationId, table.id),
+  foreignKey({ columns: [table.organizationId, table.locationId], foreignColumns: [locations.organizationId, locations.id], name: "backend_product_catalog_same_organization_location_fk" }),
+]);
+
+export const quoteBackendProductSnapshots = pgTable("quote_backend_product_snapshots", {
+  id: text("id").primaryKey(),
+  organizationId: text("organization_id").notNull(),
+  quoteId: text("quote_id").notNull(),
+  quoteLineId: text("quote_line_id").notNull(),
+  productId: text("product_id").notNull(),
+  sellCents: integer("sell_cents").notNull(),
+  costCents: integer("cost_cents").notNull(),
+  grossCents: integer("gross_cents").notNull(),
+  capturedBy: text("captured_by").references(() => users.id, { onDelete: "set null" }),
+  capturedAt: timestamp("captured_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("quote_backend_snapshots_org_id_unique").on(table.organizationId, table.id),
+  uniqueIndex("quote_backend_snapshots_line_unique").on(table.organizationId, table.quoteLineId),
+  foreignKey({ columns: [table.organizationId, table.quoteId], foreignColumns: [dealQuotes.organizationId, dealQuotes.id], name: "quote_backend_snapshots_same_organization_quote_fk" }),
+  foreignKey({ columns: [table.organizationId, table.quoteId, table.quoteLineId], foreignColumns: [dealQuoteLines.organizationId, dealQuoteLines.quoteId, dealQuoteLines.id], name: "quote_backend_snapshots_same_organization_line_fk" }),
+  foreignKey({ columns: [table.organizationId, table.productId], foreignColumns: [backendProductCatalog.organizationId, backendProductCatalog.id], name: "quote_backend_snapshots_same_organization_product_fk" }),
+]);
+
+export const inventoryCostSnapshots = pgTable("inventory_cost_snapshots", {
+  id: text("id").primaryKey(),
+  organizationId: text("organization_id").notNull(),
+  locationId: text("location_id").notNull(),
+  inventoryUnitId: text("inventory_unit_id").notNull(),
+  costCents: integer("cost_cents").notNull(),
+  sourceType: text("source_type").notNull(),
+  sourceLabel: text("source_label").notNull(),
+  sourceReference: text("source_reference"),
+  effectiveAt: timestamp("effective_at", { withTimezone: true }).notNull(),
+  capturedAt: timestamp("captured_at", { withTimezone: true }).defaultNow().notNull(),
+  capturedBy: text("captured_by").notNull().references(() => users.id, { onDelete: "restrict" }),
+}, (table) => [
+  uniqueIndex("inventory_cost_snapshots_org_id_unique").on(table.organizationId, table.id),
+  index("inventory_cost_snapshots_unit_effective_idx").on(table.organizationId, table.inventoryUnitId, table.effectiveAt),
+  foreignKey({ columns: [table.organizationId, table.locationId, table.inventoryUnitId], foreignColumns: [inventoryUnits.organizationId, inventoryUnits.locationId, inventoryUnits.id], name: "inventory_cost_snapshots_inventory_fk" }),
+]);
+
+export const quotePackPolicies = pgTable("quote_pack_policies", {
+  id: text("id").primaryKey(),
+  organizationId: text("organization_id").notNull(),
+  locationId: text("location_id"),
+  enabled: boolean("enabled").default(false).notNull(),
+  packAmountCents: integer("pack_amount_cents"),
+  version: integer("version").default(1).notNull(),
+  createdBy: text("created_by").notNull().references(() => users.id, { onDelete: "restrict" }),
+  updatedBy: text("updated_by").notNull().references(() => users.id, { onDelete: "restrict" }),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("quote_pack_policies_org_id_unique").on(table.organizationId, table.id),
+  foreignKey({ columns: [table.organizationId, table.locationId], foreignColumns: [locations.organizationId, locations.id], name: "quote_pack_policies_location_fk" }),
+]);
+
+export const quoteProfitabilitySnapshots = pgTable("quote_profitability_snapshots", {
+  id: text("id").primaryKey(),
+  organizationId: text("organization_id").notNull(),
+  locationId: text("location_id").notNull(),
+  quoteId: text("quote_id").notNull(),
+  inventoryUnitId: text("inventory_unit_id").notNull(),
+  inventoryCostSnapshotId: text("inventory_cost_snapshot_id").notNull(),
+  packPolicyId: text("pack_policy_id"),
+  vehicleSellCents: integer("vehicle_sell_cents").notNull(),
+  vehicleCostCents: integer("vehicle_cost_cents").notNull(),
+  packCents: integer("pack_cents").default(0).notNull(),
+  frontGrossCents: integer("front_gross_cents").notNull(),
+  backendGrossCents: integer("backend_gross_cents").notNull(),
+  totalGrossCents: integer("total_gross_cents").notNull(),
+  capturedAt: timestamp("captured_at", { withTimezone: true }).defaultNow().notNull(),
+  capturedBy: text("captured_by").notNull().references(() => users.id, { onDelete: "restrict" }),
+}, (table) => [
+  uniqueIndex("quote_profitability_org_id_unique").on(table.organizationId, table.id),
+  uniqueIndex("quote_profitability_quote_unique").on(table.organizationId, table.quoteId),
+  foreignKey({ columns: [table.organizationId, table.quoteId], foreignColumns: [dealQuotes.organizationId, dealQuotes.id], name: "quote_profitability_quote_fk" }),
+  foreignKey({ columns: [table.organizationId, table.locationId, table.inventoryUnitId], foreignColumns: [inventoryUnits.organizationId, inventoryUnits.locationId, inventoryUnits.id], name: "quote_profitability_inventory_fk" }),
+  foreignKey({ columns: [table.organizationId, table.inventoryCostSnapshotId], foreignColumns: [inventoryCostSnapshots.organizationId, inventoryCostSnapshots.id], name: "quote_profitability_cost_fk" }),
+  foreignKey({ columns: [table.organizationId, table.packPolicyId], foreignColumns: [quotePackPolicies.organizationId, quotePackPolicies.id], name: "quote_profitability_pack_fk" }),
 ]);

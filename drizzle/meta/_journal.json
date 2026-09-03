@@ -288,6 +288,55 @@
       "when": 1788264000000,
       "tag": "0040_synthetic_reset_maintenance_role",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1788379200000,
+      "tag": "0041_quote_approvals",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1788379260000,
+      "tag": "0042_quote_approval_policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1788379320000,
+      "tag": "0043_quote_commercial_finance_terms",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1788379380000,
+      "tag": "0044_quote_lease_terms",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1788379440000,
+      "tag": "0045_quote_incentive_provenance",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1788379500000,
+      "tag": "0046_quote_backend_products",
+      "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1788379560000,
+      "tag": "0047_quote_profitability",
+      "breakpoints": true
     }
   ]
 }

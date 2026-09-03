@@ -3,25 +3,25 @@
     "key": "owner",
     "name": "Owner",
     "description": "Full dealership platform authority.",
-    "capabilities": ["organization.configure", "staff.manage", "customer.read", "customer.create", "customer.update", "lead.read", "lead.create", "lead.assign", "lead.update", "task.read", "task.create", "task.update", "communication.read", "communication.create", "communication.consent.manage", "communication.send", "appointment.read", "appointment.create", "appointment.update", "deal.read", "deal.create", "deal.update", "deal.approve", "inventory.read", "inventory.create", "inventory.update", "reports.view"]
+    "capabilities": ["organization.configure", "staff.manage", "customer.read", "customer.create", "customer.update", "lead.read", "lead.create", "lead.assign", "lead.update", "task.read", "task.create", "task.update", "communication.read", "communication.create", "communication.consent.manage", "communication.send", "appointment.read", "appointment.create", "appointment.update", "deal.read", "deal.create", "deal.update", "deal.approve", "quote.read", "quote.create", "quote.revise", "quote.request_approval", "quote.approve", "quote.issue", "quote.void", "quote.view_sensitive_terms", "quote.configure_thresholds", "inventory.read", "inventory.create", "inventory.update", "reports.view"]
   },
   {
     "key": "sales-manager",
     "name": "Sales Manager",
     "description": "Sales operations, assignment, approval, reporting, and team administration.",
-    "capabilities": ["staff.manage", "customer.read", "customer.create", "customer.update", "lead.read", "lead.create", "lead.assign", "lead.update", "task.read", "task.create", "task.update", "communication.read", "communication.create", "communication.consent.manage", "communication.send", "appointment.read", "appointment.create", "appointment.update", "deal.read", "deal.create", "deal.update", "deal.approve", "inventory.read", "reports.view"]
+    "capabilities": ["staff.manage", "customer.read", "customer.create", "customer.update", "lead.read", "lead.create", "lead.assign", "lead.update", "task.read", "task.create", "task.update", "communication.read", "communication.create", "communication.consent.manage", "communication.send", "appointment.read", "appointment.create", "appointment.update", "deal.read", "deal.create", "deal.update", "deal.approve", "quote.read", "quote.create", "quote.revise", "quote.request_approval", "quote.approve", "quote.issue", "quote.void", "quote.view_sensitive_terms", "inventory.read", "reports.view"]
   },
   {
     "key": "general-manager",
     "name": "General Manager",
     "description": "Dealership-wide operational oversight, reporting, staffing, and deal approval authority.",
-    "capabilities": ["organization.configure", "staff.manage", "customer.read", "customer.create", "customer.update", "lead.read", "lead.create", "lead.assign", "lead.update", "task.read", "task.create", "task.update", "communication.read", "communication.create", "communication.consent.manage", "communication.send", "appointment.read", "appointment.create", "appointment.update", "deal.read", "deal.create", "deal.update", "deal.approve", "inventory.read", "inventory.create", "inventory.update", "reports.view"]
+    "capabilities": ["organization.configure", "staff.manage", "customer.read", "customer.create", "customer.update", "lead.read", "lead.create", "lead.assign", "lead.update", "task.read", "task.create", "task.update", "communication.read", "communication.create", "communication.consent.manage", "communication.send", "appointment.read", "appointment.create", "appointment.update", "deal.read", "deal.create", "deal.update", "deal.approve", "quote.read", "quote.create", "quote.revise", "quote.request_approval", "quote.approve", "quote.issue", "quote.void", "quote.view_sensitive_terms", "quote.configure_thresholds", "inventory.read", "inventory.create", "inventory.update", "reports.view"]
   },
   {
     "key": "salesperson",
     "name": "Salesperson",
     "description": "Customer, Lead, appointment, communication, and Deal workflow access.",
-    "capabilities": ["customer.read", "customer.create", "customer.update", "lead.read", "lead.create", "lead.update", "task.read", "task.create", "task.update", "communication.read", "communication.create", "communication.consent.manage", "communication.send", "appointment.read", "appointment.create", "appointment.update", "deal.read", "deal.create", "deal.update", "inventory.read"]
+    "capabilities": ["customer.read", "customer.create", "customer.update", "lead.read", "lead.create", "lead.update", "task.read", "task.create", "task.update", "communication.read", "communication.create", "communication.consent.manage", "communication.send", "appointment.read", "appointment.create", "appointment.update", "deal.read", "deal.create", "deal.update", "quote.read", "quote.create", "quote.revise", "quote.request_approval", "quote.issue", "inventory.read"]
   },
   {
     "key": "bdc",
@@ -33,7 +33,7 @@
     "key": "finance-manager",
     "name": "Finance Manager",
     "description": "Deal approval and finance workflow access with supporting customer context.",
-    "capabilities": ["customer.read", "lead.read", "task.read", "task.create", "task.update", "communication.read", "communication.create", "appointment.read", "deal.read", "deal.create", "deal.update", "deal.approve", "inventory.read", "reports.view"]
+    "capabilities": ["customer.read", "lead.read", "task.read", "task.create", "task.update", "communication.read", "communication.create", "appointment.read", "deal.read", "deal.create", "deal.update", "deal.approve", "quote.read", "quote.create", "quote.revise", "quote.request_approval", "quote.approve", "quote.issue", "quote.void", "quote.view_sensitive_terms", "inventory.read", "reports.view"]
   },
   {
     "key": "service-manager",
@@ -57,7 +57,7 @@
     "key": "controller",
     "name": "Controller",
     "description": "Financial oversight, reporting, deal review, and approval access.",
-    "capabilities": ["customer.read", "lead.read", "task.read", "task.create", "task.update", "communication.read", "appointment.read", "deal.read", "deal.update", "deal.approve", "inventory.read", "reports.view"]
+    "capabilities": ["customer.read", "lead.read", "task.read", "task.create", "task.update", "communication.read", "appointment.read", "deal.read", "deal.update", "deal.approve", "quote.read", "quote.approve", "quote.view_sensitive_terms", "inventory.read", "reports.view"]
   },
   {
     "key": "receptionist",

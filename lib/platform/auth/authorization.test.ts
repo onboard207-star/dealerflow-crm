@@ -92,6 +92,38 @@ describe("authorize", () => {
       }).allowed,
     ).toBe(true);
   });
+
+  it("does not inherit quote approval from generic deal approval", () => {
+    const actor: AuthorizationActor = {
+      userId: "user_manager_002",
+      memberships: [{
+        organizationId: "org_dealerflow_demo",
+        locationIds: "all",
+        capabilities: ["deal.read", "deal.update", "deal.approve"],
+      }],
+    };
+
+    expect(authorize(actor, {
+      organizationId: "org_dealerflow_demo",
+      capability: "quote.approve",
+    })).toEqual({ allowed: false, reason: "capability-required" });
+  });
+
+  it("allows quote approval only with the dedicated capability", () => {
+    const actor: AuthorizationActor = {
+      userId: "user_manager_003",
+      memberships: [{
+        organizationId: "org_dealerflow_demo",
+        locationIds: "all",
+        capabilities: ["deal.read", "quote.approve"],
+      }],
+    };
+
+    expect(authorize(actor, {
+      organizationId: "org_dealerflow_demo",
+      capability: "quote.approve",
+    }).allowed).toBe(true);
+  });
 });
 
 describe("assertAuthorized", () => {

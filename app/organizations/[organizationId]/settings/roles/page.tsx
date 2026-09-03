@@ -33,6 +33,20 @@ const capabilityGroups: ReadonlyArray<{
   },
   { label: "Appointments", values: ["appointment.read", "appointment.create", "appointment.update"] },
   { label: "Deals", values: ["deal.read", "deal.create", "deal.update", "deal.approve"] },
+  {
+    label: "Quotes & Desking",
+    values: [
+      "quote.read",
+      "quote.create",
+      "quote.revise",
+      "quote.request_approval",
+      "quote.approve",
+      "quote.issue",
+      "quote.void",
+      "quote.view_sensitive_terms",
+      "quote.configure_thresholds",
+    ],
+  },
   { label: "Inventory", values: ["inventory.read", "inventory.create", "inventory.update"] },
   { label: "Reporting", values: ["reports.view"] },
 ];

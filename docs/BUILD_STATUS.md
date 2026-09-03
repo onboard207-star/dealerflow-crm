@@ -1,5 +1,14 @@
 # DealerFlow AI Build Status
 
+## QUOTE / DESKING / F&I + PROFITABILITY — INTEGRATED LOCALLY
+
+- Added dedicated Quote capabilities, approval request/decision lifecycle, tenant/location approval policy, manager Desking queue, administrator policy settings, and a salesperson Quote workspace while preserving immutable Quote versions.
+- Added deterministic commercial/finance terms, isolated lease math, incentive provenance with manager verification, and privileged backend-product cost/gross snapshots. Customer proposals exclude internal source, cost, gross, approval rationale, and audit metadata.
+- Added an explicit sourced vehicle-cost boundary because Inventory previously had no authoritative cost field. Cost requires documented provenance; MSRP, selling price, book value, and appraisal value are never substituted.
+- Added organization/location pack policy support with location precedence, immutable Quote-version profitability snapshots, front gross, reused backend gross, and total gross. Missing cost or an enabled-but-unset pack fails closed; negative gross remains visible to authorized users.
+- No lender approval, credit approval, incentive eligibility, APR, payment, cost, pack, VIN, stock number, or dealership data was seeded or inferred.
+- Local gate passes: Drizzle migration validation, lint, strict TypeScript, 556 tests across 120 files, optimized production build, and whitespace validation.
+
 ## FINANCIAL OPERATING SYSTEM — NOT AUTHORIZED
 
 - Added a machine-readable financial authority boundary separating formal accounting/bank/payroll/billing sources, operational commercial/cost authorities, and dealership retail Deal finance.

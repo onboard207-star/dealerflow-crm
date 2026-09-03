@@ -7,6 +7,8 @@ import { QuoteIntegrityError, QuoteService, QuoteTransitionError, QuoteValidatio
 
 class MemoryProvider implements QuoteProvider, QuoteSession {
   quotes: QuoteRecord[] = []; events: QuoteStatusEvent[] = []; dealStatus = "working" as const; locationId = "loc_main";
+  approvalStatus: "pending" | "approved" | "declined" | null = null;
+  approvalRequired = false;
   async transaction<Result>(operation: (session: QuoteSession) => Promise<Result>) { return operation(this); }
   async acquireLock() {}
   async findQuoteByIdempotency(scope: { organizationId: string }, key: string) { return this.quotes.find((item) => item.organizationId === scope.organizationId && item.idempotencyKey === key) ?? null; }
@@ -15,11 +17,18 @@ class MemoryProvider implements QuoteProvider, QuoteSession {
   async createQuote(_context: RequestContext, quote: QuoteRecord, event: QuoteStatusEvent) { this.quotes.push(quote); this.events.push(event); return quote; }
   async findTransitionByIdempotency(scope: { organizationId: string }, key: string) { const event = this.events.find((item) => item.organizationId === scope.organizationId && item.idempotencyKey === key); const quote = event ? this.quotes.find((item) => item.id === event.quoteId) : undefined; return event && quote ? { quote, event } : null; }
   async getQuoteForUpdate(_scope: { organizationId: string }, quoteId: string) { const quote = this.quotes.find((item) => item.id === quoteId); return quote ? { quote, dealStatus: this.dealStatus, locationId: this.locationId } : null; }
+  async getApprovalStatus() { return this.approvalStatus; }
+  async getApprovalRequirement() { return { required: this.approvalRequired, ...(this.approvalRequired ? { reason: "discount-threshold" as const } : {}) }; }
   async hasAcceptedQuote(_scope: { organizationId: string }, dealId: string, exceptId: string) { return this.quotes.some((item) => item.dealId === dealId && item.id !== exceptId && item.status === "accepted"); }
   async transitionQuote(_context: RequestContext, quote: QuoteRecord, event: QuoteStatusEvent) { const index = this.quotes.findIndex((item) => item.id === quote.id); this.quotes[index] = quote; this.events.push(event); return quote; }
 }
-const capabilities: AuthorizationActor["memberships"][number]["capabilities"] = ["deal.read", "deal.update"];
-const actor = (locationIds: readonly string[] | "all" = ["loc_main"]): AuthorizationActor => ({ userId: "usr_finance", memberships: [{ organizationId: "org_dealerflow", locationIds, capabilities }] });
+const capabilities: AuthorizationActor["memberships"][number]["capabilities"] = [
+  "deal.read",
+  "quote.create",
+  "quote.revise",
+  "quote.issue",
+];
+const actor = (locationIds: readonly string[] | "all" = ["loc_main"], granted = capabilities): AuthorizationActor => ({ userId: "usr_finance", memberships: [{ organizationId: "org_dealerflow", locationIds, capabilities: granted }] });
 const createRequest = (overrides: Partial<CreateQuoteRequest> = {}): CreateQuoteRequest => ({ actor: actor(), organizationId: "org_dealerflow", correlationId: "req_quote", idempotencyKey: "quote:deal-1:v1", dealId: "dea_12345678", purchaseType: "finance", expiresAt: "2026-09-01T12:00:00.000Z", lines: [{ category: "vehicle", description: "2026 Honda CR-V Hybrid Touring", unitAmountCents: 4200000 }, { category: "product", description: "Vehicle service contract", unitAmountCents: 250000 }, { category: "fee", description: "Documentation fee", unitAmountCents: 49900 }, { category: "tax", description: "Sales tax", unitAmountCents: 260000 }, { category: "discount", description: "Dealer discount", unitAmountCents: -100000 }], ...overrides });
 const transitionRequest = (quoteId: string, status: TransitionQuoteRequest["toStatus"], overrides: Partial<TransitionQuoteRequest> = {}): TransitionQuoteRequest => ({ actor: actor(), organizationId: "org_dealerflow", correlationId: "req_quote_status", idempotencyKey: `quote:${status}`, quoteId, toStatus: status, ...overrides });
 
@@ -31,4 +40,62 @@ describe("QuoteService", () => {
   it("prevents skipped transitions and expired acceptance", async () => { const provider = new MemoryProvider(); const service = new QuoteService(provider, () => new Date("2026-08-25T12:00:00.000Z")); const { quote } = await service.create(createRequest({ expiresAt: "2026-08-26T12:00:00.000Z" })); await expect(service.transition(transitionRequest(quote.id, "accepted"))).rejects.toBeInstanceOf(QuoteTransitionError); await service.transition(transitionRequest(quote.id, "presented")); provider.quotes[0]!.expiresAt = "2026-08-24T12:00:00.000Z"; await expect(service.transition(transitionRequest(quote.id, "accepted"))).rejects.toBeInstanceOf(QuoteIntegrityError); });
   it("allows only one accepted version per deal", async () => { const provider = new MemoryProvider(); const service = new QuoteService(provider, () => new Date("2026-08-23T12:00:00.000Z")); const first = await service.create(createRequest()); const second = await service.create(createRequest({ idempotencyKey: "quote:v2" })); await service.transition(transitionRequest(first.quote.id, "presented", { idempotencyKey: "first:present" })); await service.transition(transitionRequest(first.quote.id, "accepted", { idempotencyKey: "first:accept" })); await service.transition(transitionRequest(second.quote.id, "presented", { idempotencyKey: "second:present" })); await expect(service.transition(transitionRequest(second.quote.id, "accepted", { idempotencyKey: "second:accept" }))).rejects.toBeInstanceOf(QuoteIntegrityError); });
   it("enforces the persisted deal location", async () => { const provider = new MemoryProvider(); const service = new QuoteService(provider, () => new Date("2026-08-23T12:00:00.000Z")); await expect(service.create(createRequest({ actor: actor(["loc_other"]) }))).rejects.toBeInstanceOf(AuthorizationError); });
+  it("denies quote creation to actors that only hold generic deal permissions", async () => {
+    const service = new QuoteService(new MemoryProvider(), () => new Date("2026-08-23T12:00:00.000Z"));
+    const dealOnly = actor(["loc_main"], ["deal.read", "deal.update", "deal.approve"]);
+    await expect(service.create(createRequest({ actor: dealOnly }))).rejects.toBeInstanceOf(AuthorizationError);
+  });
+  it("requires quote.issue independently from quote.revise", async () => {
+    const provider = new MemoryProvider();
+    const service = new QuoteService(provider, () => new Date("2026-08-23T12:00:00.000Z"));
+    const { quote } = await service.create(createRequest());
+    const reviserOnly = actor(["loc_main"], ["deal.read", "quote.revise"]);
+    await expect(
+      service.transition(transitionRequest(quote.id, "presented", { actor: reviserOnly })),
+    ).rejects.toBeInstanceOf(AuthorizationError);
+  });
+  it("blocks issuing a quote while manager approval is pending", async () => {
+    const provider = new MemoryProvider();
+    const service = new QuoteService(provider, () => new Date("2026-08-23T18:00:00.000Z"));
+    const { quote } = await service.create(createRequest());
+    provider.approvalStatus = "pending";
+    await expect(
+      service.transition(transitionRequest(quote.id, "presented")),
+    ).rejects.toBeInstanceOf(QuoteIntegrityError);
+  });
+  it("blocks issuing a declined quote version", async () => {
+    const provider = new MemoryProvider();
+    const service = new QuoteService(provider, () => new Date("2026-08-23T18:00:00.000Z"));
+    const { quote } = await service.create(createRequest());
+    provider.approvalStatus = "declined";
+    await expect(
+      service.transition(transitionRequest(quote.id, "presented")),
+    ).rejects.toBeInstanceOf(QuoteIntegrityError);
+  });
+  it("allows issuing an approved quote", async () => {
+    const provider = new MemoryProvider();
+    const service = new QuoteService(provider, () => new Date("2026-08-23T18:00:00.000Z"));
+    const { quote } = await service.create(createRequest());
+    provider.approvalStatus = "approved";
+    const result = await service.transition(transitionRequest(quote.id, "presented"));
+    expect(result.quote.status).toBe("presented");
+  });
+  it("blocks issue when policy requires approval and no approval exists", async () => {
+    const provider = new MemoryProvider();
+    provider.approvalRequired = true;
+    const service = new QuoteService(provider, () => new Date("2026-08-23T18:00:00.000Z"));
+    const { quote } = await service.create(createRequest());
+    await expect(
+      service.transition(transitionRequest(quote.id, "presented")),
+    ).rejects.toBeInstanceOf(QuoteIntegrityError);
+  });
+  it("allows issue when mandatory policy has an approved decision", async () => {
+    const provider = new MemoryProvider();
+    provider.approvalRequired = true;
+    provider.approvalStatus = "approved";
+    const service = new QuoteService(provider, () => new Date("2026-08-23T18:00:00.000Z"));
+    const { quote } = await service.create(createRequest());
+    const result = await service.transition(transitionRequest(quote.id, "presented"));
+    expect(result.quote.status).toBe("presented");
+  });
 });

@@ -1,5 +1,6 @@
 import type { Pool } from "pg";
 import { QuoteIntegrityError, type QuoteLine, type QuoteProvider, type QuoteRecord, type QuoteSession, type QuoteStatusEvent } from "@/lib/application/deals";
+import { evaluateQuoteApprovalPolicy, type QuoteApprovalPolicy } from "@/lib/application/deals";
 import { generateEntityId } from "@/lib/core/identifiers";
 import type { OrganizationScope, RequestContext } from "@/lib/platform/data";
 import type { SqlExecutor } from "@/lib/server/data";
@@ -23,6 +24,31 @@ class Session implements QuoteSession {
     await insertEvent(this.db, context, statusEvent); await audit(this.db, context, "quote.created", quote.id); return quote; }
   async findTransitionByIdempotency(scope: OrganizationScope, key: string) { const result = await this.db.query<QuoteRow & { location_id: string; event_id: string; from_status: EventRow["from_status"]; to_status: EventRow["to_status"]; reason: string | null; occurred_at: Date; event_key: string }>(`SELECT ${columns}, d.location_id, e.id AS event_id, e.from_status, e.to_status, e.reason, e.occurred_at, e.idempotency_key AS event_key FROM deal_quote_status_events e JOIN deal_quotes q ON q.organization_id = e.organization_id AND q.id = e.quote_id JOIN deals d ON d.organization_id = q.organization_id AND d.id = q.deal_id WHERE e.organization_id = $1 AND e.idempotency_key = $2 LIMIT 1`, [scope.organizationId, key]); const row = result.rows[0]; if (!row) return null; return { quote: await this.hydrate(row), event: statusEvent({ id: row.event_id, organization_id: row.organization_id, quote_id: row.id, from_status: row.from_status, to_status: row.to_status, reason: row.reason, occurred_at: row.occurred_at, idempotency_key: row.event_key }) }; }
   async getQuoteForUpdate(scope: OrganizationScope, quoteId: string) { const result = await this.db.query<QuoteRow & { location_id: string; deal_status: import("@/lib/application/deals").DealStatus }>(`SELECT ${columns}, d.location_id, d.status AS deal_status FROM deal_quotes q JOIN deals d ON d.organization_id = q.organization_id AND d.id = q.deal_id WHERE q.organization_id = $1 AND q.id = $2 FOR UPDATE OF q`, [scope.organizationId, quoteId]); const row = result.rows[0]; return row ? { quote: await this.hydrate(row), dealStatus: row.deal_status, locationId: row.location_id } : null; }
+  async getApprovalStatus(scope: OrganizationScope, quoteId: string) { const result = await this.db.query<{ status: "pending" | "approved" | "declined" }>("SELECT status FROM deal_quote_approvals WHERE organization_id = $1 AND quote_id = $2 LIMIT 1", [scope.organizationId, quoteId]); return result.rows[0]?.status ?? null; }
+  async getApprovalRequirement(scope: OrganizationScope, quote: Pick<QuoteRecord, "locationId" | "discountCents">) {
+    const result = await this.db.query<{ id: string; organization_id: string; location_id: string | null; enabled: boolean; always_require_approval: boolean; discount_threshold_cents: number | null; version: number }>(
+      `SELECT id, organization_id, location_id, enabled, always_require_approval,
+              discount_threshold_cents, version
+       FROM quote_approval_policies
+       WHERE organization_id = $1
+         AND enabled = true
+         AND (location_id = $2 OR location_id is null)
+       ORDER BY (location_id is not null) DESC
+       LIMIT 1`,
+      [scope.organizationId, quote.locationId ?? null],
+    );
+    const row = result.rows[0];
+    const policy: QuoteApprovalPolicy | null = row ? {
+      id: row.id,
+      organizationId: row.organization_id,
+      ...(row.location_id ? { locationId: row.location_id } : {}),
+      enabled: row.enabled,
+      alwaysRequireApproval: row.always_require_approval,
+      ...(row.discount_threshold_cents !== null ? { discountThresholdCents: row.discount_threshold_cents } : {}),
+      version: row.version,
+    } : null;
+    return evaluateQuoteApprovalPolicy(policy, quote);
+  }
   async hasAcceptedQuote(scope: OrganizationScope, dealId: string, exceptQuoteId: string) { const result = await this.db.query<{ exists: boolean }>("SELECT EXISTS (SELECT 1 FROM deal_quotes WHERE organization_id = $1 AND deal_id = $2 AND status = 'accepted' AND id <> $3) AS exists", [scope.organizationId, dealId, exceptQuoteId]); return result.rows[0]?.exists === true; }
   async transitionQuote(context: RequestContext, quote: QuoteRecord, event: QuoteStatusEvent) { const update = await this.db.query<{ id: string }>(`UPDATE deal_quotes SET status = $3, presented_at = $4, accepted_at = $5, updated_by = $6, updated_at = now() WHERE organization_id = $1 AND id = $2 AND status = $7 RETURNING id`, [quote.organizationId, quote.id, quote.status, quote.presentedAt ?? null, quote.acceptedAt ?? null, context.actorId, event.fromStatus]); if (!update.rows[0]) throw new QuoteIntegrityError("Concurrent quote transition was rejected."); if (quote.status === "accepted") await this.db.query("UPDATE deals SET agreed_price_cents = $3, purchase_type = $4, updated_by = $5, updated_at = now() WHERE organization_id = $1 AND id = $2", [quote.organizationId, quote.dealId, quote.totalCents, quote.purchaseType, context.actorId]); await insertEvent(this.db, context, event); await audit(this.db, context, "quote.status_changed", quote.id); return quote; }
   private async hydrate(row: QuoteRow & { location_id?: string }): Promise<QuoteRecord> { const lines = await this.db.query<LineRow>("SELECT id, position, category, description, quantity, unit_amount_cents, total_cents FROM deal_quote_lines WHERE organization_id = $1 AND quote_id = $2 ORDER BY position", [row.organization_id, row.id]); return { id: row.id, organizationId: row.organization_id, ...(row.location_id ? { locationId: row.location_id } : {}), dealId: row.deal_id, version: row.version, status: row.status, purchaseType: row.purchase_type, currency: row.currency, subtotalCents: row.subtotal_cents, feeCents: row.fee_cents, taxCents: row.tax_cents, discountCents: row.discount_cents, totalCents: row.total_cents, ...(row.expires_at ? { expiresAt: row.expires_at.toISOString() } : {}), ...(row.presented_at ? { presentedAt: row.presented_at.toISOString() } : {}), ...(row.accepted_at ? { acceptedAt: row.accepted_at.toISOString() } : {}), idempotencyKey: row.idempotency_key, lines: lines.rows.map(line) }; }
