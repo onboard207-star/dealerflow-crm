@@ -9,6 +9,14 @@
 - Automated tests use synthetic in-memory/provider fixtures and never send email or SMS. No configured real data layer was mutated because this batch did not establish a separately authorized disposable test database.
 - Full local gate passes: Drizzle migration validation, product-portfolio and execution-system validation, lint, strict TypeScript, 577 tests across 123 files, optimized production build, and whitespace validation. No deployment or production/staging mutation occurred.
 
+### Isolated staging activation — September 3, 2026
+
+- Deployed exact staging repair release `bfb2c86` to `dealerflow-isolated-staging`; production and legacy staging were not touched.
+- Real PostgreSQL migration rehearsal exposed and fixed two missing exact composite unique keys required by PostgreSQL foreign keys: Quote line ownership and inventory-unit location ownership. The full migration chain then completed through `0049`.
+- The governed `pilot-demo-v1` seed reconciled 26 staff, 1,476 Leads, 432 delivered Deals, and 48 current Inventory Units. Provider credentials remain absent, so no real communication or provider transaction can occur.
+- Authenticated intake/UI acceptance remains blocked: the isolated database has zero Better Auth accounts and the repository has no governed staging login provisioner. No account, password, session, authentication bypass, or direct downstream test records were fabricated.
+- Current local repair gate passes with 579 tests across 123 files plus migration validation, lint, strict TypeScript, and production build.
+
 ## INVENTORY COST & PACK ADMINISTRATION — INTEGRATED LOCALLY
 
 - Added a capability-gated, responsive administration workspace for active-inventory cost search, explicit `Cost unavailable` handling, immutable cost revisions, provenance, effective dates, recorded-user evidence, organization pack defaults, location overrides, effective-policy previews, readiness counts, and recent audit history.
