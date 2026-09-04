@@ -280,4 +280,14 @@ describe("tenant database migrations", () => {
     expect(migration).not.toMatch(/GRANT dealerflow_synthetic_reset_executor TO (PUBLIC|CURRENT_USER)/);
     expect(migration.match(/CREATE POLICY/g)).toHaveLength(2);
   });
+
+  it("binds contracted Deals and document requirements to an exact immutable Quote version", () => {
+    const migration = readFileSync(join(migrationDirectory, "0051_deal_contract_readiness.sql"), "utf8");
+    expect(migration).toContain("deals_accepted_quote_fk");
+    expect(migration).toContain('FOREIGN KEY ("organization_id", "accepted_quote_id", "accepted_quote_version")');
+    expect(migration).toContain("deal_document_requirements_quote_fk");
+    expect(migration).toContain('ALTER TABLE "deal_document_requirements" FORCE ROW LEVEL SECURITY');
+    expect(migration).toContain("prevent_deal_contract_quote_rewrite");
+    expect(migration).toContain("canonical-quote");
+  });
 });

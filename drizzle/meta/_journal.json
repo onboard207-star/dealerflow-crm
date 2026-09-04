@@ -358,6 +358,13 @@
       "when": 1788552000000,
       "tag": "0050_deal_journey_links",
       "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1788555600000,
+      "tag": "0051_deal_contract_readiness",
+      "breakpoints": true
     }
   ]
 }

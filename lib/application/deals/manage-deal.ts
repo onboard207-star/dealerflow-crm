@@ -4,7 +4,8 @@ import type { OrganizationScope, RequestContext } from "@/lib/platform/data";
 
 export type DealStatus = "draft" | "working" | "pending-approval" | "approved" | "contracted" | "delivered" | "cancelled";
 export type PurchaseType = "cash" | "finance" | "lease";
-export interface DealRecord extends OrganizationScope { id: string; customerId: string; leadId: string; appointmentId?: string; showroomVisitId?: string; primaryVehicleId: string; inventoryUnitId?: string; ownerUserId?: string; dealNumber: string; status: DealStatus; purchaseType?: PurchaseType; agreedPriceCents?: number; idempotencyKey: string; }
+export interface DealRecord extends OrganizationScope { id: string; customerId: string; leadId: string; appointmentId?: string; showroomVisitId?: string; primaryVehicleId: string; inventoryUnitId?: string; ownerUserId?: string; dealNumber: string; status: DealStatus; purchaseType?: PurchaseType; agreedPriceCents?: number; acceptedQuoteId?: string; acceptedQuoteVersion?: number; idempotencyKey: string; }
+export interface AcceptedQuoteContract { quoteId: string; version: number; purchaseType: PurchaseType; totalCents: number; }
 export interface DealStatusEvent extends OrganizationScope { id: string; dealId: string; fromStatus?: DealStatus; toStatus: DealStatus; reason?: string; occurredAt: string; idempotencyKey: string; }
 export interface CreateDealRequest extends OrganizationScope { actor: AuthorizationActor; correlationId: string; idempotencyKey: string; customerId: string; leadId: string; appointmentId?: string; showroomVisitId?: string; primaryVehicleId: string; inventoryUnitId?: string; ownerUserId?: string; purchaseType?: PurchaseType; agreedPriceCents?: number; }
 export interface TransitionDealRequest extends OrganizationScope { actor: AuthorizationActor; correlationId: string; idempotencyKey: string; dealId: string; toStatus: DealStatus; reason?: string; }
@@ -17,6 +18,8 @@ export interface DealSession {
   findTransitionByIdempotency(scope: OrganizationScope, key: string): Promise<{ deal: DealRecord; event: DealStatusEvent } | null>;
   getDealForUpdate(scope: OrganizationScope, dealId: string): Promise<DealRecord | null>;
   deliveryCompleted(scope: OrganizationScope, dealId: string): Promise<boolean>;
+  acceptedQuoteForContract(scope: OrganizationScope, dealId: string): Promise<AcceptedQuoteContract | null>;
+  deliveryReady(scope: OrganizationScope, dealId: string): Promise<boolean>;
   transitionDeal(context: RequestContext, deal: DealRecord, event: DealStatusEvent): Promise<DealRecord>;
 }
 export interface DealProvider { transaction<Result>(operation: (session: DealSession) => Promise<Result>): Promise<Result>; }
@@ -39,9 +42,9 @@ export class DealService {
   async transition(request: TransitionDealRequest): Promise<{ deal: DealRecord; event: DealStatusEvent; transitioned: boolean }> {
     validateTransition(request); const transitionCapability = request.toStatus === "approved" ? "deal.approve" : "deal.update"; assertAuthorized(request.actor, { capability: transitionCapability, organizationId: request.organizationId }); assertAuthorized(request.actor, { capability: "deal.read", organizationId: request.organizationId });
     return this.provider.transaction(async (session) => { await session.acquireIdempotencyLock(request, request.idempotencyKey); const existing = await session.findTransitionByIdempotency(request, request.idempotencyKey); if (existing) { authorizeDealLocation(request.actor, request.organizationId, existing.deal.locationId, transitionCapability); return { ...existing, transitioned: false }; } const deal = await session.getDealForUpdate(request, request.dealId); if (!deal) throw new DealIntegrityError("The deal is unavailable."); authorizeDealLocation(request.actor, request.organizationId, deal.locationId, transitionCapability);
-      if (!allowedTransitions[deal.status].includes(request.toStatus)) throw new DealTransitionError(deal.status, request.toStatus); if (request.toStatus === "delivered" && !await session.deliveryCompleted(request, deal.id)) throw new DealIntegrityError("A completed delivery handoff is required before the Deal can be delivered."); if ((request.toStatus === "cancelled" || request.toStatus === "working") && deal.status !== "draft" && !request.reason?.trim()) throw new DealValidationError(["reason is required for rollback or cancellation."]);
+      if (!allowedTransitions[deal.status].includes(request.toStatus)) throw new DealTransitionError(deal.status, request.toStatus); let nextDeal = { ...deal, status: request.toStatus }; if (request.toStatus === "contracted") { const quote = await session.acceptedQuoteForContract(request, deal.id); if (!quote) throw new DealIntegrityError("An accepted immutable Quote is required before the Deal can be contracted."); nextDeal = { ...nextDeal, acceptedQuoteId: quote.quoteId, acceptedQuoteVersion: quote.version, purchaseType: quote.purchaseType, agreedPriceCents: quote.totalCents }; } if (request.toStatus === "delivered" && (!await session.deliveryReady(request, deal.id) || !await session.deliveryCompleted(request, deal.id))) throw new DealIntegrityError("Contract, accepted Quote, inventory, document, and completed delivery requirements must be satisfied before the Deal can be delivered."); if ((request.toStatus === "cancelled" || request.toStatus === "working") && deal.status !== "draft" && !request.reason?.trim()) throw new DealValidationError(["reason is required for rollback or cancellation."]);
       const event: DealStatusEvent = { id: generateEntityId("dst"), organizationId: request.organizationId, ...(deal.locationId ? { locationId: deal.locationId } : {}), dealId: deal.id, fromStatus: deal.status, toStatus: request.toStatus, ...(request.reason?.trim() ? { reason: request.reason.trim() } : {}), occurredAt: new Date().toISOString(), idempotencyKey: request.idempotencyKey };
-      return { deal: await session.transitionDeal(context(request), { ...deal, status: request.toStatus }, event), event, transitioned: true };
+      return { deal: await session.transitionDeal(context(request), nextDeal, event), event, transitioned: true };
     });
   }
 }

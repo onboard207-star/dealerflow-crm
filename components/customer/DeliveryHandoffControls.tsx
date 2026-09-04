@@ -42,7 +42,7 @@ export function DeliveryHandoffControls({ organizationId, deal, delivery, canUpd
     } finally { setPending(false); }
   }
 
-  if (!deal || !["approved", "contracted"].includes(deal.status) && !delivery) return null;
+  if (!deal || deal.status !== "contracted" && !delivery) return null;
   return (
     <section aria-labelledby="delivery-handoff-heading" className="rounded-xl border bg-card p-4 text-card-foreground shadow-soft sm:p-5">
       <div className="flex items-start gap-3"><span className="grid size-11 shrink-0 place-items-center rounded-lg bg-muted"><CalendarCheck aria-hidden="true" className="size-5 text-muted-foreground" /></span><div><h2 id="delivery-handoff-heading" className="font-semibold tracking-tight">Delivery handoff</h2><p className="mt-1 text-sm text-muted-foreground">{delivery ? `${capitalize(delivery.status)} · ${formatDate(delivery.startsAt, delivery.timezone)}` : "Schedule and verify the physical customer handoff."}</p></div></div>

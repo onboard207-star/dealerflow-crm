@@ -822,7 +822,7 @@ export const deals = pgTable(
     customerId: text("customer_id").notNull(), leadId: text("lead_id").notNull(), appointmentId: text("appointment_id"), showroomVisitId: text("showroom_visit_id"), primaryVehicleId: text("primary_vehicle_id").notNull(),
     inventoryUnitId: text("inventory_unit_id"), ownerUserId: text("owner_user_id").references(() => users.id, { onDelete: "set null" }),
     dealNumber: text("deal_number").notNull(), status: dealStatusEnum("status").default("draft").notNull(),
-    purchaseType: purchaseTypeEnum("purchase_type"), agreedPriceCents: integer("agreed_price_cents"),
+    purchaseType: purchaseTypeEnum("purchase_type"), agreedPriceCents: integer("agreed_price_cents"), acceptedQuoteId: text("accepted_quote_id"), acceptedQuoteVersion: integer("accepted_quote_version"),
     idempotencyKey: text("idempotency_key").notNull(), createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
     updatedBy: text("updated_by").references(() => users.id, { onDelete: "set null" }), ...timestamps,
   },
@@ -846,6 +846,8 @@ export const deals = pgTable(
     check("deals_number_format", sql`${table.dealNumber} ~ '^DF-[A-Z0-9]{8}$'`),
     check("deals_price_nonnegative", sql`${table.agreedPriceCents} is null or ${table.agreedPriceCents} >= 0`),
     check("deals_visit_requires_appointment", sql`${table.showroomVisitId} is null or ${table.appointmentId} is not null`),
+    check("deals_quote_binding_complete", sql`(${table.acceptedQuoteId} is null) = (${table.acceptedQuoteVersion} is null)`),
+    check("deals_quote_required_after_contract", sql`${table.status} not in ('contracted','delivered') or ${table.acceptedQuoteId} is not null`),
   ],
 );
 
@@ -883,6 +885,7 @@ export const dealQuotes = pgTable(
   },
   (table) => [
     uniqueIndex("deal_quotes_organization_id_unique").on(table.organizationId, table.id),
+    uniqueIndex("deal_quotes_org_id_version_unique").on(table.organizationId, table.id, table.version),
     uniqueIndex("deal_quotes_deal_version_unique").on(table.organizationId, table.dealId, table.version),
     uniqueIndex("deal_quotes_organization_idempotency_unique").on(table.organizationId, table.idempotencyKey),
     uniqueIndex("deal_quotes_one_accepted_unique").on(table.organizationId, table.dealId).where(sql`${table.status} = 'accepted'`),
@@ -934,6 +937,28 @@ export const dealQuoteStatusEvents = pgTable(
     check("quote_status_events_id_format", sql`${table.id} ~ '^qst_[a-z0-9_-]{6,64}$'`),
     check("quote_status_events_changed", sql`${table.fromStatus} is null or ${table.fromStatus} <> ${table.toStatus}`),
     check("quote_status_events_reason_length", sql`${table.reason} is null or char_length(${table.reason}) <= 1000`),
+  ],
+);
+
+export const dealDocumentRequirements = pgTable(
+  "deal_document_requirements",
+  {
+    id: text("id").primaryKey(), organizationId: text("organization_id").notNull(), locationId: text("location_id").notNull(), dealId: text("deal_id").notNull(),
+    quoteId: text("quote_id").notNull(), quoteVersion: integer("quote_version").notNull(), documentType: text("document_type").notNull(), documentVersion: integer("document_version").notNull(),
+    provenance: text("provenance").notNull(), status: text("status").default("pending").notNull(), required: boolean("required").default(true).notNull(),
+    completedBy: text("completed_by").references(() => users.id, { onDelete: "set null" }), completedAt: timestamp("completed_at", { withTimezone: true }),
+    createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }), createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(), updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("deal_document_requirements_org_id_unique").on(table.organizationId, table.id),
+    uniqueIndex("deal_document_requirements_version_unique").on(table.organizationId, table.dealId, table.documentType, table.documentVersion),
+    index("deal_document_requirements_readiness_idx").on(table.organizationId, table.dealId, table.required, table.status),
+    foreignKey({ columns: [table.organizationId, table.locationId, table.dealId], foreignColumns: [deals.organizationId, deals.locationId, deals.id], name: "deal_document_requirements_deal_fk" }),
+    foreignKey({ columns: [table.organizationId, table.quoteId, table.quoteVersion], foreignColumns: [dealQuotes.organizationId, dealQuotes.id, dealQuotes.version], name: "deal_document_requirements_quote_fk" }),
+    check("deal_document_requirements_id_format", sql`${table.id} ~ '^ddr_[a-z0-9_-]{6,64}$'`),
+    check("deal_document_requirements_status", sql`${table.status} in ('pending','complete','waived')`),
+    check("deal_document_requirements_versions", sql`${table.quoteVersion}>0 and ${table.documentVersion}>0`),
+    check("deal_document_requirements_completion", sql`(${table.status}='complete')=(${table.completedAt} is not null)`),
   ],
 );
 
