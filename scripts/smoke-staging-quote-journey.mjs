@@ -9,7 +9,7 @@ export function parseArguments(values, environment = process.env) {
   if (environment.APP_ENV !== "staging") throw new Error("Staging quote-journey acceptance is disabled outside APP_ENV=staging.");
   const options = {};
   for (let index = 0; index < values.length; index += 2) options[values[index]?.replace(/^--/, "")] = values[index + 1];
-  for (const name of ["confirm", "salesperson-email", "manager-email", "organization-id", "location-id", "deal-id", "application-url", "expected-database-host"]) {
+  for (const name of ["confirm", "salesperson-email", "organization-id", "location-id", "deal-id", "application-url", "expected-database-host"]) {
     if (!options[name]) throw new Error(`--${name} is required.`);
   }
   if (options.confirm !== confirmation) throw new Error(`--confirm must equal ${confirmation}.`);
@@ -30,14 +30,26 @@ export async function run(pool, input, environment = process.env) {
     const identities = await db.query(
       `SELECT users.id user_id,lower(users.email) email,session.token FROM users
        JOIN auth_sessions session ON session.user_id=users.id AND session.expires_at>now()
-       WHERE lower(users.email)=ANY($1::text[]) AND users.active AND users.email_verified
+       WHERE lower(users.email)=lower($1) AND users.active AND users.email_verified
        ORDER BY session.created_at DESC`,
-      [[input["salesperson-email"].toLowerCase(), input["manager-email"].toLowerCase()]],
+      [input["salesperson-email"]],
     );
     const salesperson = identities.rows.find((row) => row.email === input["salesperson-email"].toLowerCase());
-    const manager = identities.rows.find((row) => row.email === input["manager-email"].toLowerCase());
-    if (!salesperson || !manager) throw new Error("Login-ready Salesperson and Manager staging sessions are required.");
+    if (!salesperson) throw new Error("A login-ready staging Salesperson session is required.");
     await db.query("SELECT set_config('app.organization_id',$1,true),set_config('app.user_id',$2,true)", [input["organization-id"], salesperson.user_id]);
+    const managerResult = await db.query(
+      `SELECT users.id user_id,session.token FROM users
+       JOIN auth_sessions session ON session.user_id=users.id AND session.expires_at>now()
+       JOIN organization_memberships membership ON membership.user_id=users.id AND membership.organization_id=$1 AND membership.status='active'
+       JOIN membership_roles mr ON mr.organization_id=membership.organization_id AND mr.membership_id=membership.id
+       JOIN role_capabilities capability ON capability.organization_id=mr.organization_id AND capability.role_id=mr.role_id AND capability.capability='quote.approve'
+       WHERE users.active AND users.email_verified
+         AND (membership.all_locations OR EXISTS(SELECT 1 FROM membership_locations ml WHERE ml.organization_id=membership.organization_id AND ml.membership_id=membership.id AND ml.location_id=$2))
+       ORDER BY session.created_at DESC LIMIT 1`,
+      [input["organization-id"], input["location-id"]],
+    );
+    const manager = managerResult.rows[0];
+    if (!manager) throw new Error("A login-ready location-authorized staging Manager session is required.");
     const guard = await db.query(
       `SELECT organization.data_class,deal.customer_id,deal.lead_id,deal.primary_vehicle_id,deal.inventory_unit_id,
         deal.owner_user_id,deal.location_id,vehicle.year,vehicle.make,vehicle.model,vehicle.trim,
