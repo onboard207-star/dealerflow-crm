@@ -62,4 +62,29 @@ describe("CustomerWorkspaceReader", () => {
     expect(result?.deal).toBeUndefined();
     expect(query.mock.calls.some(([statement]) => String(statement).includes("lead_id = $3"))).toBe(true);
   });
+
+  it("projects the latest immutable Quote and approval state into the Customer summary", async () => {
+    const createdAt = new Date("2026-09-04T12:00:00.000Z");
+    const query = vi.fn<DatabaseClient["query"]>(async (statement) => {
+      const sql = String(statement);
+      if (sql.includes("FROM customers WHERE")) return { rows: [{ id: "cus_1", location_id: "loc_1", display_name: "Jordan Lee", first_name: "Jordan", last_name: "Lee", email: null, phone: null, status: "active", created_at: createdAt, updated_at: createdAt }] };
+      if (sql.includes("FROM leads l LEFT JOIN")) return { rows: [{ id: "led_1", source: "Website", stage: "working", status: "working", created_at: createdAt, assigned_user_id: "usr_1", assigned_user_name: "Alex Morgan" }] };
+      if (sql.includes("FROM deals")) return { rows: [{ id: "dea_1", deal_number: "DF-1001", status: "working", purchase_type: null, agreed_price_cents: null }] };
+      if (sql.includes("FROM deal_quotes quote")) {
+        expect(sql).toContain("LEFT JOIN deal_quote_approvals");
+        expect(sql).toContain("ORDER BY quote.version DESC");
+        return { rows: [{ id: "quo_v2", version: 2, status: "draft", purchase_type: "finance", currency: "USD", total_cents: 4100000, expires_at: null, approval_status: "pending" }] };
+      }
+      if (sql.includes("FROM audit_logs audit")) expect(sql).toContain("quote.approval_requested");
+      return { rows: [] };
+    });
+    const client: DatabaseClient = { query, release: vi.fn() };
+    const pool: DatabasePool = { connect: vi.fn().mockResolvedValue(client) };
+
+    const result = await new CustomerWorkspaceReader(pool).read("usr_quote01", "org_quote01", "cus_quote01", {
+      locationIds: ["loc_quote01"], communications: true, appointments: true, tasks: true, inventory: true, deals: true,
+    });
+
+    expect(result?.quote).toMatchObject({ id: "quo_v2", version: 2, approvalStatus: "pending" });
+  });
 });

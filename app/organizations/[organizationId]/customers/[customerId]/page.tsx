@@ -189,10 +189,10 @@ export default async function CustomerPage({ params }: PageProps) {
         {...(record.deal && record.deal.status !== "cancelled" ? { existingDeal: { id: record.deal.id, dealNumber: record.deal.dealNumber, status: record.deal.status, deliveryCompleted: record.delivery?.status === "completed" } } : {})}
       />}
       quoteControls={<QuoteControls
-        canUpdate={has("deal.update")}
+        canCreate={has("quote.create")}
+        canRead={has("quote.read")}
         organizationId={organizationId}
-        {...(record.deal ? { deal: { id: record.deal.id, status: record.deal.status } } : {})}
-        {...(primaryVehicle ? { vehicle: { label: `${primaryVehicle.year} ${primaryVehicle.make} ${primaryVehicle.model}${primaryVehicle.trim ? ` ${primaryVehicle.trim}` : ""}`, ...(primaryVehicle.listPriceCents !== undefined ? { listPriceCents: primaryVehicle.listPriceCents } : {}) } } : {})}
+        {...(record.deal ? { deal: { id: record.deal.id, dealNumber: record.deal.dealNumber, status: record.deal.status } } : {})}
         {...(record.quote ? { quote: record.quote } : {})}
       />}
       tradeControls={<TradeWorkflowControls

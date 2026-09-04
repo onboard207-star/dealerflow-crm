@@ -9,7 +9,7 @@ export interface CustomerWorkspaceRecord {
   currentVisit?: { id: string; locationId: string; status: "checked-in" | "active"; purpose: string; arrivedAt: string; startedAt?: string; appointmentId?: string; assignedUserId?: string };
   vehicleInterests: readonly { id: string; vehicleId: string; role: "primary" | "alternative" | "trade"; status: string; priority: number; year: number; make: string; model: string; trim?: string; exteriorColor?: string; vin: string; inventoryId?: string; inventoryLocationId?: string; stockNumber?: string; inventoryStatus?: string; listPriceCents?: number }[];
   deal?: { id: string; dealNumber: string; status: "draft" | "working" | "pending-approval" | "approved" | "contracted" | "delivered" | "cancelled"; purchaseType?: string; agreedPriceCents?: number };
-  quote?: { id: string; version: number; status: "draft" | "presented" | "accepted" | "rejected" | "expired"; purchaseType: "cash" | "finance" | "lease"; currency: string; totalCents: number; expiresAt?: string };
+  quote?: { id: string; version: number; status: "draft" | "presented" | "accepted" | "rejected" | "expired"; purchaseType: "cash" | "finance" | "lease"; currency: string; totalCents: number; expiresAt?: string; approvalStatus?: "pending" | "approved" | "declined" };
   tradeAppraisal?: { id: string; vehicleId: string; version: number; status: "draft" | "presented" | "accepted" | "rejected" | "expired" | "acquired"; allowanceCents: number; payoffCents: number; equityCents: number; vehicleLabel: string };
   delivery?: { id: string; status: "scheduled" | "ready" | "completed" | "cancelled"; startsAt: string; endsAt: string; timezone: string; completedAt?: string };
   activeTasks: readonly { id:string;title:string;status:"open"|"in-progress";priority:"low"|"normal"|"high"|"urgent";dueAt?:string;assignedUserName?:string }[];
@@ -71,11 +71,15 @@ export class CustomerWorkspaceReader {
       )) as { rows: Array<{ id: string; deal_number: string; status: "draft" | "working" | "pending-approval" | "approved" | "contracted" | "delivered" | "cancelled"; purchase_type: string | null; agreed_price_cents: number | null }> } : { rows: [] };
       const currentDealForQuote = dealResult.rows[0];
       const quoteResult = visibility.deals && currentDealForQuote ? (await client.query(
-        `SELECT id, version, status, purchase_type, currency, total_cents, expires_at FROM deal_quotes
-         WHERE organization_id = $1 AND deal_id = $2
-         ORDER BY CASE status WHEN 'accepted' THEN 0 WHEN 'presented' THEN 1 WHEN 'draft' THEN 2 ELSE 3 END, version DESC LIMIT 1`,
+        `SELECT quote.id, quote.version, quote.status, quote.purchase_type, quote.currency, quote.total_cents,
+           quote.expires_at, approval.status AS approval_status
+         FROM deal_quotes quote
+         LEFT JOIN deal_quote_approvals approval
+           ON approval.organization_id=quote.organization_id AND approval.quote_id=quote.id
+         WHERE quote.organization_id = $1 AND quote.deal_id = $2
+         ORDER BY quote.version DESC LIMIT 1`,
         [organizationId, currentDealForQuote.id],
-      )) as { rows: Array<{ id: string; version: number; status: "draft" | "presented" | "accepted" | "rejected" | "expired"; purchase_type: "cash" | "finance" | "lease"; currency: string; total_cents: number; expires_at: Date | null }> } : { rows: [] };
+      )) as { rows: Array<{ id: string; version: number; status: "draft" | "presented" | "accepted" | "rejected" | "expired"; purchase_type: "cash" | "finance" | "lease"; currency: string; total_cents: number; expires_at: Date | null; approval_status: "pending" | "approved" | "declined" | null }> } : { rows: [] };
       const tradeResult = visibility.deals && currentDealForQuote ? (await client.query(
         `SELECT a.id, a.vehicle_id, a.version, a.status, a.allowance_cents, a.payoff_cents, a.equity_cents,
            v.year::text || ' ' || v.make || ' ' || v.model AS vehicle_label
@@ -157,6 +161,20 @@ export class CustomerWorkspaceReader {
             FROM deal_quote_status_events e JOIN deal_quotes q ON q.organization_id = e.organization_id AND q.id = e.quote_id
             JOIN deals d ON d.organization_id = q.organization_id AND d.id = q.deal_id
             WHERE d.organization_id = $1 AND d.customer_id = $2 AND $7::boolean
+          UNION ALL SELECT audit.id, 'quote',
+            CASE audit.action
+              WHEN 'quote.approval_requested' THEN 'Quote approval requested'
+              WHEN 'quote.approved' THEN 'Quote approval approved'
+              WHEN 'quote.approval_declined' THEN 'Quote approval declined'
+              ELSE 'Quote activity'
+            END,
+            'Version ' || quote.version::text,
+            replace(audit.action, 'quote.', ''), audit.created_at
+            FROM audit_logs audit
+            JOIN deal_quotes quote ON quote.organization_id=audit.organization_id AND quote.id=audit.entity_id
+            JOIN deals deal ON deal.organization_id=quote.organization_id AND deal.id=quote.deal_id
+            WHERE deal.organization_id=$1 AND deal.customer_id=$2 AND $7::boolean
+              AND audit.action IN ('quote.approval_requested','quote.approved','quote.approval_declined')
           UNION ALL SELECT e.id, 'trade', 'Trade appraisal status changed', 'Version ' || a.version::text, e.to_status::text, e.occurred_at
             FROM trade_appraisal_status_events e JOIN trade_appraisals a ON a.organization_id=e.organization_id AND a.id=e.appraisal_id
             JOIN deals d ON d.organization_id=a.organization_id AND d.id=a.deal_id
@@ -202,7 +220,8 @@ export class CustomerWorkspaceReader {
           ...(currentDeal.agreed_price_cents !== null ? { agreedPriceCents: currentDeal.agreed_price_cents } : {}) } } : {}),
         ...(currentQuote ? { quote: { id: currentQuote.id, version: currentQuote.version, status: currentQuote.status,
           purchaseType: currentQuote.purchase_type, currency: currentQuote.currency, totalCents: currentQuote.total_cents,
-          ...(currentQuote.expires_at ? { expiresAt: currentQuote.expires_at.toISOString() } : {}) } } : {}),
+          ...(currentQuote.expires_at ? { expiresAt: currentQuote.expires_at.toISOString() } : {}),
+          ...(currentQuote.approval_status ? { approvalStatus: currentQuote.approval_status } : {}) } } : {}),
         ...(currentTrade ? { tradeAppraisal: { id: currentTrade.id, vehicleId: currentTrade.vehicle_id, version: currentTrade.version, status: currentTrade.status,
           allowanceCents: currentTrade.allowance_cents, payoffCents: currentTrade.payoff_cents, equityCents: currentTrade.equity_cents,
           vehicleLabel: currentTrade.vehicle_label } } : {}),

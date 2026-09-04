@@ -32,6 +32,7 @@
     "execution:next": "node scripts/validate-execution-system.mjs --next",
     "smoke:deployment": "node scripts/smoke-deployment.mjs",
     "smoke:staging-sales-journey": "node scripts/smoke-staging-sales-journey.mjs",
+    "smoke:staging-quote-journey": "node scripts/smoke-staging-quote-journey.mjs",
     "validate": "pnpm db:check && pnpm portfolio:check && pnpm execution:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
   "dependencies": {
