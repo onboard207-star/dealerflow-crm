@@ -9,7 +9,7 @@ export function parseArguments(values, environment = process.env) {
   if (environment.APP_ENV !== "staging") throw new Error("Staging quote-journey acceptance is disabled outside APP_ENV=staging.");
   const options = {};
   for (let index = 0; index < values.length; index += 2) options[values[index]?.replace(/^--/, "")] = values[index + 1];
-  for (const name of ["confirm", "salesperson-email", "organization-id", "location-id", "deal-id", "application-url", "expected-database-host"]) {
+  for (const name of ["confirm", "organization-id", "location-id", "deal-id", "application-url", "expected-database-host"]) {
     if (!options[name]) throw new Error(`--${name} is required.`);
   }
   if (options.confirm !== confirmation) throw new Error(`--confirm must equal ${confirmation}.`);
@@ -28,13 +28,17 @@ export async function run(pool, input, environment = process.env) {
     await db.query("BEGIN");
     await db.query("SELECT set_config('app.auth_runtime','enabled',true)");
     const identities = await db.query(
-      `SELECT users.id user_id,lower(users.email) email,session.token FROM users
+      `SELECT users.id user_id,session.token FROM users
        JOIN auth_sessions session ON session.user_id=users.id AND session.expires_at>now()
-       WHERE lower(users.email)=lower($1) AND users.active AND users.email_verified
-       ORDER BY session.created_at DESC`,
-      [input["salesperson-email"]],
+       JOIN organization_memberships membership ON membership.user_id=users.id AND membership.organization_id=$1 AND membership.status='active'
+       JOIN membership_roles mr ON mr.organization_id=membership.organization_id AND mr.membership_id=membership.id
+       JOIN roles role ON role.organization_id=mr.organization_id AND role.id=mr.role_id AND role.key='salesperson'
+       WHERE users.active AND users.email_verified
+         AND (membership.all_locations OR EXISTS(SELECT 1 FROM membership_locations ml WHERE ml.organization_id=membership.organization_id AND ml.membership_id=membership.id AND ml.location_id=$2))
+       ORDER BY session.created_at DESC LIMIT 1`,
+      [input["organization-id"], input["location-id"]],
     );
-    const salesperson = identities.rows.find((row) => row.email === input["salesperson-email"].toLowerCase());
+    const salesperson = identities.rows[0];
     if (!salesperson) throw new Error("A login-ready staging Salesperson session is required.");
     await db.query("SELECT set_config('app.organization_id',$1,true),set_config('app.user_id',$2,true)", [input["organization-id"], salesperson.user_id]);
     const managerResult = await db.query(
@@ -66,7 +70,7 @@ export async function run(pool, input, environment = process.env) {
        WHERE deal.organization_id=$1 AND deal.id=$2 AND deal.location_id=$5`,
       [input["organization-id"], input["deal-id"], salesperson.user_id, manager.user_id, input["location-id"]],
     );
-    if (!guard.rows[0] || guard.rows[0].data_class !== "demo" || !guard.rows[0].salesperson_allowed || !guard.rows[0].manager_allowed) {
+    if (!guard.rows[0] || guard.rows[0].data_class !== "demo" || guard.rows[0].owner_user_id !== salesperson.user_id || !guard.rows[0].salesperson_allowed || !guard.rows[0].manager_allowed) {
       throw new Error("Quote acceptance requires the exact DEMO Deal and authorized staging identities.");
     }
     context = { ...guard.rows[0], salesperson, manager };
