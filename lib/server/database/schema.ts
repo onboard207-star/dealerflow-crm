@@ -819,7 +819,7 @@ export const deals = pgTable(
   "deals",
   {
     id: text("id").primaryKey(), organizationId: text("organization_id").notNull(), locationId: text("location_id").notNull(),
-    customerId: text("customer_id").notNull(), leadId: text("lead_id").notNull(), primaryVehicleId: text("primary_vehicle_id").notNull(),
+    customerId: text("customer_id").notNull(), leadId: text("lead_id").notNull(), appointmentId: text("appointment_id"), showroomVisitId: text("showroom_visit_id"), primaryVehicleId: text("primary_vehicle_id").notNull(),
     inventoryUnitId: text("inventory_unit_id"), ownerUserId: text("owner_user_id").references(() => users.id, { onDelete: "set null" }),
     dealNumber: text("deal_number").notNull(), status: dealStatusEnum("status").default("draft").notNull(),
     purchaseType: purchaseTypeEnum("purchase_type"), agreedPriceCents: integer("agreed_price_cents"),
@@ -834,13 +834,18 @@ export const deals = pgTable(
     uniqueIndex("deals_buying_cycle_unique").on(table.organizationId, table.leadId).where(sql`${table.status} <> 'cancelled'`),
     index("deals_customer_status_idx").on(table.organizationId, table.customerId, table.status),
     index("deals_lead_idx").on(table.organizationId, table.leadId),
+    index("deals_appointment_idx").on(table.organizationId, table.appointmentId),
+    index("deals_showroom_visit_idx").on(table.organizationId, table.showroomVisitId),
     foreignKey({ columns: [table.organizationId, table.locationId], foreignColumns: [locations.organizationId, locations.id], name: "deals_same_organization_location_fk" }),
     foreignKey({ columns: [table.organizationId, table.customerId, table.leadId], foreignColumns: [leads.organizationId, leads.customerId, leads.id], name: "deals_same_lead_customer_fk" }),
+    foreignKey({ columns: [table.organizationId, table.locationId, table.customerId, table.leadId, table.appointmentId], foreignColumns: [appointments.organizationId, appointments.locationId, appointments.customerId, appointments.leadId, appointments.id], name: "deals_same_journey_appointment_fk" }),
+    foreignKey({ columns: [table.organizationId, table.locationId, table.customerId, table.leadId, table.appointmentId, table.showroomVisitId], foreignColumns: [showroomVisits.organizationId, showroomVisits.locationId, showroomVisits.customerId, showroomVisits.leadId, showroomVisits.appointmentId, showroomVisits.id], name: "deals_same_journey_visit_fk" }),
     foreignKey({ columns: [table.organizationId, table.primaryVehicleId], foreignColumns: [vehicles.organizationId, vehicles.id], name: "deals_same_organization_vehicle_fk" }),
     foreignKey({ columns: [table.organizationId, table.locationId, table.primaryVehicleId, table.inventoryUnitId], foreignColumns: [inventoryUnits.organizationId, inventoryUnits.locationId, inventoryUnits.vehicleId, inventoryUnits.id], name: "deals_inventory_matches_location_vehicle_fk" }),
     check("deals_id_format", sql`${table.id} ~ '^dea_[a-z0-9_-]{6,64}$'`),
     check("deals_number_format", sql`${table.dealNumber} ~ '^DF-[A-Z0-9]{8}$'`),
     check("deals_price_nonnegative", sql`${table.agreedPriceCents} is null or ${table.agreedPriceCents} >= 0`),
+    check("deals_visit_requires_appointment", sql`${table.showroomVisitId} is null or ${table.appointmentId} is not null`),
   ],
 );
 

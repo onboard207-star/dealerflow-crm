@@ -131,6 +131,7 @@ export default async function CustomerPage({ params }: PageProps) {
         canUpdate={has("appointment.update") && has("appointment.read")}
         customerId={customerId}
         organizationId={organizationId}
+        {...(record.nextAppointment?.assignedUserId ?? record.lead?.assignedUserId ? { assignedUserId: record.nextAppointment?.assignedUserId ?? record.lead?.assignedUserId } : {})}
         {...(record.lead && ["open", "working", "qualified"].includes(record.lead.status) ? { leadId: record.lead.id } : {})}
         {...(record.customer.locationId ? { locationId: record.customer.locationId } : {})}
         {...(record.nextAppointment ? { nextAppointment: record.nextAppointment } : {})}
@@ -161,6 +162,7 @@ export default async function CustomerPage({ params }: PageProps) {
         canUpdate={has("appointment.update")}
         customerId={customerId}
         organizationId={organizationId}
+        {...(record.nextAppointment?.assignedUserId ?? record.lead?.assignedUserId ? { assignedUserId: record.nextAppointment?.assignedUserId ?? record.lead?.assignedUserId } : {})}
         {...(record.nextAppointment ? { appointmentId: record.nextAppointment.id } : {})}
         {...(record.currentVisit ? { currentVisit: record.currentVisit } : {})}
         {...(record.lead && ["open", "working", "qualified"].includes(record.lead.status) ? { leadId: record.lead.id } : {})}
@@ -179,6 +181,9 @@ export default async function CustomerPage({ params }: PageProps) {
         canUpdate={has("deal.update")}
         customerId={customerId}
         organizationId={organizationId}
+        {...(record.currentVisit?.assignedUserId ?? record.lead?.assignedUserId ? { ownerUserId: record.currentVisit?.assignedUserId ?? record.lead?.assignedUserId } : {})}
+        {...(record.nextAppointment ? { appointmentId: record.nextAppointment.id } : {})}
+        {...(record.currentVisit ? { showroomVisitId: record.currentVisit.id } : {})}
         vehicles={dealVehicles}
         {...(record.lead && ["open", "working", "qualified"].includes(record.lead.status) ? { leadId: record.lead.id } : {})}
         {...(record.deal && record.deal.status !== "cancelled" ? { existingDeal: { id: record.deal.id, dealNumber: record.deal.dealNumber, status: record.deal.status, deliveryCompleted: record.delivery?.status === "completed" } } : {})}

@@ -11,12 +11,13 @@ interface AppointmentControlsProps {
   customerId: string;
   leadId?: string;
   locationId?: string;
+  assignedUserId?: string;
   nextAppointment?: { id:string;type:string;status:string;startsAt:string;timezone:string };
   canCreate: boolean;
   canUpdate?: boolean;
 }
 
-export function AppointmentControls({ organizationId, customerId, leadId, locationId, nextAppointment, canCreate, canUpdate=false }: AppointmentControlsProps) {
+export function AppointmentControls({ organizationId, customerId, leadId, locationId, assignedUserId, nextAppointment, canCreate, canUpdate=false }: AppointmentControlsProps) {
   const router = useRouter(); const [expanded, setExpanded] = useState(false); const [pending, setPending] = useState(false); const [message, setMessage] = useState<string>();
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -25,7 +26,7 @@ export function AppointmentControls({ organizationId, customerId, leadId, locati
     if (!startsAt || !endsAt) { setMessage("Enter a valid appointment time range."); return; }
     setPending(true); setMessage(undefined);
     try {
-      const response = await fetch(`/api/organizations/${organizationId}/appointments`, { method: "POST", headers: { "content-type": "application/json", "idempotency-key": `appointment:${crypto.randomUUID()}` }, body: JSON.stringify({ locationId, customerId, leadId, type: field(form, "type"), startsAt, endsAt, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, notes: field(form, "notes"), followUp: { title: `Prepare for ${field(form, "type")} appointment`, dueAt: startsAt, priority: "normal" } }) });
+      const response = await fetch(`/api/organizations/${organizationId}/appointments`, { method: "POST", headers: { "content-type": "application/json", "idempotency-key": `appointment:${crypto.randomUUID()}` }, body: JSON.stringify({ locationId, customerId, leadId, ...(assignedUserId ? { assignedUserId } : {}), type: field(form, "type"), startsAt, endsAt, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, notes: field(form, "notes"), followUp: { title: `Prepare for ${field(form, "type")} appointment`, dueAt: startsAt, priority: "normal" } }) });
       if (!response.ok) throw new Error(await readProblem(response)); setMessage("Appointment scheduled with a linked preparation task."); setExpanded(false); router.refresh();
     } catch (error) { setMessage(error instanceof Error ? error.message : "The appointment could not be scheduled."); }
     finally { setPending(false); }

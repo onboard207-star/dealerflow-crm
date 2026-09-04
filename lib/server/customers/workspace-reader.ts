@@ -4,9 +4,9 @@ export type TimelineKind = "lead" | "communication" | "appointment" | "visit" | 
 export interface TimelineEntry { id: string; kind: TimelineKind; title: string; description?: string; status?: string; occurredAt: string; }
 export interface CustomerWorkspaceRecord {
   customer: { id: string; locationId?: string; displayName: string; firstName?:string;lastName?:string;email?: string; phone?: string; status: string; createdAt: string;updatedAt:string };
-  lead?: { id: string; source: string; stage: string; status: "open"|"working"|"qualified"|"sold"|"lost"|"archived"; assignedUserName?: string; createdAt: string };
-  nextAppointment?: { id: string; type: string; status: string; startsAt: string; timezone: string };
-  currentVisit?: { id: string; locationId: string; status: "checked-in" | "active"; purpose: string; arrivedAt: string; startedAt?: string; appointmentId?: string };
+  lead?: { id: string; source: string; stage: string; status: "open"|"working"|"qualified"|"sold"|"lost"|"archived"; assignedUserId?: string; assignedUserName?: string; createdAt: string };
+  nextAppointment?: { id: string; type: string; status: string; startsAt: string; timezone: string; assignedUserId?: string };
+  currentVisit?: { id: string; locationId: string; status: "checked-in" | "active"; purpose: string; arrivedAt: string; startedAt?: string; appointmentId?: string; assignedUserId?: string };
   vehicleInterests: readonly { id: string; vehicleId: string; role: "primary" | "alternative" | "trade"; status: string; priority: number; year: number; make: string; model: string; trim?: string; exteriorColor?: string; vin: string; inventoryId?: string; inventoryLocationId?: string; stockNumber?: string; inventoryStatus?: string; listPriceCents?: number }[];
   deal?: { id: string; dealNumber: string; status: "draft" | "working" | "pending-approval" | "approved" | "contracted" | "delivered" | "cancelled"; purchaseType?: string; agreedPriceCents?: number };
   quote?: { id: string; version: number; status: "draft" | "presented" | "accepted" | "rejected" | "expired"; purchaseType: "cash" | "finance" | "lease"; currency: string; totalCents: number; expiresAt?: string };
@@ -41,12 +41,12 @@ export class CustomerWorkspaceReader {
       )) as { rows: Array<{ id: string; location_id: string | null; display_name: string;first_name:string|null;last_name:string|null;email: string | null; phone: string | null; status: string; created_at: Date;updated_at:Date }> };
       const customer = customerResult.rows[0]; if (!customer) return null;
       const leadResult = (await client.query(
-        `SELECT l.id, l.source, l.stage, l.status, l.created_at, u.display_name AS assigned_user_name
+        `SELECT l.id, l.source, l.stage, l.status, l.created_at, l.assigned_user_id, u.display_name AS assigned_user_name
          FROM leads l LEFT JOIN users u ON u.id = l.assigned_user_id
          WHERE l.organization_id = $1 AND l.customer_id = $2
          ORDER BY CASE WHEN l.status IN ('open','working','qualified') THEN 0 ELSE 1 END, l.created_at DESC LIMIT 1`,
         [organizationId, customerId],
-      )) as { rows: Array<{ id: string; source: string; stage: string; status: "open"|"working"|"qualified"|"sold"|"lost"|"archived"; created_at: Date; assigned_user_name: string | null }> };
+      )) as { rows: Array<{ id: string; source: string; stage: string; status: "open"|"working"|"qualified"|"sold"|"lost"|"archived"; created_at: Date; assigned_user_id: string | null; assigned_user_name: string | null }> };
       const lead = leadResult.rows[0];
       const vehicleResult = visibility.inventory && lead ? (await client.query(
         `SELECT vi.id, vi.vehicle_id, vi.role, vi.status, vi.priority, v.year, v.make, v.model,
@@ -89,21 +89,21 @@ export class CustomerWorkspaceReader {
         [organizationId, currentDealForQuote.id],
       )) as { rows: Array<{ id: string; status: "scheduled" | "ready" | "completed" | "cancelled"; starts_at: Date; ends_at: Date; timezone: string; completed_at: Date | null }> } : { rows: [] };
       const appointmentResult = visibility.appointments ? (await client.query(
-        `SELECT id, type, status, starts_at, timezone FROM appointments
+        `SELECT id, type, status, starts_at, timezone, assigned_user_id FROM appointments
          WHERE organization_id = $1 AND customer_id = $2
          AND (starts_at >= now() OR status='arrived')
          AND status IN ('scheduled','confirmed','arrived')
          ORDER BY CASE WHEN status='arrived' THEN 0 ELSE 1 END, starts_at LIMIT 1`,
         [organizationId, customerId],
-      )) as { rows: Array<{ id: string; type: string; status: string; starts_at: Date; timezone: string }> } : { rows: [] };
+      )) as { rows: Array<{ id: string; type: string; status: string; starts_at: Date; timezone: string; assigned_user_id: string | null }> } : { rows: [] };
       const visitResult = visibility.appointments ? (await client.query(
-        `SELECT id, location_id, appointment_id, status, purpose, arrived_at, started_at
+        `SELECT id, location_id, appointment_id, assigned_user_id, status, purpose, arrived_at, started_at
          FROM showroom_visits WHERE organization_id = $1 AND customer_id = $2
          AND status IN ('checked-in','active')
          AND ($3::boolean OR location_id = ANY($4::text[]))
          ORDER BY arrived_at DESC LIMIT 1`,
         [organizationId, customerId, allLocations, locationIds],
-      )) as { rows: Array<{ id: string; location_id: string; appointment_id: string | null; status: "checked-in" | "active"; purpose: string; arrived_at: Date; started_at: Date | null }> } : { rows: [] };
+      )) as { rows: Array<{ id: string; location_id: string; appointment_id: string | null; assigned_user_id: string | null; status: "checked-in" | "active"; purpose: string; arrived_at: Date; started_at: Date | null }> } : { rows: [] };
       const taskResult = visibility.tasks ? (await client.query(
         `SELECT task.id,task.title,task.status,task.priority,task.due_at,user_account.display_name AS assigned_user_name
          FROM tasks task LEFT JOIN users user_account ON user_account.id=task.assigned_user_id
@@ -179,13 +179,16 @@ export class CustomerWorkspaceReader {
           ...(customer.email ? { email: customer.email } : {}), ...(customer.phone ? { phone: customer.phone } : {}),
           status: customer.status, createdAt: customer.created_at.toISOString(),updatedAt:customer.updated_at.toISOString() },
         ...(lead ? { lead: { id: lead.id, source: lead.source, stage: lead.stage, status: lead.status,
+          ...(lead.assigned_user_id ? { assignedUserId: lead.assigned_user_id } : {}),
           ...(lead.assigned_user_name ? { assignedUserName: lead.assigned_user_name } : {}), createdAt: lead.created_at.toISOString() } } : {}),
         ...(appointment ? { nextAppointment: { id: appointment.id, type: appointment.type, status: appointment.status,
-          startsAt: appointment.starts_at.toISOString(), timezone: appointment.timezone } } : {}),
+          startsAt: appointment.starts_at.toISOString(), timezone: appointment.timezone,
+          ...(appointment.assigned_user_id ? { assignedUserId: appointment.assigned_user_id } : {}) } } : {}),
         ...(currentVisit ? { currentVisit: { id: currentVisit.id, locationId: currentVisit.location_id,
           status: currentVisit.status, purpose: currentVisit.purpose, arrivedAt: currentVisit.arrived_at.toISOString(),
           ...(currentVisit.started_at ? { startedAt: currentVisit.started_at.toISOString() } : {}),
-          ...(currentVisit.appointment_id ? { appointmentId: currentVisit.appointment_id } : {}) } } : {}),
+          ...(currentVisit.appointment_id ? { appointmentId: currentVisit.appointment_id } : {}),
+          ...(currentVisit.assigned_user_id ? { assignedUserId: currentVisit.assigned_user_id } : {}) } } : {}),
         vehicleInterests: vehicleResult.rows.map((row) => ({ id: row.id, vehicleId: row.vehicle_id, role: row.role,
           status: row.status, priority: row.priority, year: row.year, make: row.make, model: row.model,
           ...(row.trim ? { trim: row.trim } : {}), ...(row.exterior_color ? { exteriorColor: row.exterior_color } : {}),

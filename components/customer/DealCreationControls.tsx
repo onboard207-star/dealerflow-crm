@@ -18,6 +18,9 @@ interface DealCreationControlsProps {
   organizationId: string;
   customerId: string;
   leadId?: string;
+  appointmentId?: string;
+  showroomVisitId?: string;
+  ownerUserId?: string;
   existingDeal?: { id: string; dealNumber: string; status: "draft" | "working" | "pending-approval" | "approved" | "contracted" | "delivered" | "cancelled"; deliveryCompleted: boolean };
   vehicles: readonly DealVehicleOption[];
   canCreate: boolean;
@@ -25,7 +28,7 @@ interface DealCreationControlsProps {
   canApprove: boolean;
 }
 
-export function DealCreationControls({ organizationId, customerId, leadId, existingDeal, vehicles, canCreate, canUpdate, canApprove }: DealCreationControlsProps) {
+export function DealCreationControls({ organizationId, customerId, leadId, appointmentId, showroomVisitId, ownerUserId, existingDeal, vehicles, canCreate, canUpdate, canApprove }: DealCreationControlsProps) {
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
   const [pending, setPending] = useState(false);
@@ -42,7 +45,7 @@ export function DealCreationControls({ organizationId, customerId, leadId, exist
       const response = await fetch(`/api/organizations/${organizationId}/deals`, {
         method: "POST",
         headers: { "content-type": "application/json", "idempotency-key": `deal:${crypto.randomUUID()}` },
-        body: JSON.stringify({ organizationId, locationId: vehicle.locationId, customerId, leadId, primaryVehicleId: vehicle.vehicleId, inventoryUnitId: vehicle.inventoryUnitId, purchaseType: field(form, "purchaseType") }),
+        body: JSON.stringify({ organizationId, locationId: vehicle.locationId, customerId, leadId, ...(appointmentId ? { appointmentId } : {}), ...(showroomVisitId ? { showroomVisitId } : {}), ...(ownerUserId ? { ownerUserId } : {}), primaryVehicleId: vehicle.vehicleId, inventoryUnitId: vehicle.inventoryUnitId, purchaseType: field(form, "purchaseType") }),
       });
       if (!response.ok) throw new Error(await readProblem(response));
       setMessage("Draft Deal created."); setExpanded(false); router.refresh();

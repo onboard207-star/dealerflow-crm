@@ -19,6 +19,7 @@ interface ShowroomVisitControlsProps {
   leadId?: string;
   locationId?: string;
   appointmentId?: string;
+  assignedUserId?: string;
   currentVisit?: CurrentVisit;
   canCreate: boolean;
   canUpdate: boolean;
@@ -26,7 +27,7 @@ interface ShowroomVisitControlsProps {
 
 type PendingAction = "check-in" | "start" | "complete" | "cancel";
 
-export function ShowroomVisitControls({ organizationId, customerId, leadId, locationId, appointmentId, currentVisit, canCreate, canUpdate }: ShowroomVisitControlsProps) {
+export function ShowroomVisitControls({ organizationId, customerId, leadId, locationId, appointmentId, assignedUserId, currentVisit, canCreate, canUpdate }: ShowroomVisitControlsProps) {
   const router = useRouter();
   const [pending, setPending] = useState<PendingAction>();
   const [message, setMessage] = useState<string>();
@@ -36,7 +37,7 @@ export function ShowroomVisitControls({ organizationId, customerId, leadId, loca
     if (!leadId || !locationId) return;
     const data = new FormData(event.currentTarget);
     await request("check-in", `/api/organizations/${organizationId}/showroom-visits`, {
-      locationId, customerId, leadId, purpose: String(data.get("purpose") ?? ""), ...(appointmentId ? { appointmentId } : {}),
+      locationId, customerId, leadId, purpose: String(data.get("purpose") ?? ""), ...(appointmentId ? { appointmentId } : {}), ...(assignedUserId ? { assignedUserId } : {}),
     });
   }
 

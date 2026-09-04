@@ -16,7 +16,7 @@ const audit = { createdAt: now, createdBy: "usr_sales", updatedAt: now, updatedB
 
 class MemoryProvider implements CRMDataProvider {
   customers: CustomerRecord[] = [{ id: "cus_jordan", organizationId: "org_dealerflow", locationId: "loc_main", displayName: "Jordan Lee", status: "active", ...audit }];
-  leads: LeadRecord[] = [{ id: "led_jordan", organizationId: "org_dealerflow", locationId: "loc_main", customerId: "cus_jordan", source: "Website", stage: "working", status: "open", idempotencyKey: "lead:1", ...audit }];
+  leads: LeadRecord[] = [{ id: "led_jordan", organizationId: "org_dealerflow", locationId: "loc_main", customerId: "cus_jordan", assignedUserId: "usr_sales", source: "Website", stage: "working", status: "open", idempotencyKey: "lead:1", ...audit }];
   appointments: AppointmentRecord[] = [];
   tasks: TaskRecord[] = [];
   transactions = 0;
@@ -60,7 +60,7 @@ function request(overrides: Partial<ScheduleAppointmentRequest> = {}): ScheduleA
 
 function service(provider: MemoryProvider) {
   let sequence = 0;
-  return new ScheduleAppointmentService(provider, (prefix) => `${prefix}_test_${++sequence}`);
+  return new ScheduleAppointmentService(provider, (prefix) => `${prefix}_test_${++sequence}`, () => new Date(now));
 }
 
 describe("ScheduleAppointmentService", () => {
@@ -98,10 +98,27 @@ describe("ScheduleAppointmentService", () => {
       .rejects.toSatisfy((error: unknown) => error instanceof AppointmentValidationError && error.issues.length === 2);
   });
 
+  it("rejects an appointment that starts in the past", async () => {
+    await expect(service(new MemoryProvider()).schedule(request({
+      startsAt: "2026-08-23T11:00:00.000Z", endsAt: "2026-08-23T12:00:00.000Z",
+    }))).rejects.toSatisfy((error: unknown) => error instanceof AppointmentValidationError
+      && error.issues.includes("startsAt must not be in the past."));
+  });
+
   it("requires a dealership location and rejects mismatched record locations", async () => {
     const missing = request(); delete missing.locationId;
     await expect(service(new MemoryProvider()).schedule(missing)).rejects.toBeInstanceOf(AppointmentValidationError);
     const provider = new MemoryProvider(); provider.leads[0] = { ...provider.leads[0]!, locationId: "loc_other" };
     await expect(service(provider).schedule(request())).rejects.toBeInstanceOf(AppointmentIntegrityError);
+  });
+
+  it("inherits the Lead assignee and rejects a conflicting assignee", async () => {
+    const provider = new MemoryProvider();
+    const withoutAssignee = request(); delete withoutAssignee.assignedUserId;
+    const result = await service(provider).schedule(withoutAssignee);
+    expect(result.appointment.assignedUserId).toBe("usr_sales");
+    expect(result.followUpTask.assignedUserId).toBe("usr_sales");
+    await expect(service(new MemoryProvider()).schedule(request({ assignedUserId: "usr_other" })))
+      .rejects.toBeInstanceOf(AppointmentIntegrityError);
   });
 });

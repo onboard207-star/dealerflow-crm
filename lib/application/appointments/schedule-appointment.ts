@@ -54,10 +54,11 @@ export class ScheduleAppointmentService {
   constructor(
     private readonly provider: CRMDataProvider,
     private readonly createId: (prefix: EntityIdPrefix) => string = generateEntityId,
+    private readonly now: () => Date = () => new Date(),
   ) {}
 
   async schedule(request: ScheduleAppointmentRequest): Promise<ScheduleAppointmentResult> {
-    const input = validate(request);
+    const input = validate(request, this.now());
     for (const capability of [
       "customer.read", "lead.read", "appointment.read", "appointment.create",
       "task.read", "task.create",
@@ -92,6 +93,10 @@ export class ScheduleAppointmentService {
       if ((customer.locationId && customer.locationId !== input.locationId) || (lead.locationId && lead.locationId !== input.locationId)) {
         throw new AppointmentIntegrityError("Customer or Lead is unavailable at this location.");
       }
+      if (input.assignedUserId && input.assignedUserId !== lead.assignedUserId) {
+        throw new AppointmentIntegrityError("Appointment assignee must match the active Lead assignment.");
+      }
+      const assignedUserId = input.assignedUserId ?? lead.assignedUserId;
       const context: RequestContext = {
         actorId: request.actor.userId,
         organizationId: input.organizationId,
@@ -102,7 +107,7 @@ export class ScheduleAppointmentService {
         id: this.createId("apt"), organizationId: input.organizationId,
         ...(input.locationId ? { locationId: input.locationId } : {}),
         customerId: input.customerId, leadId: input.leadId,
-        ...(input.assignedUserId ? { assignedUserId: input.assignedUserId } : {}),
+        ...(assignedUserId ? { assignedUserId } : {}),
         type: input.type, startsAt: input.startsAt, endsAt: input.endsAt,
         timezone: input.timezone, ...(input.notes ? { notes: input.notes } : {}),
         idempotencyKey: input.idempotencyKey,
@@ -112,7 +117,7 @@ export class ScheduleAppointmentService {
         ...(input.locationId ? { locationId: input.locationId } : {}),
         customerId: input.customerId, leadId: input.leadId,
         appointmentId: appointment.id,
-        ...(input.assignedUserId ? { assignedUserId: input.assignedUserId } : {}),
+        ...(assignedUserId ? { assignedUserId } : {}),
         title: input.followUp.title, dueAt: input.followUp.dueAt,
         priority: input.followUp.priority ?? "normal", idempotencyKey: taskKey,
       });
@@ -121,7 +126,7 @@ export class ScheduleAppointmentService {
   }
 }
 
-function validate(request: ScheduleAppointmentRequest): ScheduleAppointmentRequest {
+function validate(request: ScheduleAppointmentRequest, now: Date): ScheduleAppointmentRequest {
   const issues: string[] = [];
   const startsAt = new Date(request.startsAt);
   const endsAt = new Date(request.endsAt);
@@ -137,6 +142,7 @@ function validate(request: ScheduleAppointmentRequest): ScheduleAppointmentReque
   if (Number.isNaN(startsAt.valueOf()) || Number.isNaN(endsAt.valueOf())) {
     issues.push("Appointment times must be valid ISO timestamps.");
   } else if (endsAt <= startsAt) issues.push("endsAt must be after startsAt.");
+  else if (startsAt < now) issues.push("startsAt must not be in the past.");
   if (Number.isNaN(dueAt.valueOf())) issues.push("followUp.dueAt must be a valid ISO timestamp.");
   else if (!Number.isNaN(startsAt.valueOf()) && dueAt > startsAt) {
     issues.push("followUp.dueAt cannot be after startsAt.");

@@ -1,5 +1,102 @@
-import type{Pool}from"pg";import{AppointmentLifecycleIntegrityError,type AppointmentItem,type AppointmentLifecycleProvider,type AppointmentLifecycleSession,type AppointmentStatusEvent}from"@/lib/application/appointments";import{generateEntityId}from"@/lib/core/identifiers";import type{OrganizationScope,RequestContext}from"@/lib/platform/data";import{withTenantDatabaseContext}from"@/lib/server/database";import type{SqlExecutor}from"@/lib/server/data";
-export class PostgresAppointmentLifecycleProvider implements AppointmentLifecycleProvider{constructor(private readonly pool:Pool,private readonly tenant:{userId:string;organizationId:string}){}transaction<T>(operation:(session:AppointmentLifecycleSession)=>Promise<T>){return withTenantDatabaseContext(this.pool,this.tenant,(client)=>operation(new Session(client as unknown as SqlExecutor)));}}
-type Row={id:string;organization_id:string;location_id:string|null;customer_id:string;lead_id:string|null;status:AppointmentItem["status"];type:string;starts_at:Date;ends_at:Date;timezone:string;idempotency_key:string};type EventRow={id:string;organization_id:string;appointment_id:string;from_status:AppointmentStatusEvent["fromStatus"]|null;to_status:AppointmentStatusEvent["toStatus"];reason:string|null;occurred_at:Date;idempotency_key:string};const columns="id,organization_id,location_id,customer_id,lead_id,status,type,starts_at,ends_at,timezone,idempotency_key";
-class Session implements AppointmentLifecycleSession{constructor(private readonly db:SqlExecutor){}async lock(scope:OrganizationScope,key:string){await this.db.query("SELECT pg_advisory_xact_lock(hashtextextended($1,0))",[`${scope.organizationId}:${key}`]);}async findTransition(scope:OrganizationScope,key:string){const result=await this.db.query<Row&{event_id:string;from_status:EventRow["from_status"];to_status:EventRow["to_status"];reason:string|null;occurred_at:Date;event_key:string}>(`SELECT a.*,e.id event_id,e.from_status,e.to_status,e.reason,e.occurred_at,e.idempotency_key event_key FROM appointment_status_events e JOIN appointments a ON a.organization_id=e.organization_id AND a.id=e.appointment_id WHERE e.organization_id=$1 AND e.idempotency_key=$2 LIMIT 1`,[scope.organizationId,key]);const row=result.rows[0];return row?{appointment:item(row),event:event({id:row.event_id,organization_id:row.organization_id,appointment_id:row.id,from_status:row.from_status,to_status:row.to_status,reason:row.reason,occurred_at:row.occurred_at,idempotency_key:row.event_key})}:null;}async getForUpdate(scope:OrganizationScope,id:string){const result=await this.db.query<Row>(`SELECT ${columns} FROM appointments WHERE organization_id=$1 AND id=$2 FOR UPDATE`,[scope.organizationId,id]);return result.rows[0]?item(result.rows[0]):null;}async transition(context:RequestContext,appointment:AppointmentItem,statusEvent:AppointmentStatusEvent){const result=await this.db.query<{id:string}>("UPDATE appointments SET status=$3,updated_by=$4,updated_at=now() WHERE organization_id=$1 AND id=$2 AND status=$5 RETURNING id",[appointment.organizationId,appointment.id,appointment.status,context.actorId,statusEvent.fromStatus]);if(!result.rows[0])throw new AppointmentLifecycleIntegrityError("Concurrent appointment transition was rejected.");await insertEvent(this.db,context,statusEvent);await this.db.query("INSERT INTO audit_logs(id,organization_id,actor_id,action,entity_type,entity_id,source,correlation_id) VALUES($1,$2,$3,$4,'appointment',$5,'application',$6)",[generateEntityId("aud"),context.organizationId,context.actorId,`appointment.${appointment.status}`,appointment.id,context.correlationId]);return appointment;}}
-function item(row:Row):AppointmentItem{if(!row.location_id)throw new AppointmentLifecycleIntegrityError("Appointment does not have an operational location.");return{id:row.id,organizationId:row.organization_id,locationId:row.location_id,customerId:row.customer_id,...(row.lead_id?{leadId:row.lead_id}:{}),status:row.status,type:row.type,startsAt:row.starts_at.toISOString(),endsAt:row.ends_at.toISOString(),timezone:row.timezone,idempotencyKey:row.idempotency_key};}function event(row:EventRow):AppointmentStatusEvent{return{id:row.id,organizationId:row.organization_id,appointmentId:row.appointment_id,...(row.from_status?{fromStatus:row.from_status}:{}),toStatus:row.to_status,...(row.reason?{reason:row.reason}:{}),occurredAt:row.occurred_at.toISOString(),idempotencyKey:row.idempotency_key};}async function insertEvent(db:SqlExecutor,context:RequestContext,value:AppointmentStatusEvent){await db.query("INSERT INTO appointment_status_events(id,organization_id,appointment_id,from_status,to_status,reason,occurred_at,idempotency_key,created_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)",[value.id,value.organizationId,value.appointmentId,value.fromStatus??null,value.toStatus,value.reason??null,value.occurredAt,value.idempotencyKey,context.actorId]);}
+import type { Pool } from "pg";
+
+import {
+  AppointmentLifecycleIntegrityError,
+  type AppointmentItem,
+  type AppointmentLifecycleProvider,
+  type AppointmentLifecycleSession,
+  type AppointmentStatusEvent,
+} from "@/lib/application/appointments";
+import { generateEntityId } from "@/lib/core/identifiers";
+import type { OrganizationScope, RequestContext } from "@/lib/platform/data";
+import { withTenantDatabaseContext } from "@/lib/server/database";
+import type { SqlExecutor } from "@/lib/server/data";
+
+export class PostgresAppointmentLifecycleProvider implements AppointmentLifecycleProvider {
+  constructor(private readonly pool: Pool, private readonly tenant: { userId: string; organizationId: string }) {}
+
+  transaction<Result>(operation: (session: AppointmentLifecycleSession) => Promise<Result>) {
+    return withTenantDatabaseContext(this.pool, this.tenant, (client) => operation(new Session(client as unknown as SqlExecutor)));
+  }
+}
+
+type Row = { id: string; organization_id: string; location_id: string | null; customer_id: string; lead_id: string | null; status: AppointmentItem["status"]; type: string; starts_at: Date; ends_at: Date; timezone: string; idempotency_key: string };
+type EventRow = { id: string; organization_id: string; appointment_id: string; from_status: AppointmentStatusEvent["fromStatus"] | null; to_status: AppointmentStatusEvent["toStatus"]; reason: string | null; occurred_at: Date; idempotency_key: string };
+const columns = "id,organization_id,location_id,customer_id,lead_id,status,type,starts_at,ends_at,timezone,idempotency_key";
+
+class Session implements AppointmentLifecycleSession {
+  constructor(private readonly db: SqlExecutor) {}
+
+  async lock(scope: OrganizationScope, key: string) {
+    await this.db.query("SELECT pg_advisory_xact_lock(hashtextextended($1,0))", [`${scope.organizationId}:${key}`]);
+  }
+
+  async findTransition(scope: OrganizationScope, key: string) {
+    const result = await this.db.query<Row & { event_id: string; from_status: EventRow["from_status"]; to_status: EventRow["to_status"]; reason: string | null; occurred_at: Date; event_key: string }>(
+      `SELECT a.*,e.id event_id,e.from_status,e.to_status,e.reason,e.occurred_at,e.idempotency_key event_key
+       FROM appointment_status_events e JOIN appointments a ON a.organization_id=e.organization_id AND a.id=e.appointment_id
+       WHERE e.organization_id=$1 AND e.idempotency_key=$2 LIMIT 1`,
+      [scope.organizationId, key],
+    );
+    const row = result.rows[0];
+    return row ? { appointment: item(row), event: event({ id: row.event_id, organization_id: row.organization_id, appointment_id: row.id, from_status: row.from_status, to_status: row.to_status, reason: row.reason, occurred_at: row.occurred_at, idempotency_key: row.event_key }) } : null;
+  }
+
+  async getForUpdate(scope: OrganizationScope, id: string) {
+    const result = await this.db.query<Row>(`SELECT ${columns} FROM appointments WHERE organization_id=$1 AND id=$2 FOR UPDATE`, [scope.organizationId, id]);
+    return result.rows[0] ? item(result.rows[0]) : null;
+  }
+
+  async transition(context: RequestContext, appointment: AppointmentItem, statusEvent: AppointmentStatusEvent) {
+    const result = await this.db.query<{ id: string }>(
+      "UPDATE appointments SET status=$3,updated_by=$4,updated_at=now() WHERE organization_id=$1 AND id=$2 AND status=$5 RETURNING id",
+      [appointment.organizationId, appointment.id, appointment.status, context.actorId, statusEvent.fromStatus],
+    );
+    if (!result.rows[0]) throw new AppointmentLifecycleIntegrityError("Concurrent appointment transition was rejected.");
+    if (appointment.status === "cancelled" || appointment.status === "no-show") {
+      await cancelAppointmentTasks(this.db, context, appointment.id, appointment.status);
+    }
+    await insertEvent(this.db, context, statusEvent);
+    await this.db.query(
+      "INSERT INTO audit_logs(id,organization_id,actor_id,action,entity_type,entity_id,source,correlation_id) VALUES($1,$2,$3,$4,'appointment',$5,'application',$6)",
+      [generateEntityId("aud"), context.organizationId, context.actorId, `appointment.${appointment.status}`, appointment.id, context.correlationId],
+    );
+    return appointment;
+  }
+}
+
+function item(row: Row): AppointmentItem {
+  if (!row.location_id) throw new AppointmentLifecycleIntegrityError("Appointment does not have an operational location.");
+  return { id: row.id, organizationId: row.organization_id, locationId: row.location_id, customerId: row.customer_id, ...(row.lead_id ? { leadId: row.lead_id } : {}), status: row.status, type: row.type, startsAt: row.starts_at.toISOString(), endsAt: row.ends_at.toISOString(), timezone: row.timezone, idempotencyKey: row.idempotency_key };
+}
+
+function event(row: EventRow): AppointmentStatusEvent {
+  return { id: row.id, organizationId: row.organization_id, appointmentId: row.appointment_id, ...(row.from_status ? { fromStatus: row.from_status } : {}), toStatus: row.to_status, ...(row.reason ? { reason: row.reason } : {}), occurredAt: row.occurred_at.toISOString(), idempotencyKey: row.idempotency_key };
+}
+
+async function insertEvent(db: SqlExecutor, context: RequestContext, value: AppointmentStatusEvent) {
+  await db.query(
+    "INSERT INTO appointment_status_events(id,organization_id,appointment_id,from_status,to_status,reason,occurred_at,idempotency_key,created_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)",
+    [value.id, value.organizationId, value.appointmentId, value.fromStatus ?? null, value.toStatus, value.reason ?? null, value.occurredAt, value.idempotencyKey, context.actorId],
+  );
+}
+
+async function cancelAppointmentTasks(db: SqlExecutor, context: RequestContext, appointmentId: string, outcome: "cancelled" | "no-show") {
+  const tasks = await db.query<{ id: string; from_status: "open" | "in-progress" }>(
+    `WITH current AS (SELECT id,status FROM tasks WHERE organization_id=$1 AND appointment_id=$2 AND status IN ('open','in-progress') FOR UPDATE),
+     updated AS (UPDATE tasks task SET status='cancelled',updated_by=$3,updated_at=now() FROM current
+       WHERE task.organization_id=$1 AND task.id=current.id RETURNING task.id,current.status AS from_status)
+     SELECT id,from_status FROM updated`,
+    [context.organizationId, appointmentId, context.actorId],
+  );
+  for (const task of tasks.rows) {
+    await db.query(
+      "INSERT INTO task_status_events(id,organization_id,task_id,from_status,to_status,reason,idempotency_key,created_by) VALUES($1,$2,$3,$4,'cancelled',$5,$6,$7)",
+      [generateEntityId("tse"), context.organizationId, task.id, task.from_status, `Linked appointment was ${outcome}.`, `appointment:${appointmentId}:${outcome}:task:${task.id}`, context.actorId],
+    );
+    await db.query(
+      "INSERT INTO audit_logs(id,organization_id,actor_id,action,entity_type,entity_id,source,correlation_id) VALUES($1,$2,$3,'task.cancelled','task',$4,'application',$5)",
+      [generateEntityId("aud"), context.organizationId, context.actorId, task.id, context.correlationId],
+    );
+  }
+}

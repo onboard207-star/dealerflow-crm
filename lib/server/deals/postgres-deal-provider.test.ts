@@ -9,5 +9,7 @@ describe("PostgresDealProvider", () => {
     expect(source).toContain("$3::inventory_status = 'sold'::inventory_status");
     expect(source).toContain("'purchased'::vehicle_interest_status");
     expect(source).toContain("'inactive'::vehicle_interest_status");
+    expect(source).toContain("visit.appointment_id=$8");
+    expect(source).toContain("JOIN membership_locations");
   });
 });
