@@ -30,6 +30,7 @@ export function LeadIntakeForm({ assignedUserId, organizationId, locations }: Le
           preferredContactMethod: value(form, "preferredContactMethod") || undefined,
           message: value(form, "message") || undefined,
           tradeInterest: form.get("tradeInterest") === "on",
+          appointmentRequest: form.get("appointmentRequested") === "on" ? { notes: "Customer requested an appointment during lead intake." } : undefined,
           vehicleInterest: compact({ vin: value(form, "vin"), stockNumber: value(form, "stockNumber"), year: numberValue(form, "year"), make: value(form, "make"), model: value(form, "model"), trim: value(form, "trim") }),
           customer: { displayName: value(form, "displayName"), firstName: value(form, "firstName"), lastName: value(form, "lastName"), email: value(form, "email"), phone: value(form, "phone") },
         }),
@@ -67,6 +68,7 @@ export function LeadIntakeForm({ assignedUserId, organizationId, locations }: Le
         <Field label="Trim" maxLength={80} name="trim" />
         <label className="text-sm font-medium sm:col-span-2">Customer message<textarea className={`${inputClass} min-h-24 py-3`} maxLength={4000} name="message" /></label>
         <label className="flex min-h-11 items-center gap-2 text-sm font-medium sm:col-span-2"><input className="focus-ring size-4 rounded border" name="tradeInterest" type="checkbox" /> Customer has indicated a trade interest</label>
+        <label className="flex min-h-11 items-center gap-2 text-sm font-medium sm:col-span-2"><input className="focus-ring size-4 rounded border" name="appointmentRequested" type="checkbox" /> Customer requested an appointment</label>
         <p className="text-sm text-muted-foreground sm:col-span-2">At least one contact method—email or phone—is required.</p>
         {message ? <p className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive sm:col-span-2" role="alert">{message}</p> : null}
         <div className="sm:col-span-2"><Button disabled={pending} type="submit">{pending ? "Creating lead…" : "Create lead and open customer"}</Button></div>
