@@ -38,6 +38,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/node_modules/drizzle-orm ./node_m
 COPY --from=builder --chown=nextjs:nodejs /app/config ./config
 COPY --from=builder --chown=nextjs:nodejs /app/drizzle ./drizzle
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/render-migrate.mjs ./scripts/render-migrate.mjs
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/provision-staging-salesperson.mjs ./scripts/provision-staging-salesperson.mjs
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/seed-dealership-template.mjs ./scripts/seed-dealership-template.mjs
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/seed-synthetic-pilot.mjs ./scripts/seed-synthetic-pilot.mjs
 USER nextjs
