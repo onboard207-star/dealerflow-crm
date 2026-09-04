@@ -2,6 +2,7 @@ import type { Pool } from "pg";
 import { QuoteProfitabilityIntegrityError, type QuoteProfitabilityProvider, type QuoteProfitabilitySession } from "@/lib/application/deals";
 import { generateEntityId } from "@/lib/core/identifiers";
 import type { OrganizationScope, RequestContext } from "@/lib/platform/data";
+import type { InventoryCostSnapshot } from "@/lib/application/inventory";
 import type { SqlExecutor } from "@/lib/server/data";
 import { withTenantDatabaseContext } from "@/lib/server/database";
 
@@ -25,15 +26,21 @@ class Session implements QuoteProfitabilitySession {
     const row = result.rows[0];
     return row ? { status: row.status, locationId: row.location_id, ...(row.inventory_unit_id ? { inventoryUnitId: row.inventory_unit_id } : {}), vehicleSellCents: row.vehicle_sell_cents } : null;
   }
-  async getPackPolicy(scope: OrganizationScope, locationId: string) {
-    const result = await this.db.query<{ id: string; enabled: boolean; pack_amount_cents: number | null }>(
-      `SELECT id,enabled,pack_amount_cents FROM quote_pack_policies
-       WHERE organization_id=$1 AND (location_id=$2 OR location_id IS NULL)
-       ORDER BY (location_id IS NOT NULL) DESC LIMIT 1`,
+  async getPackPolicies(scope: OrganizationScope, locationId: string) {
+    const result = await this.db.query<{ id: string; organization_id: string; location_id: string | null; enabled: boolean; pack_amount_cents: number | null; version: number; updated_at: Date }>(
+      `SELECT id,organization_id,location_id,enabled,pack_amount_cents,version,updated_at FROM quote_pack_policies
+       WHERE organization_id=$1 AND (location_id=$2 OR location_id IS NULL)`,
       [scope.organizationId, locationId],
     );
-    const row = result.rows[0];
-    return row ? { id: row.id, enabled: row.enabled, ...(row.pack_amount_cents !== null ? { packAmountCents: row.pack_amount_cents } : {}) } : null;
+    const map = (row: (typeof result.rows)[number]) => ({ id: row.id, organizationId: row.organization_id, ...(row.location_id ? { locationId: row.location_id } : {}), enabled: row.enabled, ...(row.pack_amount_cents !== null ? { packAmountCents: row.pack_amount_cents } : {}), version: row.version, updatedAt: row.updated_at.toISOString() });
+    return { organizationDefault: result.rows.find((row) => row.location_id === null) ? map(result.rows.find((row) => row.location_id === null)!) : null, locationOverride: result.rows.find((row) => row.location_id === locationId) ? map(result.rows.find((row) => row.location_id === locationId)!) : null };
+  }
+  async getLatestInventoryCost(scope: OrganizationScope, inventoryUnitId: string) {
+    const result = await this.db.query<{ id:string;organization_id:string;location_id:string;inventory_unit_id:string;version:number;previous_snapshot_id:string|null;cost_cents:number;source_type:InventoryCostSnapshot["sourceType"];source_label:string;source_reference:string|null;effective_at:Date;captured_at:Date;captured_by:string }>(
+      `SELECT id,organization_id,location_id,inventory_unit_id,version,previous_snapshot_id,cost_cents,source_type,source_label,source_reference,effective_at,captured_at,captured_by
+       FROM inventory_cost_snapshots WHERE organization_id=$1 AND inventory_unit_id=$2 ORDER BY version DESC LIMIT 1`, [scope.organizationId,inventoryUnitId]);
+    const row=result.rows[0];
+    return row?{id:row.id,organizationId:row.organization_id,locationId:row.location_id,inventoryUnitId:row.inventory_unit_id,version:row.version,...(row.previous_snapshot_id?{previousSnapshotId:row.previous_snapshot_id}:{}),costCents:row.cost_cents,sourceType:row.source_type,sourceLabel:row.source_label,...(row.source_reference?{sourceReference:row.source_reference}:{}),effectiveAt:row.effective_at.toISOString(),capturedAt:row.captured_at.toISOString(),capturedBy:row.captured_by}:null;
   }
   async getBackendGross(scope: OrganizationScope, quoteId: string) {
     const result = await this.db.query<{ gross: number }>("SELECT COALESCE(sum(gross_cents),0)::int AS gross FROM quote_backend_product_snapshots WHERE organization_id=$1 AND quote_id=$2", [scope.organizationId, quoteId]);
@@ -43,13 +50,7 @@ class Session implements QuoteProfitabilitySession {
     const result = await this.db.query<{ exists: boolean }>("SELECT EXISTS(SELECT 1 FROM quote_profitability_snapshots WHERE organization_id=$1 AND quote_id=$2) AS exists", [scope.organizationId, quoteId]);
     return result.rows[0]?.exists === true;
   }
-  async createSnapshot(context: RequestContext, input: Parameters<QuoteProfitabilitySession["createSnapshot"]>[1]) {
-    await this.db.query(
-      `INSERT INTO inventory_cost_snapshots(id,organization_id,location_id,inventory_unit_id,cost_cents,source_type,source_label,source_reference,effective_at,captured_at,captured_by)
-       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
-      [input.costSnapshot.id, context.organizationId, context.locationId, input.costSnapshot.inventoryUnitId, input.costSnapshot.costCents, input.costSnapshot.sourceType, input.costSnapshot.sourceLabel, input.costSnapshot.sourceReference ?? null, input.costSnapshot.effectiveAt, input.costSnapshot.capturedAt, context.actorId],
-    );
-    const item = input.profitability;
+  async createSnapshot(context: RequestContext, item: Parameters<QuoteProfitabilitySession["createSnapshot"]>[1]) {
     const inserted = await this.db.query<{ id: string }>(
       `INSERT INTO quote_profitability_snapshots(id,organization_id,location_id,quote_id,inventory_unit_id,inventory_cost_snapshot_id,pack_policy_id,vehicle_sell_cents,vehicle_cost_cents,pack_cents,front_gross_cents,backend_gross_cents,total_gross_cents,captured_at,captured_by)
        VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) ON CONFLICT(organization_id,quote_id) DO NOTHING RETURNING id`,

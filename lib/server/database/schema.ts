@@ -1693,11 +1693,14 @@ export const inventoryCostSnapshots = pgTable("inventory_cost_snapshots", {
   sourceType: text("source_type").notNull(),
   sourceLabel: text("source_label").notNull(),
   sourceReference: text("source_reference"),
+  version: integer("version").default(1).notNull(),
+  previousSnapshotId: text("previous_snapshot_id"),
   effectiveAt: timestamp("effective_at", { withTimezone: true }).notNull(),
   capturedAt: timestamp("captured_at", { withTimezone: true }).defaultNow().notNull(),
   capturedBy: text("captured_by").notNull().references(() => users.id, { onDelete: "restrict" }),
 }, (table) => [
   uniqueIndex("inventory_cost_snapshots_org_id_unique").on(table.organizationId, table.id),
+  uniqueIndex("inventory_cost_snapshots_unit_version_unique").on(table.organizationId, table.inventoryUnitId, table.version),
   index("inventory_cost_snapshots_unit_effective_idx").on(table.organizationId, table.inventoryUnitId, table.effectiveAt),
   foreignKey({ columns: [table.organizationId, table.locationId, table.inventoryUnitId], foreignColumns: [inventoryUnits.organizationId, inventoryUnits.locationId, inventoryUnits.id], name: "inventory_cost_snapshots_inventory_fk" }),
 ]);

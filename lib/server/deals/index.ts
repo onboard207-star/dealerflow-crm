@@ -12,4 +12,6 @@ export * from "./postgres-quote-lease-provider";
 export * from "./postgres-quote-incentive-provider";
 export * from "./postgres-quote-backend-product-provider";
 export * from "./postgres-quote-profitability-provider";
+export * from "./postgres-pack-policy-provider";
+export * from "./profitability-administration-reader";
 export * from "./postgres-handoff-provider";

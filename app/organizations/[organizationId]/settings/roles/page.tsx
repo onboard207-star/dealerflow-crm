@@ -45,9 +45,11 @@ const capabilityGroups: ReadonlyArray<{
       "quote.void",
       "quote.view_sensitive_terms",
       "quote.configure_thresholds",
+      "quote.pack.read",
+      "quote.pack.configure",
     ],
   },
-  { label: "Inventory", values: ["inventory.read", "inventory.create", "inventory.update"] },
+  { label: "Inventory", values: ["inventory.read", "inventory.create", "inventory.update", "inventory.cost.read", "inventory.cost.manage"] },
   { label: "Reporting", values: ["reports.view"] },
 ];
 

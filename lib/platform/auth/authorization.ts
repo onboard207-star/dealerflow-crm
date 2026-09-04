@@ -34,6 +34,10 @@ export const capabilities = [
   "inventory.read",
   "inventory.create",
   "inventory.update",
+  "inventory.cost.read",
+  "inventory.cost.manage",
+  "quote.pack.read",
+  "quote.pack.configure",
   "reports.view",
 ] as const;
 

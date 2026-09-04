@@ -337,6 +337,13 @@
       "when": 1788379560000,
       "tag": "0047_quote_profitability",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1788380400000,
+      "tag": "0048_inventory_cost_revisions",
+      "breakpoints": true
     }
   ]
 }

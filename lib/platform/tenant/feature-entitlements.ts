@@ -11,8 +11,8 @@ export interface FeatureEntitlementDefinition {
 
 export const featureEntitlementRegistry: readonly FeatureEntitlementDefinition[] = [
   { key: "crm", label: "CRM", description: "Customer, Lead, task, appointment, and communication workflows.", capabilities: ["customer.read", "customer.create", "customer.update", "lead.read", "lead.create", "lead.assign", "lead.update", "task.read", "task.create", "task.update", "communication.read", "communication.create", "communication.consent.manage", "communication.send", "appointment.read", "appointment.create", "appointment.update"] },
-  { key: "inventory", label: "Inventory", description: "Vehicle inventory and media operations.", capabilities: ["inventory.read", "inventory.create", "inventory.update"] },
-  { key: "finance", label: "Finance", description: "Deal, approval, desking, quote, trade, and delivery workflows.", capabilities: ["deal.read", "deal.create", "deal.update", "deal.approve"] },
+  { key: "inventory", label: "Inventory", description: "Vehicle inventory, media, and authoritative cost operations.", capabilities: ["inventory.read", "inventory.create", "inventory.update", "inventory.cost.read", "inventory.cost.manage"] },
+  { key: "finance", label: "Finance", description: "Deal, approval, desking, quote, trade, delivery, and pack workflows.", capabilities: ["deal.read", "deal.create", "deal.update", "deal.approve", "quote.pack.read", "quote.pack.configure"] },
   { key: "service", label: "Service", description: "Reserved for future authoritative service workflows.", capabilities: [] },
   { key: "reporting", label: "Reporting", description: "Management reporting and operational command surfaces.", capabilities: ["reports.view"] },
   { key: "ai", label: "DealerFlow AI", description: "Explainable AI operating briefs and governed recommendations.", capabilities: [] },
@@ -32,4 +32,3 @@ export function isCapabilityEntitled(capability: Capability, features?: Partial<
   const feature = featureForCapability(capability);
   return feature === undefined || features?.[feature] !== false;
 }
-

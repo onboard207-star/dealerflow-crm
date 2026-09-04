@@ -33,6 +33,7 @@ export function createOrganizationNavigation(organizationId: string, capabilitie
       ...(allowed("customer.read") ? [{ label: "Customers", href: `${base}/customers`, icon: UserRoundSearch }] : []),
       ...(allowed("appointment.read") ? [{ label: "Calendar", href: `${base}/calendar`, icon: CalendarDays }] : []),
       ...(allowed("inventory.read") ? [{ label: "Inventory", href: `${base}/inventory`, icon: CarFront }] : []),
+      ...(allowed("inventory.cost.read") && allowed("quote.pack.read") ? [{ label: "Profitability inputs", href: `${base}/settings/configuration/profitability`, icon: CircleDollarSign }] : []),
       ...(allowed("deal.read") ? [{ label: "Deals", href: `${base}/deals`, icon: CircleDollarSign }] : []),
       ...(allowed("deal.read") ? [{ label: "Deal Desking", href: `${base}/desking`, icon: PanelsTopLeft }] : []),
       ...(allowed("reports.view") ? [{ label: "Reports", href: `${base}/reports`, icon: BarChart3 }] : []),

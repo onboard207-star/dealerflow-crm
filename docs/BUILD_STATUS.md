@@ -1,5 +1,15 @@
 # DealerFlow AI Build Status
 
+## INVENTORY COST & PACK ADMINISTRATION — INTEGRATED LOCALLY
+
+- Added a capability-gated, responsive administration workspace for active-inventory cost search, explicit `Cost unavailable` handling, immutable cost revisions, provenance, effective dates, recorded-user evidence, organization pack defaults, location overrides, effective-policy previews, readiness counts, and recent audit history.
+- Added `InventoryCostService` as the single provider-neutral write boundary for verified manual, DMS import, accounting import, OEM invoice, and migration/import cost sources. Revisions link to prior immutable snapshots; MSRP, selling price, appraisal, book, and market values are never substituted.
+- Centralized pack resolution for both administration preview and Quote profitability. Location policy takes precedence, a disabled location policy explicitly resolves to zero, no enabled policy permits zero, and malformed enabled policy fails closed.
+- Quote profitability now consumes the latest authoritative cost snapshot and effective pack rather than accepting cost from the Quote form. Negative front-end gross remains visible only behind the existing sensitive-terms capability.
+- Added distinct cost-read/manage and pack-read/configure capabilities without granting them to ordinary salespeople. Tenant and location scope remains enforced in services, readers, PostgreSQL RLS, and role defaults.
+- Added migration `0048_inventory_cost_revisions`; no migration was applied and no deployment occurred.
+- Local gate passes: Drizzle migration validation, portfolio/execution validation, strict TypeScript, 567 tests across 123 files, and optimized production build. A lint warning found during the first gate was corrected and lint was rerun clean.
+
 ## QUOTE / DESKING / F&I + PROFITABILITY — INTEGRATED LOCALLY
 
 - Added dedicated Quote capabilities, approval request/decision lifecycle, tenant/location approval policy, manager Desking queue, administrator policy settings, and a salesperson Quote workspace while preserving immutable Quote versions.

@@ -420,19 +420,12 @@ export async function attachBackendProductCostAction(
 }
 
 export async function captureQuoteProfitabilityAction(organizationId: string, dealId: string, quoteId: string, formData: FormData) {
+  void formData;
   const base = `/organizations/${organizationId}/deals/${dealId}/quotes`;
   try {
     const context = await loadDirectoryContext(organizationId, "deal.read");
-    const sourceType = enumValue(formData.get("costSourceType"), ["dms", "accounting", "invoice", "acquisition", "manual-documented"] as const);
-    const sourceLabel = String(formData.get("costSourceLabel") ?? "").trim();
-    const sourceReference = String(formData.get("costSourceReference") ?? "").trim();
-    const costEffectiveAt = String(formData.get("costEffectiveAt") ?? "").trim();
-    if (!sourceType || !sourceLabel || !costEffectiveAt) throw new Error("Vehicle cost source, label, and effective date are required.");
     await new QuoteProfitabilityService(new PostgresQuoteProfitabilityProvider(context.pool, { userId: context.session.user.id, organizationId })).capture({
       actor: context.actor, organizationId, correlationId: `quote-profitability:${randomUUID()}`, quoteId,
-      vehicleCostCents: parseRequiredMoney(formData, "vehicleCost", "Vehicle cost"), costSourceType: sourceType,
-      costSourceLabel: sourceLabel, ...(sourceReference ? { costSourceReference: sourceReference } : {}),
-      costEffectiveAt: new Date(costEffectiveAt).toISOString(),
     });
     revalidatePath(base);
     revalidatePath(`/organizations/${organizationId}/desking`);
