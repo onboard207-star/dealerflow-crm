@@ -13,6 +13,7 @@
     "db:check": "drizzle-kit check",
     "db:migrate": "drizzle-kit migrate",
     "tenant:provision": "node scripts/provision-tenant.mjs",
+    "staging:salesperson:provision": "node scripts/provision-staging-salesperson.mjs",
     "tenant:seed-template": "node scripts/seed-dealership-template.mjs",
     "synthetic:seed": "node scripts/seed-synthetic-pilot.mjs --confirm SYNTHETIC-DEMO",
     "synthetic:reset": "node scripts/seed-synthetic-pilot.mjs --mode reset --confirm RESET-SYNTHETIC-DEMO --fixture-version pilot-demo-v1",
