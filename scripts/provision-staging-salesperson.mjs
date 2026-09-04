@@ -29,10 +29,13 @@ export function parseStagingSalespersonArguments(values, environment = process.e
   }
   const applicationUrl = new URL(options["application-url"]);
   if (applicationUrl.protocol !== "https:") throw new Error("The staging application URL must use HTTPS.");
+  const databaseSslMode = environment.DATABASE_SSL_MODE ?? "verify-full";
+  if (!['disable', 'verify-full'].includes(databaseSslMode)) throw new Error("DATABASE_SSL_MODE must be disable or verify-full.");
 
   return {
     applicationUrl: applicationUrl.origin,
     databaseUrl: databaseUrl.toString(),
+    databaseSslMode,
     email: options.email.toLowerCase(),
     organizationId: options["organization-id"],
     locationId: options["location-id"],
@@ -136,7 +139,7 @@ function escapeHtml(value) {
 
 async function main() {
   const input = parseStagingSalespersonArguments(process.argv.slice(2));
-  const pool = new Pool({ connectionString: input.databaseUrl, ssl: { rejectUnauthorized: true }, max: 1, application_name: "dealerflow-staging-salesperson-provisioner" });
+  const pool = new Pool({ connectionString: input.databaseUrl, ssl: input.databaseSslMode === "disable" ? false : { rejectUnauthorized: true }, max: 1, application_name: "dealerflow-staging-salesperson-provisioner" });
   try {
     process.stdout.write(`${JSON.stringify(await provisionStagingSalesperson(pool, input))}\n`);
   } finally {

@@ -30,6 +30,19 @@ describe("staging Salesperson provisioner", () => {
     })).toThrow("--confirm must equal");
   });
 
+  it("accepts only the established database TLS modes", () => {
+    expect(() => parseStagingSalespersonArguments(args, {
+      APP_ENV: "staging",
+      DATABASE_URL: "postgresql://user:secret@isolated.example.internal/database",
+      DATABASE_SSL_MODE: "require",
+    })).toThrow("DATABASE_SSL_MODE must be disable or verify-full");
+    expect(parseStagingSalespersonArguments(args, {
+      APP_ENV: "staging",
+      DATABASE_URL: "postgresql://user:secret@isolated.example.internal/database",
+      DATABASE_SSL_MODE: "disable",
+    }).databaseSslMode).toBe("disable");
+  });
+
   it("rejects a non-synthetic email", () => {
     expect(() => parseStagingSalespersonArguments(args.with(3, "person@example.com"), {
       APP_ENV: "staging",
