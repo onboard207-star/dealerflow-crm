@@ -2,10 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import { AuthorizationError, type AuthorizationActor } from "@/lib/platform/auth";
 import type {
-  CRMDataProvider,
-  CRMDataSession,
+  AppointmentRecord,
+  CreateAppointmentInput,
   CreateCustomerInput,
   CreateLeadInput,
+  CreateTaskInput,
   CustomerIdentityQuery,
   CustomerQuery,
   CustomerRecord,
@@ -14,12 +15,18 @@ import type {
   OrganizationScope,
   PageResult,
   RequestContext,
+  TaskRecord,
 } from "@/lib/platform/data";
 
 import {
   LeadIntakeService,
   LeadIntakeValidationError,
+  type InboundVehicleInterest,
+  type LeadIntakeProvider,
+  type LeadIntakeRecord,
+  type LeadIntakeSession,
   type LeadIntakeRequest,
+  type VehicleResolution,
 } from "./intake-lead";
 
 const organizationId = "org_dealerflow";
@@ -32,6 +39,9 @@ function createActor(
     "lead.read",
     "customer.read",
     "customer.create",
+    "task.create",
+    "inventory.read",
+    "appointment.create",
   ],
 ): AuthorizationActor {
   return {
@@ -61,9 +71,15 @@ function createRequest(overrides: Partial<LeadIntakeRequest> = {}): LeadIntakeRe
   };
 }
 
-class MemoryCRMProvider implements CRMDataProvider {
+class MemoryCRMProvider implements LeadIntakeProvider, LeadIntakeSession {
   readonly customers: CustomerRecord[] = [];
   readonly leads: LeadRecord[] = [];
+  readonly tasks: TaskRecord[] = [];
+  readonly appointments: AppointmentRecord[] = [];
+  readonly intakes: LeadIntakeRecord[] = [];
+  readonly intakeSources: Array<{ intakeId: string; source: string; sourceLeadId?: string }> = [];
+  readonly vehicleInterests: Array<{ leadId: string; vehicleId: string }> = [];
+  vehicleResolution: VehicleResolution = { label: "Unresolved vehicle interest", resolved: false };
   transactionCount = 0;
   customerWrites = 0;
   leadWrites = 0;
@@ -71,7 +87,7 @@ class MemoryCRMProvider implements CRMDataProvider {
   async acquireIdempotencyLock() {}
 
   async transaction<Result>(
-    operation: (session: CRMDataSession) => Promise<Result>,
+    operation: (session: LeadIntakeSession) => Promise<Result>,
   ): Promise<Result> {
     this.transactionCount += 1;
     return operation(this);
@@ -100,8 +116,8 @@ class MemoryCRMProvider implements CRMDataProvider {
       this.customers.find(
         (customer) =>
           customer.organizationId === query.organizationId &&
-          ((!query.normalizedEmail || customer.email === query.normalizedEmail) &&
-            (!query.normalizedPhone || customer.phone === query.normalizedPhone)),
+          ((query.normalizedEmail && customer.email === query.normalizedEmail) ||
+            (query.normalizedPhone && customer.phone === query.normalizedPhone)),
       ) ?? null
     );
   }
@@ -165,14 +181,33 @@ class MemoryCRMProvider implements CRMDataProvider {
     return lead;
   }
 
-  async getAppointment() { return null; }
-  async findAppointmentByIdempotencyKey() { return null; }
-  async createAppointment(): Promise<never> {
-    throw new Error("Not used by lead intake tests.");
+  async findIntake(scope: OrganizationScope, input: { idempotencyKey: string; source: string; sourceLeadId?: string }) {
+    const sourceMatch = input.sourceLeadId
+      ? this.intakeSources.find((item) => item.source.toLowerCase() === input.source.toLowerCase() && item.sourceLeadId === input.sourceLeadId)
+      : undefined;
+    const intake = this.intakes.find((record) => record.idempotencyKey === input.idempotencyKey || record.id === sourceMatch?.intakeId);
+    if (!intake) return null;
+    return { leadId: intake.leadId, customerId: intake.customerId, taskId: intake.followUpTaskId,
+      ...(intake.appointmentId ? { appointmentId: intake.appointmentId } : {}), intake };
   }
-  async findTaskByIdempotencyKey() { return null; }
-  async createTask(): Promise<never> {
-    throw new Error("Not used by lead intake tests.");
+  async findActiveLead(scope: OrganizationScope, input: { customerId: string; source: string }) {
+    return this.leads.find((lead) => lead.organizationId === scope.organizationId && lead.customerId === input.customerId && lead.source === input.source && ["open", "working", "qualified"].includes(lead.status)) ?? null;
+  }
+  async resolveAssignee(_scope: OrganizationScope, input: { requestedUserId?: string }) { return input.requestedUserId; }
+  async resolveVehicle(scope: OrganizationScope, input: InboundVehicleInterest) { void scope; void input; return this.vehicleResolution; }
+  async createVehicleInterest(_context: RequestContext, input: { leadId: string; vehicleId: string }) { this.vehicleInterests.push(input); }
+  async createIntake(_context: RequestContext, input: { id: string; leadId: string; customerId: string; source: string; sourceLeadId?: string; followUpTaskId: string; appointmentId?: string; communicationStatus: LeadIntakeRecord["communicationStatus"]; vehicle: VehicleResolution; receivedAt: string; idempotencyKey: string }) {
+    const intake: LeadIntakeRecord = { id: input.id, leadId: input.leadId, customerId: input.customerId, followUpTaskId: input.followUpTaskId, ...(input.appointmentId ? { appointmentId: input.appointmentId } : {}), communicationStatus: input.communicationStatus, vehicle: input.vehicle, receivedAt: input.receivedAt, idempotencyKey: input.idempotencyKey };
+    this.intakes.push(intake); this.intakeSources.push({ intakeId: intake.id, source: input.source, ...(input.sourceLeadId ? { sourceLeadId: input.sourceLeadId } : {}) }); return intake;
+  }
+  async getAppointment(scope: OrganizationScope, id: string) { return this.appointments.find((item) => item.organizationId === scope.organizationId && item.id === id) ?? null; }
+  async findAppointmentByIdempotencyKey(scope: OrganizationScope, key: string) { return this.appointments.find((item) => item.organizationId === scope.organizationId && item.idempotencyKey === key) ?? null; }
+  async createAppointment(context: RequestContext, input: CreateAppointmentInput) {
+    const record: AppointmentRecord = { ...input, status: "scheduled", createdAt: now, createdBy: context.actorId, updatedAt: now, updatedBy: context.actorId }; this.appointments.push(record); return record;
+  }
+  async findTaskByIdempotencyKey(scope: OrganizationScope, key: string) { return this.tasks.find((item) => item.organizationId === scope.organizationId && item.idempotencyKey === key) ?? null; }
+  async createTask(context: RequestContext, input: CreateTaskInput) {
+    const record: TaskRecord = { ...input, status: "open", createdAt: now, createdBy: context.actorId, updatedAt: now, updatedBy: context.actorId }; this.tasks.push(record); return record;
   }
 }
 
@@ -219,6 +254,17 @@ describe("LeadIntakeService", () => {
     expect(result.customerCreated).toBe(false);
     expect(provider.customerWrites).toBe(0);
     expect(provider.leadWrites).toBe(1);
+  });
+
+  it.each([
+    ["email", { email: "jordan.lee@example.com", phone: "+12075559999" }],
+    ["phone", { email: "other@example.com", phone: "+12075550184" }],
+  ])("deduplicates by normalized %s", async (_kind, customer) => {
+    const provider = new MemoryCRMProvider();
+    provider.customers.push({ id: "cus_existing", organizationId, locationId, displayName: "Existing", email: "jordan.lee@example.com", phone: "+12075550184", status: "active", createdAt: now, createdBy: "usr_existing", updatedAt: now, updatedBy: "usr_existing" });
+    const result = await createService(provider).intake(createRequest({ customer: { displayName: "Jordan Lee", ...customer } }));
+    expect(result.customer.id).toBe("cus_existing");
+    expect(provider.customerWrites).toBe(0);
   });
 
   it("creates an independent buying cycle for a returning sold customer", async () => {
@@ -271,6 +317,18 @@ describe("LeadIntakeService", () => {
     expect(provider.leads[0]).toEqual(historicalSale);
   });
 
+  it("attaches a new intake event to an existing active source opportunity", async () => {
+    const provider = new MemoryCRMProvider();
+    const service = createService(provider);
+    const first = await service.intake(createRequest());
+    const second = await service.intake(createRequest({ idempotencyKey: "website-form:second-event" }));
+    expect(second.lead.id).toBe(first.lead.id);
+    expect(second.leadCreated).toBe(false);
+    expect(provider.leads).toHaveLength(1);
+    expect(provider.intakes).toHaveLength(2);
+    expect(provider.tasks).toHaveLength(2);
+  });
+
   it("returns the prior result for a repeated idempotency key", async () => {
     const provider = new MemoryCRMProvider();
     const service = createService(provider);
@@ -284,6 +342,47 @@ describe("LeadIntakeService", () => {
     expect(second.leadCreated).toBe(false);
     expect(provider.customerWrites).toBe(1);
     expect(provider.leadWrites).toBe(1);
+  });
+
+  it("deduplicates a provider source ID even when the retry key changes", async () => {
+    const provider = new MemoryCRMProvider();
+    const service = createService(provider);
+    const first = await service.intake(createRequest({ sourceLeadId: "provider-42" }));
+    const second = await service.intake(createRequest({ sourceLeadId: "provider-42", idempotencyKey: "retry-2" }));
+    expect(second.lead.id).toBe(first.lead.id);
+    expect(provider.customers).toHaveLength(1);
+    expect(provider.leads).toHaveLength(1);
+    expect(provider.tasks).toHaveLength(1);
+  });
+
+  it("links a deterministically resolved vehicle and preserves no-match evidence", async () => {
+    const known = new MemoryCRMProvider();
+    known.vehicleResolution = { vehicleId: "veh_known", inventoryUnitId: "inv_known", method: "vin", label: "2026 Honda CR-V", resolved: true };
+    const linked = await createService(known).intake(createRequest({ vehicleInterest: { vin: "1HGCM82633A004352" } }));
+    expect(linked.intake.vehicle.resolved).toBe(true);
+    expect(known.vehicleInterests).toHaveLength(1);
+    expect(known.vehicleInterests[0]).toMatchObject({ leadId: linked.lead.id, vehicleId: "veh_known" });
+
+    const unknown = new MemoryCRMProvider();
+    const unresolved = await createService(unknown).intake(createRequest({ vehicleInterest: { year: 2026, make: "Honda", model: "Prelude" } }));
+    expect(unresolved.intake.vehicle.resolved).toBe(false);
+    expect(unknown.vehicleInterests).toHaveLength(0);
+  });
+
+  it("creates follow-up and appointment state without sending communication", async () => {
+    const provider = new MemoryCRMProvider();
+    const result = await createService(provider).intake(createRequest({
+      appointmentRequest: { startsAt: "2026-09-10T14:00:00.000Z", endsAt: "2026-09-10T14:30:00.000Z", timezone: "America/New_York" },
+    }));
+    expect(result.followUpTask.title).toBe("Respond to Dealer Website lead");
+    expect(result.appointment?.status).toBe("scheduled");
+    expect(result.intake.communicationStatus).toBe("appointment-scheduled");
+  });
+
+  it("supports a lead with no vehicle or optional provider fields", async () => {
+    const result = await createService(new MemoryCRMProvider()).intake(createRequest({ sourceDetail: undefined, vehicleInterest: undefined }));
+    expect(result.intake.vehicle).toEqual({ label: "No vehicle supplied", resolved: false });
+    expect(result.intake.communicationStatus).toBe("not-sent");
   });
 
   it("denies intake across organization boundaries before opening a transaction", async () => {

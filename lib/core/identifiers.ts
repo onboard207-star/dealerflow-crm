@@ -13,6 +13,7 @@ export type EntityIdPrefix =
   | "com"
   | "cns"
   | "led"
+  | "lir"
   | "lse"
   | "int"
   | "inv"

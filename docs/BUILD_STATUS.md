@@ -1,5 +1,14 @@
 # DealerFlow AI Build Status
 
+## CANONICAL LEAD INTAKE ORCHESTRATION — INTEGRATED LOCALLY
+
+- Confirmed PostgreSQL `leads` is the canonical opportunity authority; no legacy Airtable `Leads` table or parallel lead model was recreated.
+- Extended the existing authenticated intake path with normalized provider identity, deterministic customer reuse, active-opportunity reuse, validated assignment, deterministic vehicle resolution, unresolved-interest preservation, follow-up task creation, appointment opportunity/scheduling state, immutable intake evidence, correlation IDs, structured telemetry, and audit events.
+- Added tenant-isolated migration `0049_lead_intake_orchestration` with source-event and request idempotency, composite relationship integrity, forced row-level security, and immutable evidence. The migration has not been applied to any database.
+- Expanded the Lead Queue and manual intake form with source, received time, vehicle, owner, next task, communication state, appointment state, and responsive workflow links using the existing design system.
+- Automated tests use synthetic in-memory/provider fixtures and never send email or SMS. No configured real data layer was mutated because this batch did not establish a separately authorized disposable test database.
+- Full local gate passes: Drizzle migration validation, product-portfolio and execution-system validation, lint, strict TypeScript, 577 tests across 123 files, optimized production build, and whitespace validation. No deployment or production/staging mutation occurred.
+
 ## INVENTORY COST & PACK ADMINISTRATION — INTEGRATED LOCALLY
 
 - Added a capability-gated, responsive administration workspace for active-inventory cost search, explicit `Cost unavailable` handling, immutable cost revisions, provenance, effective dates, recorded-user evidence, organization pack defaults, location overrides, effective-policy previews, readiness counts, and recent audit history.

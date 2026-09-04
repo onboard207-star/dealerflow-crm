@@ -169,4 +169,17 @@ describe("PostgresCRMSession", () => {
     expect(database.calls[0]?.text).toContain("status::text = $6");
     expect(database.calls[0]?.text).not.toContain("status = $6");
   });
+
+  it("resolves a unique canonical inventory vehicle by VIN", async () => {
+    const database = new QueueDatabase({ rows: [{ vehicle_id: "veh_crv", inventory_unit_id: "inv_crv", year: 2026, make: "Honda", model: "CR-V", trim: "Touring", method: "vin" }] });
+    const result = await new PostgresCRMSession(database).resolveVehicle({ organizationId: "org_dealerflow", locationId: "loc_main" }, { vin: "1HGCM82633A004352" });
+    expect(result).toMatchObject({ vehicleId: "veh_crv", inventoryUnitId: "inv_crv", method: "vin", resolved: true });
+    expect(database.calls[0]?.values?.slice(0, 2)).toEqual(["org_dealerflow", "loc_main"]);
+  });
+
+  it("does not fabricate a relationship when vehicle matching is ambiguous", async () => {
+    const matches = ["veh_one", "veh_two"].map((vehicle_id) => ({ vehicle_id, inventory_unit_id: null, year: 2026, make: "Honda", model: "CR-V", trim: "Touring", method: "exact-description" }));
+    const result = await new PostgresCRMSession(new QueueDatabase({ rows: matches })).resolveVehicle({ organizationId: "org_dealerflow", locationId: "loc_main" }, { year: 2026, make: "Honda", model: "CR-V", trim: "Touring" });
+    expect(result).toEqual({ label: "2026 Honda CR-V Touring", resolved: false });
+  });
 });

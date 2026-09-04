@@ -16,6 +16,9 @@ export interface LeadQueueItem {
   id: string; customerId: string; customerName: string; customerEmail?: string;
   customerPhone?: string; locationName?: string; source: string; stage: string;
   status: string; assignedUserName?: string; nextAppointmentAt?: string;
+  vehicleLabel?: string; vehicleId?: string; inventoryUnitId?: string;
+  receivedAt?: string; preferredContactMethod?: string;
+  communicationStatus?: string; nextTaskTitle?: string; nextTaskDueAt?: string;
   openTaskCount: number; createdAt: string;
 }
 
@@ -62,14 +65,27 @@ export class CRMDirectoryReader {
         `SELECT l.id, l.customer_id, l.source, l.stage, l.status, l.created_at,
            c.display_name AS customer_name, c.email AS customer_email, c.phone AS customer_phone,
            loc.name AS location_name, u.display_name AS assigned_user_name,
-           appt.starts_at AS next_appointment_at, COALESCE(task.open_count, 0)::int AS open_task_count
+           appt.starts_at AS next_appointment_at, COALESCE(task.open_count, 0)::int AS open_task_count,
+           task.next_title AS next_task_title, task.next_due_at AS next_task_due_at,
+           intake.received_at, intake.preferred_contact_method, intake.communication_status,
+           intake.resolved_vehicle_id, intake.resolved_inventory_unit_id,
+           concat_ws(' ', vehicle.year::text, vehicle.make, vehicle.model, vehicle.trim) AS vehicle_label
          FROM leads l JOIN customers c ON c.organization_id = l.organization_id AND c.id = l.customer_id
          LEFT JOIN locations loc ON loc.organization_id = c.organization_id AND loc.id = c.location_id
          LEFT JOIN users u ON u.id = l.assigned_user_id
          LEFT JOIN LATERAL (SELECT starts_at FROM appointments a WHERE a.organization_id = l.organization_id
            AND a.lead_id = l.id AND a.starts_at >= now() AND a.status IN ('scheduled','confirmed') ORDER BY starts_at LIMIT 1) appt ON true
-         LEFT JOIN LATERAL (SELECT count(*) AS open_count FROM tasks t WHERE t.organization_id = l.organization_id
+         LEFT JOIN LATERAL (SELECT count(*) AS open_count,
+           (array_agg(t.title ORDER BY t.due_at NULLS LAST, t.created_at))[1] AS next_title,
+           (array_agg(t.due_at ORDER BY t.due_at NULLS LAST, t.created_at))[1] AS next_due_at
+           FROM tasks t WHERE t.organization_id = l.organization_id
            AND t.lead_id = l.id AND t.status IN ('open','in-progress')) task ON true
+         LEFT JOIN LATERAL (SELECT received_at, preferred_contact_method, communication_status,
+           resolved_vehicle_id, resolved_inventory_unit_id FROM lead_intake_records i
+           WHERE i.organization_id = l.organization_id AND i.lead_id = l.id
+           ORDER BY i.received_at DESC LIMIT 1) intake ON true
+         LEFT JOIN vehicles vehicle ON vehicle.organization_id = l.organization_id
+           AND vehicle.id = intake.resolved_vehicle_id
          WHERE l.organization_id = $1 AND ($2::boolean OR c.location_id IS NULL OR c.location_id = ANY($3::text[]))
            AND ($4::text IS NULL OR lower(c.display_name) LIKE $4 || '%' OR c.normalized_email LIKE $4 || '%' OR ($5::text IS NOT NULL AND c.normalized_phone LIKE $5 || '%'))
            AND ($6::text IS NULL OR l.status::text = $6) AND ($7::text IS NULL OR l.assigned_user_id = $7)
@@ -89,7 +105,10 @@ type CustomerRow = { id: string; display_name: string; email: string | null; pho
   location_name: string | null; lead_id: string | null; lead_stage: string | null; lead_status: string | null; created_at: Date };
 type LeadRow = { id: string; customer_id: string; source: string; stage: string; status: string; created_at: Date;
   customer_name: string; customer_email: string | null; customer_phone: string | null; location_name: string | null;
-  assigned_user_name: string | null; next_appointment_at: Date | null; open_task_count: number };
+  assigned_user_name: string | null; next_appointment_at: Date | null; open_task_count: number;
+  next_task_title: string | null; next_task_due_at: Date | null; received_at: Date | null;
+  preferred_contact_method: string | null; communication_status: string | null;
+  resolved_vehicle_id: string | null; resolved_inventory_unit_id: string | null; vehicle_label: string | null };
 
 function normalize(query: DirectoryQuery) {
   const search = query.search?.trim().toLowerCase() ?? "";
@@ -125,4 +144,12 @@ function mapLead(row: LeadRow): LeadQueueItem { return { id: row.id, customerId:
   source: row.source, stage: row.stage, status: row.status,
   ...(row.assigned_user_name ? { assignedUserName: row.assigned_user_name } : {}),
   ...(row.next_appointment_at ? { nextAppointmentAt: row.next_appointment_at.toISOString() } : {}),
+  ...(row.vehicle_label ? { vehicleLabel: row.vehicle_label } : {}),
+  ...(row.resolved_vehicle_id ? { vehicleId: row.resolved_vehicle_id } : {}),
+  ...(row.resolved_inventory_unit_id ? { inventoryUnitId: row.resolved_inventory_unit_id } : {}),
+  ...(row.received_at ? { receivedAt: row.received_at.toISOString() } : {}),
+  ...(row.preferred_contact_method ? { preferredContactMethod: row.preferred_contact_method } : {}),
+  ...(row.communication_status ? { communicationStatus: row.communication_status } : {}),
+  ...(row.next_task_title ? { nextTaskTitle: row.next_task_title } : {}),
+  ...(row.next_task_due_at ? { nextTaskDueAt: row.next_task_due_at.toISOString() } : {}),
   openTaskCount: row.open_task_count, createdAt: row.created_at.toISOString() }; }

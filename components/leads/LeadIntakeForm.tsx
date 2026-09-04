@@ -7,11 +7,12 @@ import { UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface LeadIntakeFormProps {
+  assignedUserId: string;
   organizationId: string;
   locations: readonly { id: string; name: string }[];
 }
 
-export function LeadIntakeForm({ organizationId, locations }: LeadIntakeFormProps) {
+export function LeadIntakeForm({ assignedUserId, organizationId, locations }: LeadIntakeFormProps) {
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
   const [pending, setPending] = useState(false);
@@ -25,7 +26,11 @@ export function LeadIntakeForm({ organizationId, locations }: LeadIntakeFormProp
         method: "POST",
         headers: { "content-type": "application/json", "idempotency-key": `lead:${crypto.randomUUID()}` },
         body: JSON.stringify({
-          locationId: value(form, "locationId"), source: value(form, "source"), sourceDetail: value(form, "sourceDetail"),
+          locationId: value(form, "locationId"), source: value(form, "source"), sourceDetail: value(form, "sourceDetail"), assignedUserId,
+          preferredContactMethod: value(form, "preferredContactMethod") || undefined,
+          message: value(form, "message") || undefined,
+          tradeInterest: form.get("tradeInterest") === "on",
+          vehicleInterest: compact({ vin: value(form, "vin"), stockNumber: value(form, "stockNumber"), year: numberValue(form, "year"), make: value(form, "make"), model: value(form, "model"), trim: value(form, "trim") }),
           customer: { displayName: value(form, "displayName"), firstName: value(form, "firstName"), lastName: value(form, "lastName"), email: value(form, "email"), phone: value(form, "phone") },
         }),
       });
@@ -53,6 +58,15 @@ export function LeadIntakeForm({ organizationId, locations }: LeadIntakeFormProp
         <Field autoComplete="tel" description="Use international format, such as +12075550123." label="Phone" name="phone" pattern="\+[1-9][0-9]{7,14}" type="tel" />
         <label className="text-sm font-medium">Lead source<select className={inputClass} name="source" required><option value="">Select source</option>{["Website", "Phone", "Walk-in", "Referral", "Marketplace", "OEM", "Returning Customer"].map((source) => <option key={source} value={source}>{source}</option>)}</select></label>
         <Field label="Source detail" maxLength={200} name="sourceDetail" />
+        <label className="text-sm font-medium">Preferred contact<select className={inputClass} defaultValue="" name="preferredContactMethod"><option value="">Not specified</option><option value="phone">Phone</option><option value="sms">Text</option><option value="email">Email</option></select></label>
+        <Field label="VIN" maxLength={17} minLength={17} name="vin" />
+        <Field label="Stock number" maxLength={80} name="stockNumber" />
+        <Field inputMode="numeric" label="Model year" max={2200} min={1886} name="year" type="number" />
+        <Field label="Make" maxLength={80} name="make" />
+        <Field label="Model" maxLength={80} name="model" />
+        <Field label="Trim" maxLength={80} name="trim" />
+        <label className="text-sm font-medium sm:col-span-2">Customer message<textarea className={`${inputClass} min-h-24 py-3`} maxLength={4000} name="message" /></label>
+        <label className="flex min-h-11 items-center gap-2 text-sm font-medium sm:col-span-2"><input className="focus-ring size-4 rounded border" name="tradeInterest" type="checkbox" /> Customer has indicated a trade interest</label>
         <p className="text-sm text-muted-foreground sm:col-span-2">At least one contact method—email or phone—is required.</p>
         {message ? <p className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive sm:col-span-2" role="alert">{message}</p> : null}
         <div className="sm:col-span-2"><Button disabled={pending} type="submit">{pending ? "Creating lead…" : "Create lead and open customer"}</Button></div>
@@ -64,4 +78,6 @@ export function LeadIntakeForm({ organizationId, locations }: LeadIntakeFormProp
 const inputClass = "focus-ring mt-1 min-h-11 w-full rounded-lg border bg-background px-3 text-sm text-foreground";
 function Field({ label, description, ...props }: { label: string; description?: string } & React.InputHTMLAttributes<HTMLInputElement>) { return <label className="text-sm font-medium">{label}<input className={inputClass} {...props} />{description ? <span className="mt-1 block text-xs font-normal text-muted-foreground">{description}</span> : null}</label>; }
 function value(form: FormData, name: string) { const item = form.get(name); return typeof item === "string" ? item.trim() : ""; }
+function numberValue(form: FormData, name: string) { const item = value(form, name); return item ? Number(item) : undefined; }
+function compact(value: Record<string, string | number | undefined>) { const entries = Object.entries(value).filter(([, item]) => item !== "" && item !== undefined); return entries.length ? Object.fromEntries(entries) : undefined; }
 async function readProblem(response: Response) { const payload = (await response.json().catch(() => undefined)) as { message?: unknown; issues?: unknown } | undefined; if (Array.isArray(payload?.issues) && payload.issues.every((item) => typeof item === "string")) return payload.issues.join(" "); return typeof payload?.message === "string" ? payload.message : "The request could not be completed."; }

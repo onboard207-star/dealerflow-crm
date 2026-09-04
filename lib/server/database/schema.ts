@@ -1744,3 +1744,42 @@ export const quoteProfitabilitySnapshots = pgTable("quote_profitability_snapshot
   foreignKey({ columns: [table.organizationId, table.inventoryCostSnapshotId], foreignColumns: [inventoryCostSnapshots.organizationId, inventoryCostSnapshots.id], name: "quote_profitability_cost_fk" }),
   foreignKey({ columns: [table.organizationId, table.packPolicyId], foreignColumns: [quotePackPolicies.organizationId, quotePackPolicies.id], name: "quote_profitability_pack_fk" }),
 ]);
+
+export const leadIntakeRecords = pgTable("lead_intake_records", {
+  id: text("id").primaryKey(),
+  organizationId: text("organization_id").notNull(),
+  locationId: text("location_id").notNull(),
+  customerId: text("customer_id").notNull(),
+  leadId: text("lead_id").notNull(),
+  source: text("source").notNull(),
+  sourceLeadId: text("source_lead_id"),
+  receivedAt: timestamp("received_at", { withTimezone: true }).notNull(),
+  preferredContactMethod: text("preferred_contact_method"),
+  message: text("message"),
+  rawPayload: jsonb("raw_payload").$type<Record<string, unknown>>(),
+  vehicleInterest: jsonb("vehicle_interest").$type<Record<string, unknown>>(),
+  resolvedVehicleId: text("resolved_vehicle_id"),
+  resolvedInventoryUnitId: text("resolved_inventory_unit_id"),
+  vehicleMatchMethod: text("vehicle_match_method"),
+  assignedUserId: text("assigned_user_id"),
+  followUpTaskId: text("follow_up_task_id").notNull(),
+  appointmentId: text("appointment_id"),
+  communicationStatus: text("communication_status").default("not-sent").notNull(),
+  idempotencyKey: text("idempotency_key").notNull(),
+  createdBy: text("created_by").notNull().references(() => users.id, { onDelete: "restrict" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("lead_intakes_org_id_unique").on(table.organizationId, table.id),
+  uniqueIndex("lead_intakes_idempotency_unique").on(table.organizationId, table.idempotencyKey),
+  uniqueIndex("lead_intakes_source_lead_unique")
+    .on(table.organizationId, sql`lower(${table.source})`, table.sourceLeadId)
+    .where(sql`${table.sourceLeadId} is not null`),
+  index("lead_intakes_received_idx").on(table.organizationId, table.locationId, table.receivedAt),
+  index("lead_intakes_lead_idx").on(table.organizationId, table.leadId),
+  foreignKey({ columns: [table.organizationId, table.customerId, table.leadId], foreignColumns: [leads.organizationId, leads.customerId, leads.id], name: "lead_intakes_same_lead_fk" }),
+  foreignKey({ columns: [table.organizationId, table.locationId], foreignColumns: [locations.organizationId, locations.id], name: "lead_intakes_location_fk" }),
+  foreignKey({ columns: [table.organizationId, table.resolvedVehicleId], foreignColumns: [vehicles.organizationId, vehicles.id], name: "lead_intakes_vehicle_fk" }),
+  foreignKey({ columns: [table.organizationId, table.locationId, table.resolvedInventoryUnitId], foreignColumns: [inventoryUnits.organizationId, inventoryUnits.locationId, inventoryUnits.id], name: "lead_intakes_inventory_fk" }),
+  foreignKey({ columns: [table.organizationId, table.followUpTaskId], foreignColumns: [tasks.organizationId, tasks.id], name: "lead_intakes_task_fk" }),
+  foreignKey({ columns: [table.organizationId, table.appointmentId], foreignColumns: [appointments.organizationId, appointments.id], name: "lead_intakes_appointment_fk" }),
+]);

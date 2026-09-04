@@ -1,4 +1,5 @@
 import type { Pool } from "pg";
+import type { InboundVehicleInterest, LeadIntakeProvider, LeadIntakeRecord, LeadIntakeSession, VehicleResolution } from "@/lib/application/leads";
 
 import { generateEntityId } from "@/lib/core/identifiers";
 import type {
@@ -84,6 +85,7 @@ type TaskRow = {
   due_at: Date | null; idempotency_key: string; created_at: Date;
   created_by: string | null; updated_at: Date; updated_by: string | null;
 };
+type IntakeRow={id:string;lead_id:string;customer_id:string;follow_up_task_id:string;appointment_id:string|null;communication_status:LeadIntakeRecord["communicationStatus"];received_at:Date;idempotency_key:string;resolved_vehicle_id:string|null;resolved_inventory_unit_id:string|null;vehicle_match_method:"vin"|"stock-number"|"exact-description"|null;vehicle_interest:InboundVehicleInterest|null};
 
 const customerColumns = `id, organization_id, location_id, display_name,
   first_name, last_name, email, phone, status, created_at, created_by,
@@ -98,14 +100,14 @@ const taskColumns = `id, organization_id, location_id, customer_id, lead_id,
   appointment_id, assigned_user_id, title, status, priority, due_at,
   idempotency_key, created_at, created_by, updated_at, updated_by`;
 
-export class PostgresCRMDataProvider implements CRMDataProvider {
+export class PostgresCRMDataProvider implements CRMDataProvider,LeadIntakeProvider {
   constructor(
     private readonly pool: Pool,
     private readonly tenantContext: TenantDatabaseContext,
   ) {}
 
   transaction<Result>(
-    operation: (session: CRMDataSession) => Promise<Result>,
+    operation: (session: LeadIntakeSession) => Promise<Result>,
   ): Promise<Result> {
     return withTenantDatabaseContext(this.pool, this.tenantContext, (client) =>
       operation(new PostgresCRMSession(asExecutor(client))),
@@ -178,7 +180,7 @@ export class PostgresCRMDataProvider implements CRMDataProvider {
   }
 }
 
-export class PostgresCRMSession implements CRMDataSession {
+export class PostgresCRMSession implements LeadIntakeSession {
   constructor(private readonly database: SqlExecutor) {}
 
   async acquireIdempotencyLock(scope: OrganizationScope, idempotencyKey: string) {
@@ -305,6 +307,20 @@ export class PostgresCRMSession implements CRMDataSession {
     await this.writeAudit(context, "lead.created", "lead", input.id, input);
     return mapLead(lead);
   }
+
+  async findIntake(scope:OrganizationScope,input:{idempotencyKey:string;source:string;sourceLeadId?:string}){
+    const result=await this.database.query<IntakeRow>(`SELECT id,lead_id,customer_id,follow_up_task_id,appointment_id,communication_status,received_at,idempotency_key,resolved_vehicle_id,resolved_inventory_unit_id,vehicle_match_method,vehicle_interest
+      FROM lead_intake_records WHERE organization_id=$1 AND (idempotency_key=$2 OR ($3::text IS NOT NULL AND lower(source)=lower($4) AND source_lead_id=$3)) ORDER BY created_at LIMIT 1`,[scope.organizationId,input.idempotencyKey,input.sourceLeadId??null,input.source]);const row=result.rows[0];return row?{leadId:row.lead_id,customerId:row.customer_id,taskId:row.follow_up_task_id,...(row.appointment_id?{appointmentId:row.appointment_id}:{}),intake:mapIntake(row)}:null;
+  }
+  async findActiveLead(scope:OrganizationScope,input:{customerId:string;source:string;receivedAt:string}){const result=await this.database.query<LeadRow>(`SELECT ${leadColumns} FROM leads WHERE organization_id=$1 AND customer_id=$2 AND status IN ('open','working','qualified') AND lower(source)=lower($3) AND created_at BETWEEN $4::timestamptz-interval '24 hours' AND $4::timestamptz+interval '5 minutes' ORDER BY created_at DESC LIMIT 1`,[scope.organizationId,input.customerId,input.source,input.receivedAt]);return result.rows[0]?mapLead(result.rows[0]):null}
+  async resolveAssignee(scope:OrganizationScope,input:{requestedUserId?:string;source:string}){void input.source;if(!input.requestedUserId)return undefined;const result=await this.database.query<{allowed:boolean}>(`SELECT EXISTS(SELECT 1 FROM organization_memberships membership WHERE membership.organization_id=$1 AND membership.user_id=$2 AND membership.status='active' AND (membership.all_locations OR EXISTS(SELECT 1 FROM membership_locations grant_record WHERE grant_record.organization_id=membership.organization_id AND grant_record.membership_id=membership.id AND grant_record.location_id=$3)) AND EXISTS(SELECT 1 FROM membership_roles mr JOIN role_capabilities rc ON rc.organization_id=mr.organization_id AND rc.role_id=mr.role_id WHERE mr.organization_id=membership.organization_id AND mr.membership_id=membership.id AND rc.capability='lead.update')) allowed`,[scope.organizationId,input.requestedUserId,scope.locationId]);if(!result.rows[0]?.allowed)throw new Error("The requested assignee is unavailable for this location.");return input.requestedUserId}
+  async resolveVehicle(scope:OrganizationScope,input:InboundVehicleInterest):Promise<VehicleResolution>{const values=[scope.organizationId,scope.locationId??null,input.vin??null,input.stockNumber??null,input.year??null,input.make??null,input.model??null,input.trim??null];const result=await this.database.query<{vehicle_id:string;inventory_unit_id:string|null;year:number;make:string;model:string;trim:string|null;method:"vin"|"stock-number"|"exact-description"}>(`SELECT vehicle_id,inventory_unit_id,year,make,model,trim,method FROM (
+      SELECT vehicle.id vehicle_id,unit.id inventory_unit_id,vehicle.year,vehicle.make,vehicle.model,vehicle.trim,'vin'::text method,1 priority FROM vehicles vehicle LEFT JOIN LATERAL (SELECT candidate.id FROM inventory_units candidate WHERE candidate.organization_id=vehicle.organization_id AND candidate.vehicle_id=vehicle.id AND ($2::text IS NULL OR candidate.location_id=$2) ORDER BY CASE candidate.status WHEN 'available' THEN 0 WHEN 'hold' THEN 1 ELSE 2 END,candidate.created_at DESC LIMIT 1) unit ON true WHERE vehicle.organization_id=$1 AND $3::text IS NOT NULL AND vehicle.vin=$3
+      UNION ALL SELECT vehicle.id,unit.id,vehicle.year,vehicle.make,vehicle.model,vehicle.trim,'stock-number',2 FROM inventory_units unit JOIN vehicles vehicle ON vehicle.organization_id=unit.organization_id AND vehicle.id=unit.vehicle_id WHERE unit.organization_id=$1 AND ($2::text IS NULL OR unit.location_id=$2) AND $4::text IS NOT NULL AND unit.stock_number=$4
+      UNION ALL SELECT vehicle.id,unit.id,vehicle.year,vehicle.make,vehicle.model,vehicle.trim,'exact-description',3 FROM vehicles vehicle LEFT JOIN LATERAL (SELECT candidate.id FROM inventory_units candidate WHERE candidate.organization_id=vehicle.organization_id AND candidate.vehicle_id=vehicle.id AND ($2::text IS NULL OR candidate.location_id=$2) ORDER BY CASE candidate.status WHEN 'available' THEN 0 WHEN 'hold' THEN 1 ELSE 2 END,candidate.created_at DESC LIMIT 1) unit ON true WHERE vehicle.organization_id=$1 AND $5::int IS NOT NULL AND vehicle.year=$5 AND lower(vehicle.make)=lower($6) AND lower(vehicle.model)=lower($7) AND ($8::text IS NULL OR lower(coalesce(vehicle.trim,''))=lower($8))
+      ) match ORDER BY priority LIMIT 2`,values);if(!result.rows.length)return{label:vehicleLabel(input),resolved:false};const best=result.rows[0]!;if(result.rows.length>1&&result.rows[1]?.method===best.method)return{label:vehicleLabel(input),resolved:false};return{vehicleId:best.vehicle_id,...(best.inventory_unit_id?{inventoryUnitId:best.inventory_unit_id}:{}),method:best.method,label:`${best.year} ${best.make} ${best.model}${best.trim?` ${best.trim}`:""}`,resolved:true}}
+  async createVehicleInterest(context:RequestContext,input:{customerId:string;leadId:string;vehicleId:string;notes?:string;idempotencyKey:string}){const result=await this.database.query<{id:string}>(`INSERT INTO lead_vehicle_interests(id,organization_id,customer_id,lead_id,vehicle_id,role,status,priority,notes,idempotency_key,created_by,updated_by) VALUES($1,$2,$3,$4,$5,'primary','active',0,$6,$7,$8,$8) ON CONFLICT DO NOTHING RETURNING id`,[generateEntityId("vhi"),context.organizationId,input.customerId,input.leadId,input.vehicleId,input.notes??null,input.idempotencyKey,context.actorId]);if(result.rows[0])await this.writeAudit(context,"vehicle_interest.created","lead",input.leadId,{vehicleId:input.vehicleId,resolution:"deterministic"})}
+  async createIntake(context:RequestContext,input:{id:string;leadId:string;customerId:string;source:string;sourceLeadId?:string;receivedAt:string;preferredContactMethod?:string;message?:string;rawPayload?:Record<string,unknown>;vehicleInterest?:InboundVehicleInterest;vehicle:VehicleResolution;assignedUserId?:string;followUpTaskId:string;appointmentId?:string;communicationStatus:LeadIntakeRecord["communicationStatus"];idempotencyKey:string}){const result=await this.database.query<IntakeRow>(`INSERT INTO lead_intake_records(id,organization_id,location_id,customer_id,lead_id,source,source_lead_id,received_at,preferred_contact_method,message,raw_payload,vehicle_interest,resolved_vehicle_id,resolved_inventory_unit_id,vehicle_match_method,assigned_user_id,follow_up_task_id,appointment_id,communication_status,idempotency_key,created_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12::jsonb,$13,$14,$15,$16,$17,$18,$19,$20,$21) RETURNING id,lead_id,customer_id,follow_up_task_id,appointment_id,communication_status,received_at,idempotency_key,resolved_vehicle_id,resolved_inventory_unit_id,vehicle_match_method,vehicle_interest`,[input.id,context.organizationId,context.locationId,input.customerId,input.leadId,input.source,input.sourceLeadId??null,input.receivedAt,input.preferredContactMethod??null,input.message??null,JSON.stringify(input.rawPayload??null),JSON.stringify(input.vehicleInterest??null),input.vehicle.vehicleId??null,input.vehicle.inventoryUnitId??null,input.vehicle.method??null,input.assignedUserId??null,input.followUpTaskId,input.appointmentId??null,input.communicationStatus,input.idempotencyKey,context.actorId]);const row=requireRow(result.rows[0],"lead intake");await this.writeAudit(context,"lead.intake_completed","lead",input.leadId,{intakeId:input.id,source:input.source,sourceLeadId:input.sourceLeadId??null,vehicleResolved:input.vehicle.resolved,vehicleMatchMethod:input.vehicle.method??null,assignedUserId:input.assignedUserId??null,followUpTaskId:input.followUpTaskId,appointmentId:input.appointmentId??null,communicationStatus:input.communicationStatus,receivedAt:input.receivedAt});return mapIntake(row)}
 
   async getAppointment(scope: OrganizationScope, appointmentId: string) {
     const result = await this.database.query<AppointmentRow>(
@@ -475,4 +491,40 @@ function mapTask(row: TaskRow): TaskRecord {
     idempotencyKey: row.idempotency_key, createdAt: row.created_at.toISOString(),
     createdBy: row.created_by ?? "system", updatedAt: row.updated_at.toISOString(),
     updatedBy: row.updated_by ?? "system" };
+}
+
+function mapIntake(row: IntakeRow): LeadIntakeRecord {
+  const vehicleInput = row.vehicle_interest ?? {};
+  const vehicle: VehicleResolution = row.resolved_vehicle_id
+    ? {
+        vehicleId: row.resolved_vehicle_id,
+        ...(row.resolved_inventory_unit_id
+          ? { inventoryUnitId: row.resolved_inventory_unit_id }
+          : {}),
+        ...(row.vehicle_match_method ? { method: row.vehicle_match_method } : {}),
+        label: vehicleLabel(vehicleInput),
+        resolved: true,
+      }
+    : { label: vehicleLabel(vehicleInput), resolved: false };
+  return {
+    id: row.id,
+    leadId: row.lead_id,
+    customerId: row.customer_id,
+    followUpTaskId: row.follow_up_task_id,
+    ...(row.appointment_id ? { appointmentId: row.appointment_id } : {}),
+    communicationStatus: row.communication_status,
+    vehicle,
+    receivedAt: row.received_at.toISOString(),
+    idempotencyKey: row.idempotency_key,
+  };
+}
+
+function vehicleLabel(input: InboundVehicleInterest): string {
+  const description = [input.year, input.make, input.model, input.trim]
+    .filter((value): value is string | number => value !== undefined && value !== "")
+    .join(" ");
+  if (description) return description;
+  if (input.stockNumber) return `Stock ${input.stockNumber}`;
+  if (input.vin) return `VIN ${input.vin}`;
+  return "Unresolved vehicle interest";
 }

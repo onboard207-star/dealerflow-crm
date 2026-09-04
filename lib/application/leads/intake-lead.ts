@@ -1,242 +1,35 @@
-import { assertAuthorized, type AuthorizationActor } from "@/lib/platform/auth";
-import type {
-  CRMDataProvider,
-  CRMDataSession,
-  CustomerRecord,
-  LeadRecord,
-  OrganizationScope,
-  RequestContext,
-} from "@/lib/platform/data";
 import { generateEntityId, type EntityIdPrefix } from "@/lib/core/identifiers";
+import { assertAuthorized, type AuthorizationActor } from "@/lib/platform/auth";
+import type { CRMDataProvider, CRMDataSession, CustomerRecord, LeadRecord, OrganizationScope, RequestContext, TaskRecord, AppointmentRecord } from "@/lib/platform/data";
 
-export interface LeadIntakeRequest extends OrganizationScope {
-  actor: AuthorizationActor;
-  correlationId: string;
-  idempotencyKey: string;
-  source: string;
-  sourceDetail?: string;
-  assignedUserId?: string;
-  customer: {
-    displayName: string;
-    firstName?: string;
-    lastName?: string;
-    email?: string;
-    phone?: string;
-  };
+export interface InboundVehicleInterest { vin?:string;stockNumber?:string;year?:number;make?:string;model?:string;trim?:string }
+export interface InboundAppointmentRequest { startsAt?:string;endsAt?:string;timezone?:string;notes?:string }
+export interface LeadIntakeRequest extends OrganizationScope {actor:AuthorizationActor;correlationId:string;idempotencyKey:string;source:string;sourceLeadId?:string;sourceDetail?:string;assignedUserId?:string;preferredContactMethod?:"phone"|"sms"|"email";vehicleInterest?:InboundVehicleInterest;message?:string;tradeInterest?:boolean;appointmentRequest?:InboundAppointmentRequest;receivedAt?:string;rawPayload?:Record<string,unknown>;customer:{displayName:string;firstName?:string;lastName?:string;email?:string;phone?:string}}
+export interface VehicleResolution {vehicleId?:string;inventoryUnitId?:string;method?:"vin"|"stock-number"|"exact-description";label:string;resolved:boolean}
+export interface LeadIntakeRecord {id:string;leadId:string;customerId:string;followUpTaskId:string;appointmentId?:string;communicationStatus:"not-sent"|"appointment-requested"|"appointment-scheduled";vehicle:VehicleResolution;receivedAt:string;idempotencyKey:string}
+export interface LeadIntakeResult {customer:CustomerRecord;lead:LeadRecord;followUpTask:TaskRecord;appointment?:AppointmentRecord;intake:LeadIntakeRecord;customerCreated:boolean;leadCreated:boolean;intakeCreated:boolean}
+
+export interface LeadIntakeSession extends CRMDataSession {
+  findIntake(scope:OrganizationScope,input:{idempotencyKey:string;source:string;sourceLeadId?:string}):Promise<{leadId:string;customerId:string;taskId:string;appointmentId?:string;intake:LeadIntakeRecord}|null>;
+  findActiveLead(scope:OrganizationScope,input:{customerId:string;source:string;receivedAt:string}):Promise<LeadRecord|null>;
+  resolveAssignee(scope:OrganizationScope,input:{requestedUserId?:string;source:string}):Promise<string|undefined>;
+  resolveVehicle(scope:OrganizationScope,input:InboundVehicleInterest):Promise<VehicleResolution>;
+  createVehicleInterest(context:RequestContext,input:{customerId:string;leadId:string;vehicleId:string;notes?:string;idempotencyKey:string}):Promise<void>;
+  createIntake(context:RequestContext,input:{id:string;leadId:string;customerId:string;source:string;sourceLeadId?:string;receivedAt:string;preferredContactMethod?:string;message?:string;rawPayload?:Record<string,unknown>;vehicleInterest?:InboundVehicleInterest;vehicle:VehicleResolution;assignedUserId?:string;followUpTaskId:string;appointmentId?:string;communicationStatus:LeadIntakeRecord["communicationStatus"];idempotencyKey:string}):Promise<LeadIntakeRecord>;
 }
+export interface LeadIntakeProvider extends Omit<CRMDataProvider,"transaction"> {transaction<Result>(operation:(session:LeadIntakeSession)=>Promise<Result>):Promise<Result>}
+export class LeadIntakeValidationError extends Error{constructor(readonly issues:readonly string[]){super("Lead intake data is invalid.");this.name="LeadIntakeValidationError"}}
+export class LeadIntakeIntegrityError extends Error{constructor(message:string){super(message);this.name="LeadIntakeIntegrityError"}}
 
-export interface LeadIntakeResult {
-  customer: CustomerRecord;
-  lead: LeadRecord;
-  customerCreated: boolean;
-  leadCreated: boolean;
+export class LeadIntakeService{
+  constructor(private readonly provider:LeadIntakeProvider,private readonly createId:(prefix:EntityIdPrefix)=>string=generateEntityId,private readonly now:()=>Date=()=>new Date()){}
+  async intake(request:LeadIntakeRequest):Promise<LeadIntakeResult>{const normalized=validate(request,this.now());for(const capability of["lead.create","lead.read","customer.read","task.create"]as const)assertAuthorized(request.actor,{capability,organizationId:request.organizationId,locationId:request.locationId});if(normalized.vehicleInterest)assertAuthorized(request.actor,{capability:"inventory.read",organizationId:request.organizationId,locationId:request.locationId});if(completeAppointment(normalized.appointmentRequest))assertAuthorized(request.actor,{capability:"appointment.create",organizationId:request.organizationId,locationId:request.locationId});return this.provider.transaction(async session=>{await session.acquireIdempotencyLock(request,request.idempotencyKey);if(normalized.sourceLeadId)await session.acquireIdempotencyLock(request,`source:${normalized.source.toLowerCase()}:${normalized.sourceLeadId}`);const existing=await session.findIntake(request,{idempotencyKey:request.idempotencyKey,source:normalized.source,...(normalized.sourceLeadId?{sourceLeadId:normalized.sourceLeadId}:{})});if(existing)return this.existing(session,request,existing);
+    for(const key of[...(normalized.email?[`customer:identity:email:${normalized.email}`]:[]),...(normalized.phone?[`customer:identity:phone:${normalized.phone}`]:[])].sort())await session.acquireIdempotencyLock(request,key);
+    const customerResolution=await this.resolveCustomer(session,request,normalized);const context:RequestContext={actorId:request.actor.userId,organizationId:request.organizationId,locationId:request.locationId!,correlationId:request.correlationId};const active=await session.findActiveLead(request,{customerId:customerResolution.customer.id,source:normalized.source,receivedAt:normalized.receivedAt});const assignedUserId=await session.resolveAssignee(request,{...(request.assignedUserId?{requestedUserId:request.assignedUserId}:{}),source:normalized.source});const lead=active??await session.createLead(context,{id:this.createId("led"),organizationId:request.organizationId,locationId:request.locationId!,customerId:customerResolution.customer.id,source:normalized.source,...(normalized.sourceDetail?{sourceDetail:normalized.sourceDetail}:{}),...(assignedUserId?{assignedUserId}:{}),stage:"new",idempotencyKey:request.idempotencyKey});const vehicle=normalized.vehicleInterest?await session.resolveVehicle(request,normalized.vehicleInterest):{label:"No vehicle supplied",resolved:false};if(vehicle.vehicleId)await session.createVehicleInterest(context,{customerId:customerResolution.customer.id,leadId:lead.id,vehicleId:vehicle.vehicleId,...(normalized.message?{notes:normalized.message}:{}) ,idempotencyKey:`${request.idempotencyKey}:vehicle`});const followUpTask=await session.createTask(context,{id:this.createId("tsk"),organizationId:request.organizationId,locationId:request.locationId!,customerId:customerResolution.customer.id,leadId:lead.id,...(assignedUserId?{assignedUserId}:{}),title:`Respond to ${normalized.source} lead`,priority:"high",dueAt:normalized.receivedAt,idempotencyKey:`${request.idempotencyKey}:follow-up`});let appointment:AppointmentRecord|undefined;if(completeAppointment(normalized.appointmentRequest)){appointment=await session.createAppointment(context,{id:this.createId("apt"),organizationId:request.organizationId,locationId:request.locationId!,customerId:customerResolution.customer.id,leadId:lead.id,...(assignedUserId?{assignedUserId}:{}),type:"sales",startsAt:normalized.appointmentRequest.startsAt,endsAt:normalized.appointmentRequest.endsAt,timezone:normalized.appointmentRequest.timezone,...(normalized.appointmentRequest.notes?{notes:normalized.appointmentRequest.notes}:{}) ,idempotencyKey:`${request.idempotencyKey}:appointment`})}const communicationStatus=appointment?"appointment-scheduled":normalized.appointmentRequest?"appointment-requested":"not-sent";const intake=await session.createIntake(context,{id:this.createId("lir"),leadId:lead.id,customerId:customerResolution.customer.id,source:normalized.source,...(normalized.sourceLeadId?{sourceLeadId:normalized.sourceLeadId}:{}),receivedAt:normalized.receivedAt,...(normalized.preferredContactMethod?{preferredContactMethod:normalized.preferredContactMethod}:{}),...(normalized.message?{message:normalized.message}:{}),...(normalized.rawPayload?{rawPayload:normalized.rawPayload}:{}),...(normalized.vehicleInterest?{vehicleInterest:normalized.vehicleInterest}:{}),vehicle,...(assignedUserId?{assignedUserId}:{}),followUpTaskId:followUpTask.id,...(appointment?{appointmentId:appointment.id}:{}),communicationStatus,idempotencyKey:request.idempotencyKey});return{customer:customerResolution.customer,lead,followUpTask,...(appointment?{appointment}:{}),intake,customerCreated:customerResolution.created,leadCreated:!active,intakeCreated:true}})}
+  private async existing(session:LeadIntakeSession,scope:OrganizationScope,record:NonNullable<Awaited<ReturnType<LeadIntakeSession["findIntake"]>>>){const[customer,lead,task,appointment]=await Promise.all([session.getCustomer(scope,record.customerId),session.getLead(scope,record.leadId),session.findTaskByIdempotencyKey(scope,`${record.intake.idempotencyKey}:follow-up`),record.appointmentId?session.getAppointment(scope,record.appointmentId):Promise.resolve(null)]);if(!customer||!lead||!task)throw new LeadIntakeIntegrityError("Existing intake evidence is incomplete.");return{customer,lead,followUpTask:task,...(appointment?{appointment}:{}),intake:record.intake,customerCreated:false,leadCreated:false,intakeCreated:false}}
+  private async resolveCustomer(session:LeadIntakeSession,request:LeadIntakeRequest,value:Normalized){const existing=await session.findCustomerByIdentity({organizationId:request.organizationId,locationId:request.locationId,...(value.email?{normalizedEmail:value.email}:{}),...(value.phone?{normalizedPhone:value.phone}:{})});if(existing)return{customer:existing,created:false};assertAuthorized(request.actor,{capability:"customer.create",organizationId:request.organizationId,locationId:request.locationId});const context:RequestContext={actorId:request.actor.userId,organizationId:request.organizationId,locationId:request.locationId!,correlationId:request.correlationId};return{customer:await session.createCustomer(context,{id:this.createId("cus"),organizationId:request.organizationId,locationId:request.locationId!,displayName:value.displayName,...(value.firstName?{firstName:value.firstName}:{}),...(value.lastName?{lastName:value.lastName}:{}),...(value.email?{email:value.email,normalizedEmail:value.email}:{}),...(value.phone?{phone:value.phone,normalizedPhone:value.phone}:{})}),created:true}}
 }
-
-export class LeadIntakeValidationError extends Error {
-  readonly issues: readonly string[];
-
-  constructor(issues: readonly string[]) {
-    super("Lead intake data is invalid.");
-    this.name = "LeadIntakeValidationError";
-    this.issues = [...issues];
-  }
-}
-
-export class LeadIntakeIntegrityError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "LeadIntakeIntegrityError";
-  }
-}
-
-export class LeadIntakeService {
-  constructor(
-    private readonly provider: CRMDataProvider,
-    private readonly createId: (prefix: EntityIdPrefix) => string =
-      generateEntityId,
-  ) {}
-
-  async intake(request: LeadIntakeRequest): Promise<LeadIntakeResult> {
-    const normalized = validateAndNormalize(request);
-
-    assertAuthorized(request.actor, {
-      capability: "lead.create",
-      organizationId: request.organizationId,
-      locationId: request.locationId,
-    });
-    assertAuthorized(request.actor, {
-      capability: "lead.read",
-      organizationId: request.organizationId,
-      locationId: request.locationId,
-    });
-    assertAuthorized(request.actor, {
-      capability: "customer.read",
-      organizationId: request.organizationId,
-      locationId: request.locationId,
-    });
-
-    return this.provider.transaction(async (session) => {
-      await session.acquireIdempotencyLock(request, request.idempotencyKey);
-      const existingLead = await session.findLeadByIdempotencyKey(
-        request,
-        request.idempotencyKey,
-      );
-
-      if (existingLead) {
-        const existingCustomer = await session.getCustomer(
-          request,
-          existingLead.customerId,
-        );
-        if (!existingCustomer) {
-          throw new LeadIntakeIntegrityError(
-            "The existing lead references an unavailable customer.",
-          );
-        }
-        return {
-          customer: existingCustomer,
-          lead: existingLead,
-          customerCreated: false,
-          leadCreated: false,
-        };
-      }
-
-      const identityLocks = [
-        ...(normalized.email ? [`customer:identity:email:${normalized.email}`] : []),
-        ...(normalized.phone ? [`customer:identity:phone:${normalized.phone}`] : []),
-      ].sort();
-      for (const key of identityLocks) {
-        await session.acquireIdempotencyLock(request, key);
-      }
-
-      const customerResolution = await this.resolveCustomer(
-        session,
-        request,
-        normalized,
-      );
-      const context: RequestContext = {
-        actorId: request.actor.userId,
-        organizationId: request.organizationId,
-        correlationId: request.correlationId,
-        ...(request.locationId ? { locationId: request.locationId } : {}),
-      };
-      const lead = await session.createLead(context, {
-        id: this.createId("led"),
-        organizationId: request.organizationId,
-        ...(request.locationId ? { locationId: request.locationId } : {}),
-        customerId: customerResolution.customer.id,
-        source: normalized.source,
-        ...(normalized.sourceDetail
-          ? { sourceDetail: normalized.sourceDetail }
-          : {}),
-        ...(request.assignedUserId
-          ? { assignedUserId: request.assignedUserId }
-          : {}),
-        stage: "new",
-        idempotencyKey: request.idempotencyKey,
-      });
-
-      return {
-        customer: customerResolution.customer,
-        lead,
-        customerCreated: customerResolution.created,
-        leadCreated: true,
-      };
-    });
-  }
-
-  private async resolveCustomer(
-    session: CRMDataSession,
-    request: LeadIntakeRequest,
-    normalized: NormalizedLeadIntake,
-  ): Promise<{ customer: CustomerRecord; created: boolean }> {
-    const existingCustomer = await session.findCustomerByIdentity({
-      organizationId: request.organizationId,
-      ...(request.locationId ? { locationId: request.locationId } : {}),
-      ...(normalized.email ? { normalizedEmail: normalized.email } : {}),
-      ...(normalized.phone ? { normalizedPhone: normalized.phone } : {}),
-    });
-
-    if (existingCustomer) {
-      return { customer: existingCustomer, created: false };
-    }
-
-    assertAuthorized(request.actor, {
-      capability: "customer.create",
-      organizationId: request.organizationId,
-      locationId: request.locationId,
-    });
-
-    const context: RequestContext = {
-      actorId: request.actor.userId,
-      organizationId: request.organizationId,
-      correlationId: request.correlationId,
-      ...(request.locationId ? { locationId: request.locationId } : {}),
-    };
-    const customer = await session.createCustomer(context, {
-      id: this.createId("cus"),
-      organizationId: request.organizationId,
-      ...(request.locationId ? { locationId: request.locationId } : {}),
-      displayName: normalized.displayName,
-      ...(normalized.firstName ? { firstName: normalized.firstName } : {}),
-      ...(normalized.lastName ? { lastName: normalized.lastName } : {}),
-      ...(normalized.email
-        ? { email: normalized.email, normalizedEmail: normalized.email }
-        : {}),
-      ...(normalized.phone
-        ? { phone: normalized.phone, normalizedPhone: normalized.phone }
-        : {}),
-    });
-
-    return { customer, created: true };
-  }
-}
-
-interface NormalizedLeadIntake {
-  displayName: string;
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  phone?: string;
-  source: string;
-  sourceDetail?: string;
-}
-
-function validateAndNormalize(request: LeadIntakeRequest): NormalizedLeadIntake {
-  const issues: string[] = [];
-  const displayName = request.customer.displayName.trim();
-  const source = request.source.trim();
-  const email = request.customer.email?.trim().toLowerCase();
-  const phone = request.customer.phone?.replace(/[\s().-]/g, "");
-
-  if (!displayName) issues.push("customer.displayName is required.");
-  if (!request.locationId?.trim()) issues.push("locationId is required.");
-  if (!source) issues.push("source is required.");
-  if (!request.correlationId.trim()) issues.push("correlationId is required.");
-  if (!request.idempotencyKey.trim()) issues.push("idempotencyKey is required.");
-  if (!email && !phone) {
-    issues.push("A customer email or phone number is required for lead intake.");
-  }
-  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    issues.push("customer.email must be a valid email address.");
-  }
-  if (phone && !/^\+[1-9]\d{7,14}$/.test(phone)) {
-    issues.push("customer.phone must be supplied in international E.164 format.");
-  }
-  if (issues.length > 0) throw new LeadIntakeValidationError(issues);
-
-  return {
-    displayName,
-    source,
-    ...(request.customer.firstName?.trim()
-      ? { firstName: request.customer.firstName.trim() }
-      : {}),
-    ...(request.customer.lastName?.trim()
-      ? { lastName: request.customer.lastName.trim() }
-      : {}),
-    ...(email ? { email } : {}),
-    ...(phone ? { phone } : {}),
-    ...(request.sourceDetail?.trim()
-      ? { sourceDetail: request.sourceDetail.trim() }
-      : {}),
-  };
-}
+interface Normalized{displayName:string;firstName?:string;lastName?:string;email?:string;phone?:string;source:string;sourceLeadId?:string;sourceDetail?:string;preferredContactMethod?:"phone"|"sms"|"email";vehicleInterest?:InboundVehicleInterest;message?:string;appointmentRequest?:InboundAppointmentRequest;receivedAt:string;rawPayload?:Record<string,unknown>}
+function validate(request:LeadIntakeRequest,now:Date):Normalized{const issues:string[]=[],displayName=request.customer.displayName.trim(),source=request.source.trim(),email=request.customer.email?.trim().toLowerCase(),phone=request.customer.phone?.replace(/[^+\d]/g,"");const received=new Date(request.receivedAt??now.toISOString());if(!displayName)issues.push("customer.displayName is required.");if(!request.locationId?.trim())issues.push("locationId is required.");if(!source||source.length>100)issues.push("source is required and must not exceed 100 characters.");if(!request.correlationId.trim())issues.push("correlationId is required.");if(!request.idempotencyKey.trim())issues.push("idempotencyKey is required.");if(!email&&!phone)issues.push("A customer email or phone number is required for lead intake.");if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))issues.push("customer.email must be a valid email address.");if(phone&&!/^\+[1-9]\d{7,14}$/.test(phone))issues.push("customer.phone must be supplied in international E.164 format.");if(Number.isNaN(received.valueOf())||received.getTime()>now.getTime()+300000)issues.push("receivedAt is invalid.");if(request.sourceLeadId&&(!request.sourceLeadId.trim()||request.sourceLeadId.trim().length>200))issues.push("sourceLeadId is invalid.");if(request.message&&request.message.trim().length>4000)issues.push("message is too long.");if(request.vehicleInterest?.vin&&!/^[A-HJ-NPR-Z0-9]{17}$/.test(request.vehicleInterest.vin.trim().toUpperCase()))issues.push("vehicleInterest.vin is invalid.");if(request.vehicleInterest?.year&&(!Number.isInteger(request.vehicleInterest.year)||request.vehicleInterest.year<1886||request.vehicleInterest.year>2200))issues.push("vehicleInterest.year is invalid.");if(request.appointmentRequest&&completeAppointment(request.appointmentRequest)&&new Date(request.appointmentRequest.endsAt).valueOf()<=new Date(request.appointmentRequest.startsAt).valueOf())issues.push("appointmentRequest end must follow start.");if(issues.length)throw new LeadIntakeValidationError(issues);return{displayName,source,receivedAt:received.toISOString(),...(request.customer.firstName?.trim()?{firstName:request.customer.firstName.trim()}:{}),...(request.customer.lastName?.trim()?{lastName:request.customer.lastName.trim()}:{}),...(email?{email}:{}),...(phone?{phone}:{}),...(request.sourceLeadId?.trim()?{sourceLeadId:request.sourceLeadId.trim()}:{}),...(request.sourceDetail?.trim()?{sourceDetail:request.sourceDetail.trim()}:{}),...(request.preferredContactMethod?{preferredContactMethod:request.preferredContactMethod}:{}),...(request.vehicleInterest?{vehicleInterest:normalizeVehicle(request.vehicleInterest)}:{}),...(request.message?.trim()?{message:request.message.trim()}:{}),...(request.appointmentRequest?{appointmentRequest:request.appointmentRequest}:{}),...(request.rawPayload?{rawPayload:request.rawPayload}:{})}}
+function normalizeVehicle(value:InboundVehicleInterest):InboundVehicleInterest{return{...(value.vin?.trim()?{vin:value.vin.trim().toUpperCase()}:{}),...(value.stockNumber?.trim()?{stockNumber:value.stockNumber.trim()}:{}),...(value.year?{year:value.year}:{}),...(value.make?.trim()?{make:value.make.trim()}:{}),...(value.model?.trim()?{model:value.model.trim()}:{}),...(value.trim?.trim()?{trim:value.trim.trim()}:{})}}
+function completeAppointment(value:InboundAppointmentRequest|undefined):value is Required<Pick<InboundAppointmentRequest,"startsAt"|"endsAt"|"timezone">>&InboundAppointmentRequest{return Boolean(value?.startsAt&&value.endsAt&&value.timezone&&!Number.isNaN(new Date(value.startsAt).valueOf())&&!Number.isNaN(new Date(value.endsAt).valueOf()))}
