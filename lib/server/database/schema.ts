@@ -681,6 +681,7 @@ export const inventoryUnits = pgTable(
   },
   (table) => [
     uniqueIndex("inventory_units_organization_id_unique").on(table.organizationId, table.id),
+    uniqueIndex("inventory_units_org_location_id_unique").on(table.organizationId, table.locationId, table.id),
     uniqueIndex("inventory_units_organization_vehicle_id_unique").on(table.organizationId, table.vehicleId, table.id),
     uniqueIndex("inventory_units_organization_location_vehicle_id_unique").on(table.organizationId, table.locationId, table.vehicleId, table.id),
     uniqueIndex("inventory_units_organization_stock_unique").on(table.organizationId, table.stockNumber),

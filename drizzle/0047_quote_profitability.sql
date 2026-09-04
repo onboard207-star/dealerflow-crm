@@ -1,3 +1,6 @@
+CREATE UNIQUE INDEX "inventory_units_org_location_id_unique"
+  ON "inventory_units" ("organization_id", "location_id", "id");
+
 CREATE TABLE "inventory_cost_snapshots" (
   "id" text PRIMARY KEY NOT NULL,
   "organization_id" text NOT NULL,
