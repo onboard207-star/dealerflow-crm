@@ -900,6 +900,7 @@ export const dealQuoteLines = pgTable(
   },
   (table) => [
     uniqueIndex("deal_quote_lines_organization_id_unique").on(table.organizationId, table.id),
+    uniqueIndex("deal_quote_lines_org_quote_id_unique").on(table.organizationId, table.quoteId, table.id),
     uniqueIndex("deal_quote_lines_quote_position_unique").on(table.organizationId, table.quoteId, table.position),
     foreignKey({ columns: [table.organizationId, table.quoteId], foreignColumns: [dealQuotes.organizationId, dealQuotes.id], name: "deal_quote_lines_same_organization_quote_fk" }),
     check("deal_quote_lines_id_format", sql`${table.id} ~ '^qli_[a-z0-9_-]{6,64}$'`),

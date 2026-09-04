@@ -11,6 +11,12 @@ CREATE TYPE "incentive_eligibility_status" AS ENUM (
   'ineligible'
 );
 
+-- PostgreSQL requires the referenced columns to match a unique key exactly.
+-- The earlier (organization_id, id) key protects tenant identity, while this
+-- key additionally proves that the line belongs to the referenced Quote.
+CREATE UNIQUE INDEX "deal_quote_lines_org_quote_id_unique"
+  ON "deal_quote_lines" ("organization_id", "quote_id", "id");
+
 CREATE TABLE "incentive_programs" (
   "id" text PRIMARY KEY NOT NULL,
   "organization_id" text NOT NULL,
