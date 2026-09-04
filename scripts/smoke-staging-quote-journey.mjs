@@ -27,6 +27,7 @@ export async function run(pool, input, environment = process.env) {
   try {
     await db.query("BEGIN");
     await db.query("SELECT set_config('app.auth_runtime','enabled',true)");
+    await db.query("SELECT set_config('app.organization_id',$1,true),set_config('app.user_id','',true)", [input["organization-id"]]);
     const identities = await db.query(
       `SELECT users.id user_id,session.token FROM users
        JOIN auth_sessions session ON session.user_id=users.id AND session.expires_at>now()
