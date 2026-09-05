@@ -134,6 +134,73 @@ export async function run(pool, input, environment = process.env) {
   }
   const accepted = await post(`${base}/quotes/${quoteId}/transitions`, "acceptance-quote:accept:v2", { toStatus: "accepted" });
   requireStatus(accepted, [200], "exact Quote acceptance");
+  const alternateAcceptance = await post(`${base}/quotes/${v1.payload.quote.id}/transitions`, "acceptance-quote:alternate-acceptance:v1", { toStatus: "accepted" });
+  requireStatus(alternateAcceptance, [409], "alternate Quote acceptance rejection");
+
+  const working = await post(`${base}/deals/${input["deal-id"]}/transitions`, "golden-deal:working", { toStatus: "working" });
+  const pendingApproval = await post(`${base}/deals/${input["deal-id"]}/transitions`, "golden-deal:pending-approval", { toStatus: "pending-approval" });
+  const approvedDeal = await post(`${base}/deals/${input["deal-id"]}/transitions`, "golden-deal:approved", { toStatus: "approved" }, managerCookie);
+  const contracted = await post(`${base}/deals/${input["deal-id"]}/transitions`, "golden-deal:contracted", { toStatus: "contracted" });
+  const contractedRetry = await post(`${base}/deals/${input["deal-id"]}/transitions`, "golden-deal:contracted", { toStatus: "contracted" });
+  requireStatus(working, [200], "Deal working transition");
+  requireStatus(pendingApproval, [200], "Deal pending-approval transition");
+  requireStatus(approvedDeal, [200], "Manager Deal approval");
+  requireStatus(contracted, [200], "Deal contracting");
+  requireStatus(contractedRetry, [200], "Deal contracting retry");
+
+  const unauthorizedDocument = await post(`${base}/deals/${input["deal-id"]}/documents`, "golden-document:unauthorized", { documentType: "unauthorized-test", sourceType: "uploaded", required: true, waiverAllowed: false });
+  requireStatus(unauthorizedDocument, [403], "Salesperson document-management denial");
+  const directUrl = await post(`${base}/deals/${input["deal-id"]}/documents`, "golden-document:direct-url", { documentType: "unsafe-reference-test", sourceType: "external-reference", externalReference: "https://example.invalid/private.pdf", required: true, waiverAllowed: false }, managerCookie);
+  requireStatus(directUrl, [400], "direct document URL rejection");
+
+  const requiredDocument = await post(`${base}/deals/${input["deal-id"]}/documents`, "golden-document:purchase-agreement", { documentType: "purchase-agreement", sourceType: "uploaded", required: true, waiverAllowed: false }, managerCookie);
+  const requiredDocumentRetry = await post(`${base}/deals/${input["deal-id"]}/documents`, "golden-document:purchase-agreement", { documentType: "purchase-agreement", sourceType: "uploaded", required: true, waiverAllowed: false }, managerCookie);
+  requireStatus(requiredDocument, [200, 201], "required document creation");
+  requireStatus(requiredDocumentRetry, [200], "required document creation retry");
+  const requiredDocumentId = requiredDocument.payload.requirement?.id;
+  if (!requiredDocumentId || requiredDocumentRetry.payload.requirement?.id !== requiredDocumentId) throw new Error("Document creation idempotency evidence is incomplete.");
+
+  const readinessBefore = await readReadiness(pool, input["organization-id"], input["deal-id"], context.manager.user_id);
+  if (readinessBefore.ready || !readinessBefore.blockers.includes("documents-incomplete")) throw new Error("Pending required documents did not block delivery readiness.");
+  const crossDealDocument = await post(`${base}/deals/dea_cross_deal_negative/documents/${requiredDocumentId}/transitions`, "golden-document:cross-deal", { toStatus: "provided" }, managerCookie);
+  requireStatus(crossDealDocument, [409], "cross-Deal document transition denial");
+  const documentProvided = await post(`${base}/deals/${input["deal-id"]}/documents/${requiredDocumentId}/transitions`, "golden-document:purchase-agreement:provided", { toStatus: "provided" }, managerCookie);
+  const documentProvidedRetry = await post(`${base}/deals/${input["deal-id"]}/documents/${requiredDocumentId}/transitions`, "golden-document:purchase-agreement:provided", { toStatus: "provided" }, managerCookie);
+  const documentCompleted = await post(`${base}/deals/${input["deal-id"]}/documents/${requiredDocumentId}/transitions`, "golden-document:purchase-agreement:complete", { toStatus: "complete" }, managerCookie);
+  const documentCompletedRetry = await post(`${base}/deals/${input["deal-id"]}/documents/${requiredDocumentId}/transitions`, "golden-document:purchase-agreement:complete", { toStatus: "complete" }, managerCookie);
+  requireStatus(documentProvided, [200], "document evidence");
+  requireStatus(documentProvidedRetry, [200], "document evidence retry");
+  requireStatus(documentCompleted, [200], "document completion");
+  requireStatus(documentCompletedRetry, [200], "document completion retry");
+
+  const waivableDocument = await post(`${base}/deals/${input["deal-id"]}/documents`, "golden-document:policy-waiver", { documentType: "policy-waiver-test", sourceType: "uploaded", required: true, waiverAllowed: true }, managerCookie);
+  requireStatus(waivableDocument, [200, 201], "waivable document creation");
+  const waivableDocumentId = waivableDocument.payload.requirement?.id;
+  if (!waivableDocumentId) throw new Error("Waivable document identity is unavailable.");
+  const unauthorizedWaiver = await post(`${base}/deals/${input["deal-id"]}/documents/${waivableDocumentId}/transitions`, "golden-document:unauthorized-waiver", { toStatus: "waived", reason: "Synthetic permission attack" });
+  requireStatus(unauthorizedWaiver, [403], "unauthorized document waiver");
+  const authorizedWaiver = await post(`${base}/deals/${input["deal-id"]}/documents/${waivableDocumentId}/transitions`, "golden-document:authorized-waiver", { toStatus: "waived", reason: "Synthetic policy-authorized acceptance waiver" }, managerCookie);
+  const authorizedWaiverRetry = await post(`${base}/deals/${input["deal-id"]}/documents/${waivableDocumentId}/transitions`, "golden-document:authorized-waiver", { toStatus: "waived", reason: "Synthetic policy-authorized acceptance waiver" }, managerCookie);
+  requireStatus(authorizedWaiver, [200], "authorized document waiver");
+  requireStatus(authorizedWaiverRetry, [200], "authorized document waiver retry");
+  const crossTenantDocument = await post(`${input.applicationUrl}/api/organizations/org_cross_tenant_negative/deals/${input["deal-id"]}/documents`, "golden-document:cross-tenant", { documentType: "cross-tenant-test", sourceType: "uploaded", required: true, waiverAllowed: false }, managerCookie);
+  requireStatus(crossTenantDocument, [403], "cross-tenant document denial");
+
+  const readinessAfter = await readReadiness(pool, input["organization-id"], input["deal-id"], context.manager.user_id);
+  if (!readinessAfter.ready || readinessAfter.blockers.length) throw new Error("Completed document evidence did not satisfy delivery readiness.");
+
+  const delivery = await post(`${base}/deals/${input["deal-id"]}/delivery`, "golden-delivery:schedule", { startsAt: "2030-09-05T14:00:00.000Z", endsAt: "2030-09-05T15:00:00.000Z", timezone: "America/New_York", notes: "Synthetic golden-journey handoff" });
+  const deliveryRetry = await post(`${base}/deals/${input["deal-id"]}/delivery`, "golden-delivery:schedule", { startsAt: "2030-09-05T14:00:00.000Z", endsAt: "2030-09-05T15:00:00.000Z", timezone: "America/New_York", notes: "Synthetic golden-journey handoff" });
+  requireStatus(delivery, [200, 201], "delivery scheduling");
+  requireStatus(deliveryRetry, [200], "delivery scheduling retry");
+  const deliveryId = delivery.payload.delivery?.id;
+  if (!deliveryId || deliveryRetry.payload.delivery?.id !== deliveryId) throw new Error("Delivery scheduling idempotency evidence is incomplete.");
+  const deliveryReady = await post(`${base}/deliveries/${deliveryId}/transitions`, "golden-delivery:ready", { toStatus: "ready" });
+  const deliveryCompleted = await post(`${base}/deliveries/${deliveryId}/transitions`, "golden-delivery:completed", { toStatus: "completed" });
+  const deliveryCompletedRetry = await post(`${base}/deliveries/${deliveryId}/transitions`, "golden-delivery:completed", { toStatus: "completed" });
+  const deliveredDeal = await post(`${base}/deals/${input["deal-id"]}/transitions`, "golden-deal:delivered", { toStatus: "delivered" });
+  const deliveredDealRetry = await post(`${base}/deals/${input["deal-id"]}/transitions`, "golden-deal:delivered", { toStatus: "delivered" });
+  for (const [label, result] of [["delivery ready", deliveryReady], ["delivery completion", deliveryCompleted], ["delivery completion retry", deliveryCompletedRetry], ["Deal delivered", deliveredDeal], ["Deal delivered retry", deliveredDealRetry]]) requireStatus(result, [200], label);
 
   const evidenceDb = await pool.connect();
   try {
@@ -151,14 +218,53 @@ export async function run(pool, input, environment = process.env) {
         (SELECT status::text FROM deal_quote_approvals WHERE organization_id=$1 AND quote_id=$4) approval_status,
         (SELECT version FROM deal_quotes WHERE organization_id=$1 AND id=$4) accepted_version,
         (SELECT unit_amount_cents FROM deal_quote_lines WHERE organization_id=$1 AND quote_id=$5 AND category='vehicle') v1_price,
-        (SELECT unit_amount_cents FROM deal_quote_lines WHERE organization_id=$1 AND quote_id=$4 AND category='vehicle') v2_price`,
-      [input["organization-id"], input["deal-id"], financeId, quoteId, v1.payload.quote.id],
+        (SELECT unit_amount_cents FROM deal_quote_lines WHERE organization_id=$1 AND quote_id=$4 AND category='vehicle') v2_price,
+        (SELECT status::text FROM deals WHERE organization_id=$1 AND id=$2) deal_status,
+        (SELECT accepted_quote_id FROM deals WHERE organization_id=$1 AND id=$2) bound_quote_id,
+        (SELECT accepted_quote_version FROM deals WHERE organization_id=$1 AND id=$2) bound_quote_version,
+        (SELECT count(*)::int FROM deal_status_events WHERE organization_id=$1 AND deal_id=$2 AND idempotency_key='golden-deal:contracted') contract_event_count,
+        (SELECT count(*)::int FROM deal_document_requirements WHERE organization_id=$1 AND deal_id=$2 AND idempotency_key='golden-document:purchase-agreement') required_document_count,
+        (SELECT count(*)::int FROM deal_document_status_events WHERE organization_id=$1 AND requirement_id=$6) required_document_event_count,
+        (SELECT count(*)::int FROM deal_document_status_events WHERE organization_id=$1 AND requirement_id=$7 AND to_status='waived') waiver_event_count,
+        (SELECT count(*)::int FROM deal_deliveries WHERE organization_id=$1 AND deal_id=$2 AND idempotency_key='golden-delivery:schedule') delivery_count,
+        (SELECT count(*)::int FROM deal_delivery_status_events WHERE organization_id=$1 AND delivery_id=$8 AND to_status='completed') delivery_completion_count`,
+      [input["organization-id"], input["deal-id"], financeId, quoteId, v1.payload.quote.id, requiredDocumentId, waivableDocumentId, deliveryId],
     );
     await evidenceDb.query("COMMIT");
     const row = evidence.rows[0];
-    if (!row || row.v1_count !== 1 || row.approval_count !== 1 || row.terms_count !== 1 || row.finance_count !== 1 || row.accepted_status !== "accepted" || row.approval_status !== "approved" || row.v1_price !== 4_200_000 || row.v2_price !== 4_150_000) throw new Error("Canonical Quote evidence is incomplete.");
-    return { dealId: input["deal-id"], cashQuoteV1Id: v1.payload.quote.id, acceptedQuoteId: quoteId, financeQuoteId: financeId, leaseQuoteId: lease.payload.quote.id, approvalId, statuses: { v1: v1.status, v1Retry: v1Retry.status, v2: v2.status, finance: finance.status, terms: terms.status, termsRetry: termsRetry.status, leaseIncomplete: leaseIncomplete.status, approval: approval.status, approvalRetry: approvalRetry.status, selfApproval: selfApproval.status, managerDecision: decision.status, managerDecisionRetry: decisionRetry.status, proposal: proposalResponse.status, accepted: accepted.status }, evidence: row };
+    if (!row || row.v1_count !== 1 || row.approval_count !== 1 || row.terms_count !== 1 || row.finance_count !== 1 || row.accepted_status !== "accepted" || row.approval_status !== "approved" || row.v1_price !== 4_200_000 || row.v2_price !== 4_150_000 || row.deal_status !== "delivered" || row.bound_quote_id !== quoteId || row.bound_quote_version !== v2.payload.quote.version || row.contract_event_count !== 1 || row.required_document_count !== 1 || row.required_document_event_count !== 3 || row.waiver_event_count !== 1 || row.delivery_count !== 1 || row.delivery_completion_count !== 1) throw new Error("Canonical golden-journey evidence is incomplete.");
+    return { dealId: input["deal-id"], cashQuoteV1Id: v1.payload.quote.id, acceptedQuoteId: quoteId, financeQuoteId: financeId, leaseQuoteId: lease.payload.quote.id, approvalId, requiredDocumentId, waivableDocumentId, deliveryId, readinessBefore, readinessAfter, statuses: { v1: v1.status, v1Retry: v1Retry.status, v2: v2.status, finance: finance.status, terms: terms.status, termsRetry: termsRetry.status, leaseIncomplete: leaseIncomplete.status, approval: approval.status, approvalRetry: approvalRetry.status, selfApproval: selfApproval.status, managerDecision: decision.status, managerDecisionRetry: decisionRetry.status, proposal: proposalResponse.status, accepted: accepted.status, alternateAcceptance: alternateAcceptance.status, contracted: contracted.status, contractedRetry: contractedRetry.status, unauthorizedDocument: unauthorizedDocument.status, directUrl: directUrl.status, crossDealDocument: crossDealDocument.status, unauthorizedWaiver: unauthorizedWaiver.status, crossTenantDocument: crossTenantDocument.status, delivery: delivery.status, deliveryRetry: deliveryRetry.status, deliveryCompleted: deliveryCompleted.status, deliveryCompletedRetry: deliveryCompletedRetry.status, delivered: deliveredDeal.status, deliveredRetry: deliveredDealRetry.status }, evidence: row };
   } catch (error) { await evidenceDb.query("ROLLBACK").catch(() => undefined); throw error; } finally { evidenceDb.release(); }
+}
+
+async function readReadiness(pool, organizationId, dealId, userId) {
+  const db = await pool.connect();
+  try {
+    await db.query("BEGIN");
+    await db.query("SELECT set_config('app.organization_id',$1,true),set_config('app.user_id',$2,true)", [organizationId, userId]);
+    const result = await db.query(
+      `SELECT d.status::text deal_status,d.accepted_quote_id,d.accepted_quote_version,
+        EXISTS(SELECT 1 FROM deal_quotes q WHERE q.organization_id=d.organization_id AND q.deal_id=d.id AND q.id=d.accepted_quote_id AND q.version=d.accepted_quote_version AND q.status='accepted') quote_valid,
+        (d.inventory_unit_id IS NULL OR EXISTS(SELECT 1 FROM inventory_units i WHERE i.organization_id=d.organization_id AND i.location_id=d.location_id AND i.id=d.inventory_unit_id AND i.vehicle_id=d.primary_vehicle_id AND i.status='hold')) inventory_valid,
+        EXISTS(SELECT 1 FROM deal_document_requirements r WHERE r.organization_id=d.organization_id AND r.deal_id=d.id AND r.required) has_required_documents,
+        NOT EXISTS(SELECT 1 FROM deal_document_requirements r WHERE r.organization_id=d.organization_id AND r.deal_id=d.id AND r.required AND r.status NOT IN ('complete','waived')) documents_complete
+       FROM deals d WHERE d.organization_id=$1 AND d.id=$2`,
+      [organizationId, dealId],
+    );
+    await db.query("COMMIT");
+    const row = result.rows[0];
+    if (!row) throw new Error("Delivery-readiness Deal is unavailable.");
+    const blockers = [];
+    if (row.deal_status !== "contracted") blockers.push("deal-not-contracted");
+    if (!row.accepted_quote_id || !row.accepted_quote_version) blockers.push("accepted-quote-missing");
+    else if (!row.quote_valid) blockers.push("accepted-quote-mismatch");
+    if (!row.inventory_valid) blockers.push("inventory-unavailable");
+    if (!row.has_required_documents || !row.documents_complete) blockers.push("documents-incomplete");
+    return { ready: blockers.length === 0, blockers };
+  } catch (error) {
+    await db.query("ROLLBACK").catch(() => undefined);
+    throw error;
+  } finally { db.release(); }
 }
 
 function requireStatus(result, allowed, label) { if (!allowed.includes(result.status)) throw new Error(`${label} returned HTTP ${result.status}.`); }
