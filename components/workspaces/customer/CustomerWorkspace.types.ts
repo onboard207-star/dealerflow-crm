@@ -21,6 +21,7 @@ export interface CustomerWorkspaceProps {
   vehicleControls?: ReactNode;
   dealControls?: ReactNode;
   deliveryControls?: ReactNode;
+  documentControls?: ReactNode;
   quoteControls?: ReactNode;
   appointmentControls?: ReactNode;
   communicationControls?: ReactNode;

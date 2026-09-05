@@ -19,9 +19,10 @@ describe("delivery readiness", () => {
     expect(evaluateDeliveryReadiness({ ...ready, acceptedQuoteVersion: 3 })).toMatchObject({ ready: false, blockers: ["accepted-quote-mismatch"] });
   });
 
-  it("reports incomplete required documents without treating waived records as complete", () => {
+  it("reports incomplete required documents and honors an explicit policy waiver", () => {
     expect(evaluateDeliveryReadiness({ ...ready, documentRequirements: [{ required: true, status: "pending" }] })).toMatchObject({ ready: false, blockers: ["documents-incomplete"] });
-    expect(evaluateDeliveryReadiness({ ...ready, documentRequirements: [{ required: true, status: "waived" }] }).ready).toBe(false);
+    expect(evaluateDeliveryReadiness({ ...ready, documentRequirements: [{ required: true, status: "waived" }] }).ready).toBe(true);
+    expect(evaluateDeliveryReadiness({ ...ready, documentRequirements: [] })).toMatchObject({ ready: false, blockers: ["documents-incomplete"] });
   });
 
   it("fails closed for an invalid physical inventory binding", () => {

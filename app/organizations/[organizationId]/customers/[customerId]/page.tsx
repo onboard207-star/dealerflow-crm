@@ -9,6 +9,7 @@ import { ShowroomVisitControls } from "@/components/customer/ShowroomVisitContro
 import { VehicleInterestControls } from "@/components/customer/VehicleInterestControls";
 import { DealCreationControls } from "@/components/customer/DealCreationControls";
 import { DeliveryHandoffControls } from "@/components/customer/DeliveryHandoffControls";
+import { DealDocumentControls } from "@/components/customer/DealDocumentControls";
 import { QuoteControls } from "@/components/customer/QuoteControls";
 import { AppointmentControls } from "@/components/customer/AppointmentControls";
 import { CommunicationControls } from "@/components/customer/CommunicationControls";
@@ -21,6 +22,8 @@ import { getAuth, PostgresMembershipReader, resolveAuthorizationActor } from "@/
 import { CustomerRecommendationReader } from "@/lib/server/ai";
 import { CustomerWorkspaceReader } from "@/lib/server/customers";
 import { getDatabasePool } from "@/lib/server/database";
+import { DealDocumentService } from "@/lib/application/deals";
+import { PostgresDealDocumentProvider } from "@/lib/server/deals";
 import { OrganizationDirectory } from "@/lib/server/organizations";
 import { InventoryDirectoryReader } from "@/lib/server/vehicles";
 import { CommunicationWorkspaceReader } from "@/lib/server/communications";
@@ -66,6 +69,7 @@ export default async function CustomerPage({ params }: PageProps) {
     organizationId,
     customerId,
   );
+  const documentRequirements=record.deal&&has("document.read")?await new DealDocumentService(new PostgresDealDocumentProvider(pool,{userId:session.user.id,organizationId})).list({actor,organizationId,dealId:record.deal.id}):[];
   const appointmentDate = record.nextAppointment ? new Date(record.nextAppointment.startsAt) : undefined;
   const identity = [
     ...(record.lead ? [{ id: "lead-source", label: "Lead Source", value: record.lead.source, kind: "confirmed" as const }] : []),
@@ -212,6 +216,7 @@ export default async function CustomerPage({ params }: PageProps) {
         {...(record.deal ? { deal: { id: record.deal.id, status: record.deal.status } } : {})}
         {...(record.delivery ? { delivery: record.delivery } : {})}
       />}
+      documentControls={record.deal&&has("document.read")?<DealDocumentControls organizationId={organizationId} dealId={record.deal.id} records={documentRequirements} canManage={has("document.manage")} canComplete={has("document.complete")} canWaive={has("document.waive")}/>:undefined}
       snapshotProps={{ state: "ready", snapshot: { id: record.customer.id, identity, vehicleInterest, buyingJourney, communication } }}
       sidebarItems={[{ id: "tasks", label: "Open Tasks", description: "Assigned follow-up requiring attention.", statusLabel: String(record.openTaskCount), disabled: !has("task.read") },
         { id: "deal", label: "Deal", description: record.deal ? record.deal.dealNumber : "No deal started", statusLabel: record.deal?.status ?? "Not started", disabled: !has("deal.read") },

@@ -75,6 +75,7 @@ export function CustomerWorkspace({
   vehicleControls,
   dealControls,
   deliveryControls,
+  documentControls,
   quoteControls,
   appointmentControls,
   communicationControls,
@@ -121,6 +122,8 @@ export function CustomerWorkspace({
       {quoteControls}
 
       {tradeControls}
+
+      {documentControls}
 
       {deliveryControls}
 

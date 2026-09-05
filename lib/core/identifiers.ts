@@ -11,6 +11,7 @@ export type EntityIdPrefix =
   | "dlv"
   | "dse"
   | "ddr"
+  | "dde"
   | "com"
   | "cns"
   | "led"

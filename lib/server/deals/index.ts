@@ -15,3 +15,4 @@ export * from "./postgres-quote-profitability-provider";
 export * from "./postgres-pack-policy-provider";
 export * from "./profitability-administration-reader";
 export * from "./postgres-handoff-provider";
+export * from "./postgres-deal-document-provider";

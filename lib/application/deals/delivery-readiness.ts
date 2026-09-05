@@ -6,7 +6,7 @@ export interface DeliveryReadinessInput {
   acceptedQuoteVersion?: number;
   resolvedQuote?: { id: string; version: number; status: "accepted" | "other" };
   inventory?: { required: boolean; valid: boolean };
-  documentRequirements: readonly { required: boolean; status: "pending" | "complete" | "waived" }[];
+  documentRequirements: readonly { required: boolean; status: "pending" | "generated" | "provided" | "complete" | "waived" | "unavailable" }[];
 }
 
 export interface DeliveryReadiness {
@@ -23,6 +23,6 @@ export function evaluateDeliveryReadiness(input: DeliveryReadinessInput): Delive
     blockers.push("accepted-quote-mismatch");
   }
   if (input.inventory?.required && !input.inventory.valid) blockers.push("inventory-unavailable");
-  if (input.documentRequirements.some((item) => item.required && item.status !== "complete")) blockers.push("documents-incomplete");
+  if (!input.documentRequirements.some((item) => item.required) || input.documentRequirements.some((item) => item.required && !["complete", "waived"].includes(item.status))) blockers.push("documents-incomplete");
   return { ready: blockers.length === 0, blockers };
 }

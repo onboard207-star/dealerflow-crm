@@ -290,4 +290,13 @@ describe("tenant database migrations", () => {
     expect(migration).toContain("prevent_deal_contract_quote_rewrite");
     expect(migration).toContain("canonical-quote");
   });
+
+  it("adds a governed tenant-safe Deal document workflow", () => {
+    const migration = readFileSync(join(migrationDirectory, "0052_deal_document_workflow.sql"), "utf8");
+    expect(migration).toContain("deal_document_status_events");
+    expect(migration).toContain('ALTER TABLE "deal_document_status_events" FORCE ROW LEVEL SECURITY');
+    expect(migration).toContain("deal_document_requirements_idempotency_unique");
+    expect(migration).toContain("document.waive");
+    expect(migration).toContain("external_reference !~*");
+  });
 });

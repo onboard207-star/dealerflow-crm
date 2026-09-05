@@ -10,3 +10,4 @@ export * from "./manage-quote-profitability";
 export * from "./manage-pack-policy";
 export * from "./manage-handoff";
 export * from "./delivery-readiness";
+export * from "./manage-deal-documents";

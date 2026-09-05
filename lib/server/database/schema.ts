@@ -945,22 +945,30 @@ export const dealDocumentRequirements = pgTable(
   {
     id: text("id").primaryKey(), organizationId: text("organization_id").notNull(), locationId: text("location_id").notNull(), dealId: text("deal_id").notNull(),
     quoteId: text("quote_id").notNull(), quoteVersion: integer("quote_version").notNull(), documentType: text("document_type").notNull(), documentVersion: integer("document_version").notNull(),
-    provenance: text("provenance").notNull(), status: text("status").default("pending").notNull(), required: boolean("required").default(true).notNull(),
+    provenance: text("provenance").notNull(), sourceType: text("source_type").default("external-reference").notNull(), status: text("status").default("pending").notNull(), required: boolean("required").default(true).notNull(), waiverAllowed: boolean("waiver_allowed").default(false).notNull(),
+    templateId: text("template_id"), templateVersion: integer("template_version"), externalReference: text("external_reference"), idempotencyKey: text("idempotency_key").notNull(),
     completedBy: text("completed_by").references(() => users.id, { onDelete: "set null" }), completedAt: timestamp("completed_at", { withTimezone: true }),
+    waivedBy: text("waived_by").references(() => users.id, { onDelete: "set null" }), waivedAt: timestamp("waived_at", { withTimezone: true }), waiverReason: text("waiver_reason"),
     createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }), createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(), updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     uniqueIndex("deal_document_requirements_org_id_unique").on(table.organizationId, table.id),
     uniqueIndex("deal_document_requirements_version_unique").on(table.organizationId, table.dealId, table.documentType, table.documentVersion),
+    uniqueIndex("deal_document_requirements_idempotency_unique").on(table.organizationId, table.idempotencyKey),
     index("deal_document_requirements_readiness_idx").on(table.organizationId, table.dealId, table.required, table.status),
     foreignKey({ columns: [table.organizationId, table.locationId, table.dealId], foreignColumns: [deals.organizationId, deals.locationId, deals.id], name: "deal_document_requirements_deal_fk" }),
     foreignKey({ columns: [table.organizationId, table.quoteId, table.quoteVersion], foreignColumns: [dealQuotes.organizationId, dealQuotes.id, dealQuotes.version], name: "deal_document_requirements_quote_fk" }),
     check("deal_document_requirements_id_format", sql`${table.id} ~ '^ddr_[a-z0-9_-]{6,64}$'`),
-    check("deal_document_requirements_status", sql`${table.status} in ('pending','complete','waived')`),
+    check("deal_document_requirements_status", sql`${table.status} in ('pending','generated','provided','complete','waived','unavailable')`),
     check("deal_document_requirements_versions", sql`${table.quoteVersion}>0 and ${table.documentVersion}>0`),
     check("deal_document_requirements_completion", sql`(${table.status}='complete')=(${table.completedAt} is not null)`),
+    check("deal_document_requirements_waiver", sql`(${table.status}='waived')=(${table.waivedAt} is not null) and (${table.status}<>'waived' or (${table.waiverAllowed} and ${table.waiverReason} is not null))`),
   ],
 );
+
+export const dealDocumentStatusEvents = pgTable("deal_document_status_events",{
+  id:text("id").primaryKey(),organizationId:text("organization_id").notNull(),requirementId:text("requirement_id").notNull(),fromStatus:text("from_status"),toStatus:text("to_status").notNull(),reason:text("reason"),occurredAt:timestamp("occurred_at",{withTimezone:true}).defaultNow().notNull(),idempotencyKey:text("idempotency_key").notNull(),createdBy:text("created_by").references(()=>users.id,{onDelete:"set null"}),
+},table=>[uniqueIndex("deal_document_status_events_org_id_unique").on(table.organizationId,table.id),uniqueIndex("deal_document_status_events_idempotency_unique").on(table.organizationId,table.idempotencyKey),foreignKey({columns:[table.organizationId,table.requirementId],foreignColumns:[dealDocumentRequirements.organizationId,dealDocumentRequirements.id],name:"deal_document_status_events_requirement_fk"}),check("deal_document_status_events_id_format",sql`${table.id} ~ '^dde_[a-z0-9_-]{6,64}$'`)]);
 
 export const tradeAppraisals = pgTable(
   "trade_appraisals",
