@@ -33,6 +33,9 @@ export function parseStagingSalespersonArguments(values, environment = process.e
   const roleProfile = roleProfiles[roleKey];
   if (!roleProfile) throw new Error("--role-key must be salesperson or general-manager.");
   if (options.confirm !== roleProfile.confirmation) throw new Error(`--confirm must equal ${roleProfile.confirmation}.`);
+  const returnSetupUrl = options["setup-link-confirm"] === "RETURN-ONE-TIME-SETUP-LINK";
+  if (options["setup-link-confirm"] && !returnSetupUrl) throw new Error("--setup-link-confirm must equal RETURN-ONE-TIME-SETUP-LINK.");
+  if (returnSetupUrl && roleKey !== "general-manager") throw new Error("One-time setup-link return is restricted to the governed staging Manager flow.");
   if (!/^org_[a-z0-9_-]{6,64}$/.test(options["organization-id"])) throw new Error("Organization ID is invalid.");
   if (!/^loc_[a-z0-9_-]{6,64}$/.test(options["location-id"])) throw new Error("Location ID is invalid.");
   if (!/^\S+\+[^@]+@\S+\.\S+$/.test(options.email)) throw new Error("Use a clearly synthetic plus-addressed email.");
@@ -54,6 +57,7 @@ export function parseStagingSalespersonArguments(values, environment = process.e
     organizationId: options["organization-id"],
     locationId: options["location-id"],
     roleKey,
+    returnSetupUrl,
   };
 }
 
@@ -102,7 +106,7 @@ export async function provisionStagingSalesperson(pool, input) {
       "SELECT id,status,expires_at FROM organization_invitations WHERE organization_id=$1 AND idempotency_key=$2 FOR UPDATE",
       [input.organizationId, idempotencyKey],
     );
-    if (existingInvitation.rows[0]) {
+    if (existingInvitation.rows[0] && !input.returnSetupUrl) {
       await client.query("COMMIT");
       return { status: "invitation-exists", organizationId: input.organizationId, locationId: input.locationId, roleKey, invitationId };
     }
@@ -110,6 +114,20 @@ export async function provisionStagingSalesperson(pool, input) {
     const token = `${input.organizationId}.${randomBytes(32).toString("base64url")}`;
     const tokenHash = createHash("sha256").update(token).digest("hex");
     const expiresAt = new Date(Date.now() + 7 * 86_400_000).toISOString();
+    const actionUrl = new URL("/accept-invitation", input.applicationUrl);
+    actionUrl.searchParams.set("token", token);
+    if (existingInvitation.rows[0]) {
+      const rotated = await client.query(
+        `UPDATE organization_invitations SET token_hash=$3,expires_at=$4,resend_count=resend_count+1,last_sent_at=now(),updated_at=now()
+         WHERE organization_id=$1 AND id=$2 AND status='pending' AND resend_count<10 RETURNING resend_count`,
+        [input.organizationId, invitationId, tokenHash, expiresAt],
+      );
+      if (!rotated.rows[0]) throw new Error("The existing staging Manager invitation is unavailable or has reached its resend limit.");
+      await queueInvitationEmail(client, { invitationId, input, roleProfile, actionUrl, suffix: `setup:${rotated.rows[0].resend_count}` });
+      await insertAudit(client, { input, invitationId, action: "staging.synthetic_manager.setup_link_rotated", roleKey });
+      await client.query("COMMIT");
+      return { status: "setup-link-rotated", organizationId: input.organizationId, locationId: input.locationId, roleKey, invitationId, setupUrl: actionUrl.toString() };
+    }
     await client.query(
       "INSERT INTO organization_invitations(id,organization_id,email,token_hash,idempotency_key,all_locations,expires_at,invited_by) VALUES($1,$2,$3,$4,$5,false,$6,NULL)",
       [invitationId, input.organizationId, input.email, tokenHash, idempotencyKey, expiresAt],
@@ -122,30 +140,36 @@ export async function provisionStagingSalesperson(pool, input) {
       "INSERT INTO organization_invitation_locations(invitation_id,organization_id,location_id) VALUES($1,$2,$3)",
       [invitationId, input.organizationId, input.locationId],
     );
-    const actionUrl = new URL("/accept-invitation", input.applicationUrl);
-    actionUrl.searchParams.set("token", token);
-    await client.query(
-      `INSERT INTO transactional_email_messages(id,organization_id,invitation_id,kind,recipient_email,subject,text_body,html_body,idempotency_key)
-       VALUES($1,$2,$3,'organization-invitation',$4,'Join the DealerFlow synthetic staging dealership',$5,$6,$7)`,
-      [
-        deterministicId("tem", invitationId), input.organizationId, invitationId, input.email,
-        `A governed synthetic staging ${roleProfile.label} invitation is ready.\n\nAccept invitation: ${actionUrl}\n\nThis invitation expires in 7 days.`,
-        `<p>A governed synthetic staging ${roleProfile.label} invitation is ready.</p><p><a href="${escapeHtml(actionUrl.toString())}">Accept invitation</a></p><p>This invitation expires in 7 days.</p>`,
-        `organization-invitation:${invitationId}`,
-      ],
-    );
-    await client.query(
-      "INSERT INTO audit_logs(id,organization_id,actor_id,action,entity_type,entity_id,source,correlation_id,new_values) VALUES($1,$2,NULL,$3,'organization_invitation',$4,'operator',$5,$6::jsonb)",
-      [`aud_${randomUUID().replaceAll("-", "")}`, input.organizationId, roleProfile.auditAction, invitationId, `staging-provision:${randomUUID()}`, JSON.stringify({ locationId: input.locationId, roleKey, synthetic: true })],
-    );
+    await queueInvitationEmail(client, { invitationId, input, roleProfile, actionUrl });
+    await insertAudit(client, { input, invitationId, action: roleProfile.auditAction, roleKey });
     await client.query("COMMIT");
-    return { status: "invitation-created", organizationId: input.organizationId, locationId: input.locationId, roleKey, invitationId };
+    return { status: "invitation-created", organizationId: input.organizationId, locationId: input.locationId, roleKey, invitationId, ...(input.returnSetupUrl ? { setupUrl: actionUrl.toString() } : {}) };
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;
   } finally {
     client.release();
   }
+}
+
+async function queueInvitationEmail(client, { invitationId, input, roleProfile, actionUrl, suffix }) {
+  await client.query(
+    `INSERT INTO transactional_email_messages(id,organization_id,invitation_id,kind,recipient_email,subject,text_body,html_body,idempotency_key)
+     VALUES($1,$2,$3,'organization-invitation',$4,'Join the DealerFlow synthetic staging dealership',$5,$6,$7)`,
+    [
+      deterministicId("tem", `${invitationId}:${suffix ?? "initial"}`), input.organizationId, invitationId, input.email,
+      `A governed synthetic staging ${roleProfile.label} invitation is ready.\n\nAccept invitation: ${actionUrl}\n\nThis invitation expires in 7 days.`,
+      `<p>A governed synthetic staging ${roleProfile.label} invitation is ready.</p><p><a href="${escapeHtml(actionUrl.toString())}">Accept invitation</a></p><p>This invitation expires in 7 days.</p>`,
+      `organization-invitation:${invitationId}${suffix ? `:${suffix}` : ""}`,
+    ],
+  );
+}
+
+async function insertAudit(client, { input, invitationId, action, roleKey }) {
+  await client.query(
+    "INSERT INTO audit_logs(id,organization_id,actor_id,action,entity_type,entity_id,source,correlation_id,new_values) VALUES($1,$2,NULL,$3,'organization_invitation',$4,'operator',$5,$6::jsonb)",
+    [`aud_${randomUUID().replaceAll("-", "")}`, input.organizationId, action, invitationId, `staging-provision:${randomUUID()}`, JSON.stringify({ locationId: input.locationId, roleKey, synthetic: true })],
+  );
 }
 
 function deterministicId(prefix, value) {
