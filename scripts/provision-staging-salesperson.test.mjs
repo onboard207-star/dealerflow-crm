@@ -66,13 +66,80 @@ describe("staging Salesperson provisioner", () => {
       locationId: "loc_demo_main_rooftop_v1",
     });
     expect(result.status).toBe("invitation-created");
-    const sql = query.mock.calls.map(([statement]) => statement).join("\n");
+    const calls = query.mock.calls;
+    const sql = calls.map(([statement]) => statement).join("\n");
     expect(sql).toContain("organization.data_class='demo'");
-    expect(sql).toContain("role.key='salesperson'");
+    expect(calls.find(([statement]) => String(statement).includes("JOIN roles"))?.[1]).toEqual(["org_demo_first_pilot_v1", "loc_demo_main_rooftop_v1", "salesperson"]);
     expect(sql).toContain("organization_invitation_locations");
     expect(sql).toContain("transactional_email_messages");
-    expect(sql).toContain("staging.synthetic_salesperson.provisioning_requested");
+    expect(calls.some(([, values]) => values?.includes("staging.synthetic_salesperson.provisioning_requested"))).toBe(true);
     expect(sql).not.toContain("INSERT INTO auth_accounts");
     expect(client.release).toHaveBeenCalled();
+  });
+});
+
+describe("staging Manager provisioner", () => {
+  const managerArgs = [
+    "--role-key", "general-manager",
+    "--confirm", "PROVISION-SYNTHETIC-STAGING-MANAGER",
+    "--email", "synthetic+manager@example.com",
+    "--organization-id", "org_demo_first_pilot_v1",
+    "--location-id", "loc_demo_main_rooftop_v1",
+    "--application-url", "https://dealerflow-isolated-staging.onrender.com",
+    "--expected-database-host", "isolated.example.internal",
+  ];
+
+  it("requires the Manager-specific confirmation and rejects unsupported roles", () => {
+    const environment = { APP_ENV: "staging", DATABASE_URL: "postgresql://user:secret@isolated.example.internal/database" };
+    expect(() => parseStagingSalespersonArguments(managerArgs.with(3, "PROVISION-SYNTHETIC-STAGING-SALESPERSON"), environment)).toThrow("PROVISION-SYNTHETIC-STAGING-MANAGER");
+    expect(() => parseStagingSalespersonArguments(managerArgs.with(1, "platform-administrator"), environment)).toThrow("salesperson or general-manager");
+  });
+
+  it("creates one canonical General Manager invitation without creating auth records", async () => {
+    const query = vi.fn()
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ organization_id: "org", location_id: "loc", role_id: "rol_manager" }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValue({ rows: [] });
+    const client = { query, release: vi.fn() };
+    const result = await provisionStagingSalesperson({ connect: vi.fn().mockResolvedValue(client) }, {
+      applicationUrl: "https://staging.example.com",
+      email: "synthetic+manager@example.com",
+      organizationId: "org_demo_first_pilot_v1",
+      locationId: "loc_demo_main_rooftop_v1",
+      roleKey: "general-manager",
+    });
+    expect(result).toMatchObject({ status: "invitation-created", roleKey: "general-manager" });
+    const calls = query.mock.calls;
+    expect(calls.find(([statement]) => String(statement).includes("JOIN roles"))?.[1]).toEqual(["org_demo_first_pilot_v1", "loc_demo_main_rooftop_v1", "general-manager"]);
+    const sql = calls.map(([statement]) => statement).join("\n");
+    expect(sql).toContain("organization.data_class='demo'");
+    expect(sql).toContain("organization_invitation_roles");
+    expect(sql).toContain("organization_invitation_locations");
+    expect(calls.some(([, values]) => values?.includes("staging.synthetic_manager.provisioning_requested"))).toBe(true);
+    expect(sql).not.toContain("INSERT INTO auth_accounts");
+    expect(sql).not.toContain("INSERT INTO auth_sessions");
+  });
+
+  it("reuses an existing Manager invitation instead of creating a duplicate", async () => {
+    const query = vi.fn()
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ organization_id: "org", location_id: "loc", role_id: "rol_manager" }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ id: "oin_existing", status: "pending", expires_at: new Date() }] })
+      .mockResolvedValue({ rows: [] });
+    const client = { query, release: vi.fn() };
+    const result = await provisionStagingSalesperson({ connect: vi.fn().mockResolvedValue(client) }, {
+      applicationUrl: "https://staging.example.com",
+      email: "synthetic+manager@example.com",
+      organizationId: "org_demo_first_pilot_v1",
+      locationId: "loc_demo_main_rooftop_v1",
+      roleKey: "general-manager",
+    });
+    expect(result).toMatchObject({ status: "invitation-exists", roleKey: "general-manager" });
+    expect(query.mock.calls.map(([statement]) => statement).join("\n")).not.toContain("INSERT INTO organization_invitations");
   });
 });

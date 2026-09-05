@@ -3,11 +3,22 @@ import { pathToFileURL } from "node:url";
 import pg from "pg";
 
 const { Pool } = pg;
-const confirmation = "PROVISION-SYNTHETIC-STAGING-SALESPERSON";
+const roleProfiles = Object.freeze({
+  salesperson: {
+    confirmation: "PROVISION-SYNTHETIC-STAGING-SALESPERSON",
+    auditAction: "staging.synthetic_salesperson.provisioning_requested",
+    label: "Salesperson",
+  },
+  "general-manager": {
+    confirmation: "PROVISION-SYNTHETIC-STAGING-MANAGER",
+    auditAction: "staging.synthetic_manager.provisioning_requested",
+    label: "General Manager",
+  },
+});
 
 export function parseStagingSalespersonArguments(values, environment = process.env) {
   if (environment.APP_ENV !== "staging") {
-    throw new Error("Staging Salesperson provisioning is disabled outside APP_ENV=staging.");
+    throw new Error("Staging identity provisioning is disabled outside APP_ENV=staging.");
   }
 
   const options = Object.fromEntries(values.map((value, index) => {
@@ -18,7 +29,10 @@ export function parseStagingSalespersonArguments(values, environment = process.e
   for (const name of ["confirm", "email", "organization-id", "location-id", "application-url", "expected-database-host"]) {
     if (!options[name]) throw new Error(`--${name} is required.`);
   }
-  if (options.confirm !== confirmation) throw new Error(`--confirm must equal ${confirmation}.`);
+  const roleKey = options["role-key"] ?? "salesperson";
+  const roleProfile = roleProfiles[roleKey];
+  if (!roleProfile) throw new Error("--role-key must be salesperson or general-manager.");
+  if (options.confirm !== roleProfile.confirmation) throw new Error(`--confirm must equal ${roleProfile.confirmation}.`);
   if (!/^org_[a-z0-9_-]{6,64}$/.test(options["organization-id"])) throw new Error("Organization ID is invalid.");
   if (!/^loc_[a-z0-9_-]{6,64}$/.test(options["location-id"])) throw new Error("Location ID is invalid.");
   if (!/^\S+\+[^@]+@\S+\.\S+$/.test(options.email)) throw new Error("Use a clearly synthetic plus-addressed email.");
@@ -39,13 +53,18 @@ export function parseStagingSalespersonArguments(values, environment = process.e
     email: options.email.toLowerCase(),
     organizationId: options["organization-id"],
     locationId: options["location-id"],
+    roleKey,
   };
 }
 
 export async function provisionStagingSalesperson(pool, input) {
   const client = await pool.connect();
-  const invitationId = deterministicId("oin", `${input.organizationId}:staging-salesperson:${input.email}`);
-  const idempotencyKey = `operator-provision:${input.organizationId}:staging-salesperson:${input.email}`;
+  const roleKey = input.roleKey ?? "salesperson";
+  const roleProfile = roleProfiles[roleKey];
+  if (!roleProfile) throw new Error("Unsupported staging identity role.");
+  const identityKey = roleKey === "salesperson" ? "staging-salesperson" : "staging-general-manager";
+  const invitationId = deterministicId("oin", `${input.organizationId}:${identityKey}:${input.email}`);
+  const idempotencyKey = `operator-provision:${input.organizationId}:${identityKey}:${input.email}`;
   try {
     await client.query("BEGIN");
     await client.query(
@@ -56,11 +75,11 @@ export async function provisionStagingSalesperson(pool, input) {
       `SELECT organization.id organization_id,location.id location_id,role.id role_id
        FROM organizations organization
        JOIN locations location ON location.organization_id=organization.id AND location.id=$2 AND location.active=true
-       JOIN roles role ON role.organization_id=organization.id AND role.key='salesperson' AND role.system=true
+       JOIN roles role ON role.organization_id=organization.id AND role.key=$3 AND role.system=true
        WHERE organization.id=$1 AND organization.active=true AND organization.data_class='demo'`,
-      [input.organizationId, input.locationId],
+      [input.organizationId, input.locationId, roleKey],
     );
-    if (!target.rows[0]) throw new Error("Target must be an active DEMO organization with the requested active location and system Salesperson role.");
+    if (!target.rows[0]) throw new Error(`Target must be an active DEMO organization with the requested active location and system ${roleProfile.label} role.`);
 
     const existingUser = await client.query("SELECT id,email_verified,active FROM users WHERE lower(email)=lower($1) LIMIT 1", [input.email]);
     if (existingUser.rows[0]) {
@@ -68,15 +87,15 @@ export async function provisionStagingSalesperson(pool, input) {
       const account = await client.query("SELECT 1 FROM auth_accounts WHERE user_id=$1 AND provider_id='credential' LIMIT 1", [user.id]);
       const membership = await client.query(
         `SELECT membership.id,
-          EXISTS(SELECT 1 FROM membership_roles mr WHERE mr.organization_id=membership.organization_id AND mr.membership_id=membership.id AND mr.role_id=$3) salesperson,
+          EXISTS(SELECT 1 FROM membership_roles mr WHERE mr.organization_id=membership.organization_id AND mr.membership_id=membership.id AND mr.role_id=$3) expected_role,
           EXISTS(SELECT 1 FROM membership_locations ml WHERE ml.organization_id=membership.organization_id AND ml.membership_id=membership.id AND ml.location_id=$4) location_access
          FROM organization_memberships membership
          WHERE membership.organization_id=$1 AND membership.user_id=$2 AND membership.status='active'`,
         [input.organizationId, user.id, target.rows[0].role_id, input.locationId],
       );
-      const ready = Boolean(user.active && user.email_verified && account.rows[0] && membership.rows[0]?.salesperson && membership.rows[0]?.location_access);
+      const ready = Boolean(user.active && user.email_verified && account.rows[0] && membership.rows[0]?.expected_role && membership.rows[0]?.location_access);
       await client.query("COMMIT");
-      return { status: ready ? "ready" : "existing-user-incomplete", userId: user.id, organizationId: input.organizationId, locationId: input.locationId, invitationId };
+      return { status: ready ? "ready" : "existing-user-incomplete", userId: user.id, organizationId: input.organizationId, locationId: input.locationId, roleKey, invitationId };
     }
 
     const existingInvitation = await client.query(
@@ -85,7 +104,7 @@ export async function provisionStagingSalesperson(pool, input) {
     );
     if (existingInvitation.rows[0]) {
       await client.query("COMMIT");
-      return { status: "invitation-exists", organizationId: input.organizationId, locationId: input.locationId, invitationId };
+      return { status: "invitation-exists", organizationId: input.organizationId, locationId: input.locationId, roleKey, invitationId };
     }
 
     const token = `${input.organizationId}.${randomBytes(32).toString("base64url")}`;
@@ -110,17 +129,17 @@ export async function provisionStagingSalesperson(pool, input) {
        VALUES($1,$2,$3,'organization-invitation',$4,'Join the DealerFlow synthetic staging dealership',$5,$6,$7)`,
       [
         deterministicId("tem", invitationId), input.organizationId, invitationId, input.email,
-        `A governed synthetic staging Salesperson invitation is ready.\n\nAccept invitation: ${actionUrl}\n\nThis invitation expires in 7 days.`,
-        `<p>A governed synthetic staging Salesperson invitation is ready.</p><p><a href="${escapeHtml(actionUrl.toString())}">Accept invitation</a></p><p>This invitation expires in 7 days.</p>`,
+        `A governed synthetic staging ${roleProfile.label} invitation is ready.\n\nAccept invitation: ${actionUrl}\n\nThis invitation expires in 7 days.`,
+        `<p>A governed synthetic staging ${roleProfile.label} invitation is ready.</p><p><a href="${escapeHtml(actionUrl.toString())}">Accept invitation</a></p><p>This invitation expires in 7 days.</p>`,
         `organization-invitation:${invitationId}`,
       ],
     );
     await client.query(
-      "INSERT INTO audit_logs(id,organization_id,actor_id,action,entity_type,entity_id,source,correlation_id,new_values) VALUES($1,$2,NULL,'staging.synthetic_salesperson.provisioning_requested','organization_invitation',$3,'operator',$4,$5::jsonb)",
-      [`aud_${randomUUID().replaceAll("-", "")}`, input.organizationId, invitationId, `staging-provision:${randomUUID()}`, JSON.stringify({ locationId: input.locationId, roleKey: "salesperson", synthetic: true })],
+      "INSERT INTO audit_logs(id,organization_id,actor_id,action,entity_type,entity_id,source,correlation_id,new_values) VALUES($1,$2,NULL,$3,'organization_invitation',$4,'operator',$5,$6::jsonb)",
+      [`aud_${randomUUID().replaceAll("-", "")}`, input.organizationId, roleProfile.auditAction, invitationId, `staging-provision:${randomUUID()}`, JSON.stringify({ locationId: input.locationId, roleKey, synthetic: true })],
     );
     await client.query("COMMIT");
-    return { status: "invitation-created", organizationId: input.organizationId, locationId: input.locationId, invitationId };
+    return { status: "invitation-created", organizationId: input.organizationId, locationId: input.locationId, roleKey, invitationId };
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;
@@ -139,7 +158,7 @@ function escapeHtml(value) {
 
 async function main() {
   const input = parseStagingSalespersonArguments(process.argv.slice(2));
-  const pool = new Pool({ connectionString: input.databaseUrl, ssl: input.databaseSslMode === "disable" ? false : { rejectUnauthorized: true }, max: 1, application_name: "dealerflow-staging-salesperson-provisioner" });
+  const pool = new Pool({ connectionString: input.databaseUrl, ssl: input.databaseSslMode === "disable" ? false : { rejectUnauthorized: true }, max: 1, application_name: "dealerflow-staging-identity-provisioner" });
   try {
     process.stdout.write(`${JSON.stringify(await provisionStagingSalesperson(pool, input))}\n`);
   } finally {
@@ -149,7 +168,7 @@ async function main() {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((error) => {
-    process.stderr.write(`Staging Salesperson provisioning failed: ${error instanceof Error ? error.message : "Unknown error"}\n`);
+    process.stderr.write(`Staging identity provisioning failed: ${error instanceof Error ? error.message : "Unknown error"}\n`);
     process.exitCode = 1;
   });
 }
