@@ -299,4 +299,14 @@ describe("tenant database migrations", () => {
     expect(migration).toContain("document.waive");
     expect(migration).toContain("external_reference !~*");
   });
+
+  it("allows only the existing governed operator to rotate operator-created invitations", () => {
+    const migration = readFileSync(join(migrationDirectory, "0053_operator_invitation_rotation.sql"), "utf8");
+    expect(migration).toContain('CREATE POLICY "organization_invitations_operator_update"');
+    expect(migration).toContain("FOR UPDATE");
+    expect(migration).toContain("app.operator_provision");
+    expect(migration).toContain('"invited_by" IS NULL');
+    expect(migration).toContain("operator-provision:%");
+    expect(migration).not.toMatch(/TO (PUBLIC|CURRENT_USER)/);
+  });
 });

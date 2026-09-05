@@ -372,6 +372,13 @@
       "when": 1788559200000,
       "tag": "0052_deal_document_workflow",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1788642000000,
+      "tag": "0053_operator_invitation_rotation",
+      "breakpoints": true
     }
   ]
 }

@@ -103,8 +103,8 @@ export async function provisionStagingSalesperson(pool, input) {
     }
 
     const existingInvitation = await client.query(
-      "SELECT id,status,expires_at FROM organization_invitations WHERE organization_id=$1 AND idempotency_key=$2 FOR UPDATE",
-      [input.organizationId, idempotencyKey],
+      "SELECT id,status,expires_at FROM organization_invitations WHERE organization_id=$1 AND id=$2 FOR UPDATE",
+      [input.organizationId, invitationId],
     );
     if (existingInvitation.rows[0] && !input.returnSetupUrl) {
       await client.query("COMMIT");
