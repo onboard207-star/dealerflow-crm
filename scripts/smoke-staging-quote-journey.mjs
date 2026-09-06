@@ -20,6 +20,10 @@ export function parseArguments(values, environment = process.env) {
   return { ...options, applicationUrl: applicationUrl.origin, databaseUrl: databaseUrl.toString() };
 }
 
+export function normalizeReactMarkup(markup) {
+  return markup.replace(/<!--.*?-->/gs, "");
+}
+
 export async function run(pool, input, environment = process.env) {
   if (!environment.BETTER_AUTH_SECRET) throw new Error("BETTER_AUTH_SECRET is required.");
   const db = await pool.connect();
@@ -128,7 +132,8 @@ export async function run(pool, input, environment = process.env) {
 
   const proposalResponse = await fetch(`${input.applicationUrl}/organizations/${input["organization-id"]}/quotes/${quoteId}/print`, { headers: { cookie: salespersonCookie } });
   const proposal = await proposalResponse.text();
-  if (proposalResponse.status !== 200 || !proposal.includes("Purchase proposal") || !proposal.includes(`Version ${v2.payload.quote.version}`)) throw new Error("Exact-version proposal rendering failed.");
+  const normalizedProposal = normalizeReactMarkup(proposal);
+  if (proposalResponse.status !== 200 || !normalizedProposal.includes("Purchase proposal") || !normalizedProposal.includes(`Version ${v2.payload.quote.version}`)) throw new Error("Exact-version proposal rendering failed.");
   for (const forbidden of ["Vehicle cost", "Front gross", "Backend gross", "Total gross", "Cost source", "Manager rationale"]) {
     if (proposal.includes(forbidden)) throw new Error(`Customer proposal exposed internal field: ${forbidden}.`);
   }
