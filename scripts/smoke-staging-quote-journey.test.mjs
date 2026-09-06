@@ -23,5 +23,8 @@ describe("staging Quote journey acceptance", () => {
     expect(source).toContain("cross-tenant document denial");
     expect(source).toContain("Delivery scheduling idempotency evidence is incomplete");
     expect(source).toContain("row.bound_quote_id !== quoteId");
+    expect(source).toContain("row.cash_down_cents !== 500_000");
+    expect(source).toContain("row.apr_basis_points !== 599");
+    expect(source).toContain("row.term_months !== 60");
   });
 });

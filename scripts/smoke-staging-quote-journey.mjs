@@ -109,7 +109,7 @@ export async function run(pool, input, environment = process.env) {
   const financeId = finance.payload.quote?.id;
   const terms = await post(`${base}/quotes/${financeId}/terms`, "unused-by-immutable-terms", { cashDownCents: 500_000, finance: { aprBasisPoints: 599, termMonths: 60, sourceType: "manual-entry", sourceLabel: "Synthetic acceptance input — not a lender offer" } });
   const termsRetry = await post(`${base}/quotes/${financeId}/terms`, "unused-by-immutable-terms", { cashDownCents: 500_000, finance: { aprBasisPoints: 599, termMonths: 60, sourceType: "manual-entry", sourceLabel: "Synthetic acceptance input — not a lender offer" } });
-  requireStatus(terms, [201], "finance terms"); requireStatus(termsRetry, [409], "immutable finance terms retry");
+  requireStatus(terms, [201, 409], "finance terms"); requireStatus(termsRetry, [409], "immutable finance terms retry");
 
   const lease = await post(`${base}/deals/${input["deal-id"]}/quotes`, "acceptance-quote:lease:v1", { purchaseType: "lease", lines: lines(4_150_000) });
   requireStatus(lease, [200, 201], "lease Quote");
@@ -218,6 +218,9 @@ export async function run(pool, input, environment = process.env) {
         (SELECT count(*)::int FROM deal_quote_approvals WHERE organization_id=$1 AND request_idempotency_key='acceptance-quote:approval:v2') approval_count,
         (SELECT count(*)::int FROM quote_commercial_terms WHERE organization_id=$1 AND quote_id=$3) terms_count,
         (SELECT count(*)::int FROM quote_finance_terms WHERE organization_id=$1 AND quote_id=$3) finance_count,
+        (SELECT cash_down_cents FROM quote_commercial_terms WHERE organization_id=$1 AND quote_id=$3) cash_down_cents,
+        (SELECT apr_basis_points FROM quote_finance_terms WHERE organization_id=$1 AND quote_id=$3) apr_basis_points,
+        (SELECT term_months FROM quote_finance_terms WHERE organization_id=$1 AND quote_id=$3) term_months,
         (SELECT estimated_payment_cents FROM quote_finance_terms WHERE organization_id=$1 AND quote_id=$3) estimated_payment_cents,
         (SELECT status::text FROM deal_quotes WHERE organization_id=$1 AND id=$4) accepted_status,
         (SELECT status::text FROM deal_quote_approvals WHERE organization_id=$1 AND quote_id=$4) approval_status,
@@ -237,7 +240,7 @@ export async function run(pool, input, environment = process.env) {
     );
     await evidenceDb.query("COMMIT");
     const row = evidence.rows[0];
-    if (!row || row.v1_count !== 1 || row.approval_count !== 1 || row.terms_count !== 1 || row.finance_count !== 1 || row.accepted_status !== "accepted" || row.approval_status !== "approved" || row.v1_price !== 4_200_000 || row.v2_price !== 4_150_000 || row.deal_status !== "delivered" || row.bound_quote_id !== quoteId || row.bound_quote_version !== v2.payload.quote.version || row.contract_event_count !== 1 || row.required_document_count !== 1 || row.required_document_event_count !== 3 || row.waiver_event_count !== 1 || row.delivery_count !== 1 || row.delivery_completion_count !== 1) throw new Error("Canonical golden-journey evidence is incomplete.");
+    if (!row || row.v1_count !== 1 || row.approval_count !== 1 || row.terms_count !== 1 || row.finance_count !== 1 || row.cash_down_cents !== 500_000 || row.apr_basis_points !== 599 || row.term_months !== 60 || row.estimated_payment_cents !== 70_548 || row.accepted_status !== "accepted" || row.approval_status !== "approved" || row.v1_price !== 4_200_000 || row.v2_price !== 4_150_000 || row.deal_status !== "delivered" || row.bound_quote_id !== quoteId || row.bound_quote_version !== v2.payload.quote.version || row.contract_event_count !== 1 || row.required_document_count !== 1 || row.required_document_event_count !== 3 || row.waiver_event_count !== 1 || row.delivery_count !== 1 || row.delivery_completion_count !== 1) throw new Error("Canonical golden-journey evidence is incomplete.");
     return { dealId: input["deal-id"], cashQuoteV1Id: v1.payload.quote.id, acceptedQuoteId: quoteId, financeQuoteId: financeId, leaseQuoteId: lease.payload.quote.id, approvalId, requiredDocumentId, waivableDocumentId, deliveryId, readinessBefore, readinessAfter, statuses: { v1: v1.status, v1Retry: v1Retry.status, v2: v2.status, finance: finance.status, terms: terms.status, termsRetry: termsRetry.status, leaseIncomplete: leaseIncomplete.status, approval: approval.status, approvalRetry: approvalRetry.status, selfApproval: selfApproval.status, managerDecision: decision.status, managerDecisionRetry: decisionRetry.status, proposal: proposalResponse.status, accepted: accepted.status, alternateAcceptance: alternateAcceptance.status, contracted: contracted.status, contractedRetry: contractedRetry.status, unauthorizedDocument: unauthorizedDocument.status, directUrl: directUrl.status, crossDealDocument: crossDealDocument.status, unauthorizedWaiver: unauthorizedWaiver.status, crossTenantDocument: crossTenantDocument.status, delivery: delivery.status, deliveryRetry: deliveryRetry.status, deliveryCompleted: deliveryCompleted.status, deliveryCompletedRetry: deliveryCompletedRetry.status, delivered: deliveredDeal.status, deliveredRetry: deliveredDealRetry.status }, evidence: row };
   } catch (error) { await evidenceDb.query("ROLLBACK").catch(() => undefined); throw error; } finally { evidenceDb.release(); }
 }
