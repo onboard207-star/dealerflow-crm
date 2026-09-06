@@ -126,15 +126,13 @@ describe("staging Manager provisioner", () => {
   });
 
   it("reconciles an authenticated existing Manager to the exact canonical role and location", async () => {
-    const query = vi.fn()
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [{ organization_id: "org", location_id: "loc", role_id: "rol_manager" }] })
-      .mockResolvedValueOnce({ rows: [{ id: "usr_manager", email_verified: true, active: true }] })
-      .mockResolvedValueOnce({ rows: [{ one: 1 }] })
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [{ id: "mem_manager" }] })
-      .mockResolvedValue({ rows: [] });
+    const query = vi.fn(async (statement) => {
+      if (String(statement).includes("JOIN roles")) return { rows: [{ organization_id: "org", location_id: "loc", role_id: "rol_manager", role_capabilities: ["deal.approve"] }] };
+      if (String(statement).startsWith("SELECT id,email_verified")) return { rows: [{ id: "usr_manager", email_verified: true, active: true }] };
+      if (String(statement).startsWith("SELECT 1 FROM auth_accounts")) return { rows: [{ one: 1 }] };
+      if (String(statement).startsWith("INSERT INTO organization_memberships")) return { rows: [{ id: "mem_manager" }] };
+      return { rows: [] };
+    });
     const client = { query, release: vi.fn() };
     const result = await provisionStagingSalesperson({ connect: vi.fn().mockResolvedValue(client) }, {
       applicationUrl: "https://staging.example.com",
@@ -150,7 +148,10 @@ describe("staging Manager provisioner", () => {
     expect(sql).toContain("INSERT INTO membership_roles");
     expect(sql).toContain("DELETE FROM membership_locations");
     expect(sql).toContain("INSERT INTO membership_locations");
+    expect(sql).toContain("DELETE FROM role_capabilities");
+    expect(sql).toContain("INSERT INTO role_capabilities");
     expect(query.mock.calls.some(([, values]) => values?.includes("staging.synthetic_general_manager.identity_reconciled"))).toBe(true);
+    expect(query.mock.calls.some(([, values]) => values?.includes("staging.synthetic_general_manager.role_capabilities_reconciled"))).toBe(true);
     expect(sql).not.toContain("INSERT INTO auth_accounts");
     expect(sql).not.toContain("INSERT INTO auth_sessions");
   });

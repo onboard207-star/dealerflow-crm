@@ -1,6 +1,7 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { pathToFileURL } from "node:url";
 import pg from "pg";
+import systemRoles from "../config/system-roles.json" with { type: "json" };
 
 const { Pool } = pg;
 const roleProfiles = Object.freeze({
@@ -76,7 +77,8 @@ export async function provisionStagingSalesperson(pool, input) {
       [input.organizationId],
     );
     const target = await client.query(
-      `SELECT organization.id organization_id,location.id location_id,role.id role_id
+      `SELECT organization.id organization_id,location.id location_id,role.id role_id,
+         ARRAY(SELECT capability FROM role_capabilities WHERE organization_id=role.organization_id AND role_id=role.id ORDER BY capability) role_capabilities
        FROM organizations organization
        JOIN locations location ON location.organization_id=organization.id AND location.id=$2 AND location.active=true
        JOIN roles role ON role.organization_id=organization.id AND role.key=$3 AND role.system=true
@@ -84,6 +86,14 @@ export async function provisionStagingSalesperson(pool, input) {
       [input.organizationId, input.locationId, roleKey],
     );
     if (!target.rows[0]) throw new Error(`Target must be an active DEMO organization with the requested active location and system ${roleProfile.label} role.`);
+    const canonicalRole = systemRoles.find((role) => role.key === roleKey);
+    if (!canonicalRole) throw new Error(`The canonical ${roleProfile.label} role definition is unavailable.`);
+    const currentCapabilities = target.rows[0].role_capabilities;
+    if (Array.isArray(currentCapabilities) && !sameValues(currentCapabilities, canonicalRole.capabilities)) {
+      await client.query("DELETE FROM role_capabilities WHERE organization_id=$1 AND role_id=$2 AND NOT (capability=ANY($3::text[]))", [input.organizationId, target.rows[0].role_id, canonicalRole.capabilities]);
+      await client.query("INSERT INTO role_capabilities(role_id,organization_id,capability) SELECT $2,$1,unnest($3::text[]) ON CONFLICT DO NOTHING", [input.organizationId, target.rows[0].role_id, canonicalRole.capabilities]);
+      await insertAudit(client, { input, invitationId, action: `staging.synthetic_${roleKey.replaceAll("-", "_")}.role_capabilities_reconciled`, roleKey });
+    }
 
     const existingUser = await client.query("SELECT id,email_verified,active FROM users WHERE lower(email)=lower($1) LIMIT 1", [input.email]);
     if (existingUser.rows[0]) {
@@ -194,6 +204,10 @@ async function insertAudit(client, { input, invitationId, action, roleKey }) {
 
 function deterministicId(prefix, value) {
   return `${prefix}_${createHash("sha256").update(value).digest("hex").slice(0, 32)}`;
+}
+
+function sameValues(left, right) {
+  return left.length === right.length && [...left].sort().every((value, index) => value === [...right].sort()[index]);
 }
 
 function escapeHtml(value) {
