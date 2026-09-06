@@ -89,6 +89,7 @@ export async function provisionStagingSalesperson(pool, input) {
     if (existingUser.rows[0]) {
       const user = existingUser.rows[0];
       const account = await client.query("SELECT 1 FROM auth_accounts WHERE user_id=$1 AND provider_id='credential' LIMIT 1", [user.id]);
+      const authenticationReady = Boolean(user.active && user.email_verified && account.rows[0]);
       const membership = await client.query(
         `SELECT membership.id,
           EXISTS(SELECT 1 FROM membership_roles mr WHERE mr.organization_id=membership.organization_id AND mr.membership_id=membership.id AND mr.role_id=$3) expected_role,
@@ -97,7 +98,26 @@ export async function provisionStagingSalesperson(pool, input) {
          WHERE membership.organization_id=$1 AND membership.user_id=$2 AND membership.status='active'`,
         [input.organizationId, user.id, target.rows[0].role_id, input.locationId],
       );
-      const ready = Boolean(user.active && user.email_verified && account.rows[0] && membership.rows[0]?.expected_role && membership.rows[0]?.location_access);
+      const ready = Boolean(authenticationReady && membership.rows[0]?.expected_role && membership.rows[0]?.location_access);
+      if (!ready && authenticationReady) {
+        const membershipId = deterministicId("mem", `${input.organizationId}:${identityKey}:${user.id}`);
+        const reconciled = await client.query(
+          `INSERT INTO organization_memberships(id,organization_id,user_id,status,all_locations)
+           VALUES($1,$2,$3,'active',false)
+           ON CONFLICT(organization_id,user_id) DO UPDATE SET status='active',all_locations=false,updated_at=now()
+           RETURNING id`,
+          [membershipId, input.organizationId, user.id],
+        );
+        const resolvedMembershipId = reconciled.rows[0]?.id;
+        if (!resolvedMembershipId) throw new Error(`The existing synthetic ${roleProfile.label} membership could not be reconciled.`);
+        await client.query("DELETE FROM membership_roles WHERE organization_id=$1 AND membership_id=$2", [input.organizationId, resolvedMembershipId]);
+        await client.query("INSERT INTO membership_roles(membership_id,organization_id,role_id) VALUES($1,$2,$3)", [resolvedMembershipId, input.organizationId, target.rows[0].role_id]);
+        await client.query("DELETE FROM membership_locations WHERE organization_id=$1 AND membership_id=$2", [input.organizationId, resolvedMembershipId]);
+        await client.query("INSERT INTO membership_locations(membership_id,organization_id,location_id) VALUES($1,$2,$3)", [resolvedMembershipId, input.organizationId, input.locationId]);
+        await insertAudit(client, { input, invitationId, action: `staging.synthetic_${roleKey.replaceAll("-", "_")}.identity_reconciled`, roleKey });
+        await client.query("COMMIT");
+        return { status: "identity-reconciled", userId: user.id, organizationId: input.organizationId, locationId: input.locationId, roleKey, invitationId };
+      }
       await client.query("COMMIT");
       return { status: ready ? "ready" : "existing-user-incomplete", userId: user.id, organizationId: input.organizationId, locationId: input.locationId, roleKey, invitationId };
     }

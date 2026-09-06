@@ -125,6 +125,36 @@ describe("staging Manager provisioner", () => {
     expect(sql).not.toContain("INSERT INTO auth_sessions");
   });
 
+  it("reconciles an authenticated existing Manager to the exact canonical role and location", async () => {
+    const query = vi.fn()
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ organization_id: "org", location_id: "loc", role_id: "rol_manager" }] })
+      .mockResolvedValueOnce({ rows: [{ id: "usr_manager", email_verified: true, active: true }] })
+      .mockResolvedValueOnce({ rows: [{ one: 1 }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ id: "mem_manager" }] })
+      .mockResolvedValue({ rows: [] });
+    const client = { query, release: vi.fn() };
+    const result = await provisionStagingSalesperson({ connect: vi.fn().mockResolvedValue(client) }, {
+      applicationUrl: "https://staging.example.com",
+      email: "synthetic+manager@example.com",
+      organizationId: "org_demo_first_pilot_v1",
+      locationId: "loc_demo_main_rooftop_v1",
+      roleKey: "general-manager",
+    });
+    expect(result).toMatchObject({ status: "identity-reconciled", userId: "usr_manager", roleKey: "general-manager" });
+    const sql = query.mock.calls.map(([statement]) => statement).join("\n");
+    expect(sql).toContain("INSERT INTO organization_memberships");
+    expect(sql).toContain("DELETE FROM membership_roles");
+    expect(sql).toContain("INSERT INTO membership_roles");
+    expect(sql).toContain("DELETE FROM membership_locations");
+    expect(sql).toContain("INSERT INTO membership_locations");
+    expect(query.mock.calls.some(([, values]) => values?.includes("staging.synthetic_general_manager.identity_reconciled"))).toBe(true);
+    expect(sql).not.toContain("INSERT INTO auth_accounts");
+    expect(sql).not.toContain("INSERT INTO auth_sessions");
+  });
+
   it("reuses an existing Manager invitation instead of creating a duplicate", async () => {
     const query = vi.fn()
       .mockResolvedValueOnce({ rows: [] })
