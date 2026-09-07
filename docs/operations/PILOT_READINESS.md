@@ -1,5 +1,7 @@
 # DealerFlow Pilot Readiness Evidence
 
+> Superseded for current blocker status by [Pilot-Readiness Reconciliation — September 7, 2026](PILOT_READINESS_RECONCILIATION_2026-09-07.md). Historical evidence below remains useful, but its release SHA and open-gate statements must not be used as the current P0/P1 list.
+
 ## Decision
 
 **NOT PILOT READY — operational evidence blockers remain.**

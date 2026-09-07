@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-08-31T21:22:30-04:00",
+  "updatedAt": "2026-09-07",
   "decision": "NO_GO",
   "environment": "production",
   "release": {
-    "candidateCommit": "856c7a02284588330128c332cdb48db0f3fc2be0",
+    "candidateCommit": "4912c7694da64a227edb4d4efe0247651b0f00f4",
     "tag": null,
-    "schemaVersion": "0038_organization_data_class",
+    "schemaVersion": "0053_operator_invitation_rotation",
     "artifact": null,
     "approvedBy": null,
     "approvedAt": null
@@ -45,19 +45,19 @@
     "automatedReviewSolicitation": false
   },
   "gates": {
-    "zeroP0": { "status": "verified", "evidence": "docs/operations/PILOT_READINESS.md" },
-    "noPilotBlockingP1": { "status": "blocked", "evidence": "docs/operations/FIRST_PILOT_GO_LIVE.md" },
-    "tenantIsolationAndSecurity": { "status": "verified", "evidence": "docs/operations/PILOT_READINESS.md" },
-    "coreGoldenJourneys": { "status": "partial", "evidence": "docs/operations/P0_P1_CLOSURE.md" },
-    "providerDegradedBehavior": { "status": "blocked", "evidence": "docs/operations/FIRST_PILOT_GO_LIVE.md" },
-    "resetReseedAcceptance": { "status": "blocked", "evidence": "docs/operations/SYNTHETIC_PILOT_HARNESS.md" },
+    "zeroP0": { "status": "verified", "evidence": "docs/operations/PILOT_READINESS_RECONCILIATION_2026-09-07.md" },
+    "noPilotBlockingP1": { "status": "blocked", "evidence": "docs/operations/PILOT_READINESS_RECONCILIATION_2026-09-07.md" },
+    "tenantIsolationAndSecurity": { "status": "verified", "evidence": "docs/operations/PILOT_READINESS_RECONCILIATION_2026-09-07.md" },
+    "coreGoldenJourneys": { "status": "verified", "evidence": "docs/BUILD_STATUS.md" },
+    "providerDegradedBehavior": { "status": "blocked", "evidence": "docs/operations/PILOT_READINESS_RECONCILIATION_2026-09-07.md" },
+    "resetReseedAcceptance": { "status": "verified", "evidence": "docs/operations/PILOT_READINESS_RECONCILIATION_2026-09-07.md" },
     "backupRestore": { "status": "blocked", "evidence": "docs/operations/RECOVERY_RUNBOOK.md" },
     "rollbackPath": { "status": "partial", "evidence": "docs/operations/RECOVERY_RUNBOOK.md" },
-    "approvedPilotScope": { "status": "blocked", "evidence": "docs/operations/FIRST_PILOT_GO_LIVE.md" },
-    "namedLaunchOwner": { "status": "blocked", "evidence": "docs/operations/FIRST_PILOT_GO_LIVE.md" },
+    "approvedPilotScope": { "status": "blocked", "evidence": "docs/operations/PILOT_READINESS_RECONCILIATION_2026-09-07.md" },
+    "namedLaunchOwner": { "status": "blocked", "evidence": "docs/operations/PILOT_READINESS_RECONCILIATION_2026-09-07.md" },
     "productionParity": { "status": "blocked", "evidence": null },
-    "roleAcceptance": { "status": "blocked", "evidence": "docs/operations/FIRST_PILOT_GO_LIVE.md" },
-    "monitoringAndAlertOwnership": { "status": "blocked", "evidence": "docs/operations/PILOT_READINESS.md" }
+    "roleAcceptance": { "status": "blocked", "evidence": "docs/operations/PILOT_READINESS_RECONCILIATION_2026-09-07.md" },
+    "monitoringAndAlertOwnership": { "status": "blocked", "evidence": "docs/operations/PILOT_READINESS_RECONCILIATION_2026-09-07.md" }
   },
   "productionInventory": {
     "status": "not_verified",

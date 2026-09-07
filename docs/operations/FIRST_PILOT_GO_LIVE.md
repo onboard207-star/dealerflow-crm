@@ -1,5 +1,7 @@
 # DealerFlow First-Pilot Go-Live Readiness
 
+> Current blocker authority: [Pilot-Readiness Reconciliation — September 7, 2026](PILOT_READINESS_RECONCILIATION_2026-09-07.md). This document retains the original operating checklist, but older migration, staging, Manager-login, and golden-journey blockers are superseded.
+
 **Assessment date:** August 30, 2026  
 **Pilot scope:** Sales, BDC, Sales Management, Inventory/Vehicle, Dealer Administration, Customer Workspace, appointments/Calendar, and verified communications  
 **Excluded:** Finance, Service, Recon, billing activation, Slack, VinSolutions, and cross-tenant Platform Administration
