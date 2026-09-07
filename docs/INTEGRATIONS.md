@@ -17,11 +17,15 @@ The same workflow is available at `/organizations/:organizationId/settings/integ
 
 The reference `TWILIO_DEMO`, for example, resolves the auth token from `DEALERFLOW_INTEGRATION_SECRET_TWILIO_DEMO`. Its exact status callback URL resolves from `DEALERFLOW_INTEGRATION_SECRET_TWILIO_DEMO_WEBHOOK_URL`. Production deployments should inject both values from their hosting secret manager.
 
+In `APP_ENV=staging`, provider-backed SMS fails closed unless the organization is classified `demo`, the configured sender is present in `DEALERFLOW_STAGING_SMS_SENDER_ALLOWLIST`, and the exact recipient is present in `DEALERFLOW_STAGING_SMS_RECIPIENT_ALLOWLIST`. These comma-separated server-only values must contain only controlled test destinations. They must never use `NEXT_PUBLIC_` names or be supplied by a browser request.
+
 ## Twilio webhooks
 
 Twilio sends form-encoded webhooks signed with `X-Twilio-Signature`. DealerFlow validates the exact configured public URL and every received parameter using Twilio's official Node SDK before resolving a tenant event. See Twilio's [webhook security guidance](https://www.twilio.com/docs/usage/webhooks/webhooks-faq) and [messaging webhook lifecycle](https://www.twilio.com/docs/usage/webhooks/messaging-webhooks).
 
 Accepted events enter `integration_events` under a provider-event uniqueness constraint. Replays are acknowledged without duplicate work. Inbound SMS requires exactly one tenant/location customer match by normalized sender phone. Ambiguous or missing matches remain `unmatched` for operational resolution. Material outbound callbacks reconcile both the canonical communication and its durable send attempt without allowing late callbacks to downgrade terminal `delivered` or `failed` states.
+
+Status-event idempotency includes both the provider message identifier and normalized status, allowing `sent` followed by `delivered` while deduplicating a repeated callback for either state. An inbound exact STOP keyword (`STOP`, `STOPALL`, `UNSUBSCRIBE`, `CANCEL`, `END`, or `QUIT`, case-insensitive) records immutable operational and marketing SMS revocations after the sender resolves to exactly one Customer. Re-consent is never inferred from inbound text; it remains an authorized, evidence-backed consent event.
 
 ## Outbound messaging
 
@@ -34,6 +38,12 @@ Deferred attempts are processed by `POST /api/internal/jobs/outbound-messages`, 
 Consent is revalidated immediately before deferred dispatch. A revocation or context change rejects the queued attempt without contacting Twilio. One tenant or attempt failure does not stop the remainder of the bounded batch, and responses report aggregate outcomes without tenant identifiers.
 
 Customer-facing controls support consent-aware operational SMS. Marketing-policy details and jurisdiction-specific rules require compliance and founder approval before production traffic.
+
+Known provider 4xx responses are recorded as rejected. Timeouts, 5xx responses, network failures, and malformed provider responses remain `delivery-unknown` because DealerFlow cannot safely infer whether the provider accepted the request. They are not automatically retried.
+
+## Staging transactional email safety
+
+Transactional account email uses the existing durable queue and Resend adapter. In `APP_ENV=staging`, the worker refuses provider contact unless the recipient is in `DEALERFLOW_STAGING_EMAIL_RECIPIENT_ALLOWLIST` and the configured sender mailbox is in `DEALERFLOW_STAGING_EMAIL_SENDER_ALLOWLIST`. Provider credentials and allowlists remain server-only. Retry backoff, terminal failure, provider idempotency, and sanitized error codes remain owned by the existing queue and worker.
 
 Administrators with `organization.configure` and `communication.read` may review ambiguous outcomes at `/organizations/:organizationId/operations/messages` or through the corresponding authenticated outbound-attempt APIs. DealerFlow requires a Twilio message ID for a verified sent/delivered outcome and an evidence reference for every resolution. Successful resolution creates the canonical timeline communication; a verified provider failure rejects the attempt. Resolution is location-scoped, audited, and allowed only from `delivery-unknown`.
 

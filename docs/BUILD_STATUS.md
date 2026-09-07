@@ -612,3 +612,12 @@
 - The current evidence-based posture is zero verified P0s and five P1 gates: communications/provider acceptance; Vehicle Intelligence scope/projection; recovery/monitoring/support exercises; clean-room dealership onboarding/import rehearsal; and named ownership plus human role UAT and explicit GO.
 - R2 media, durable document/e-signature providers, and provider-backed AI are conditional on approved pilot scope. Disabled or explicitly excluded capabilities do not block a reduced first-pilot scope.
 - The pilot manifest now identifies the exact accepted release and migration head, marks the golden journey verified, and points open gates to the dated reconciliation. The decision remains NO-GO; this batch authorizes no production action, provider activation, real customer communication, real dealer import, or pilot launch.
+
+## P1-01 RESTRICTED STAGING COMMUNICATIONS — SEPTEMBER 7, 2026
+
+- Reused the canonical consent, outbound-attempt, Twilio, webhook-inbox, Customer timeline, transactional-email, job, authorization, forced-RLS, idempotency, reconciliation, and telemetry architecture. No parallel messaging system or schema migration was introduced.
+- Added a mandatory server-only staging safety envelope: SMS requires a DEMO tenant plus exact sender and recipient allowlists; transactional email requires exact sender and recipient allowlists. Missing or arbitrary destinations fail before provider contact.
+- Fixed status callback idempotency so sequential `sent` and `delivered` evidence can both process while exact repeats remain duplicates. Added exact STOP keyword handling that records immutable operational and marketing revocations for a uniquely matched Customer without inferring re-consent.
+- Known Twilio 4xx outcomes now become rejected; timeout, 5xx, network, and malformed outcomes remain delivery-unknown. DealerFlow never claims delivery from an attempted request alone and never automatically retries an ambiguous outcome.
+- Live isolated-staging configuration inspection found Twilio, Resend, callback, sender, and controlled-recipient settings absent. The workspace truthfully reports no active Twilio sender. No provider call or communication occurred and P1-01 remains blocked pending approved sandbox credentials and test destinations.
+- The existing communication surface is present without horizontal overflow at 1440×900, 820×1180, and 390×844; labeled native controls, text status, keyboard behavior, and focus styling are retained. Live provider-state visual acceptance remains pending configuration.

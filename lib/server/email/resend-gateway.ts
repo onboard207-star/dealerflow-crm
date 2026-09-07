@@ -5,6 +5,8 @@ export interface ResendGatewayConfiguration {
   from: string;
   replyTo?: string;
   fetch?: typeof fetch;
+  recipientAllowlist?: ReadonlySet<string>;
+  senderAllowlist?: ReadonlySet<string>;
 }
 
 export class TransactionalEmailDeliveryError extends Error {
@@ -21,6 +23,13 @@ export class ResendTransactionalEmailGateway implements TransactionalEmailGatewa
   }
 
   async send(message: TransactionalEmailMessage): Promise<{ providerMessageId: string }> {
+    if (this.configuration.recipientAllowlist && !this.configuration.recipientAllowlist.has(message.recipientEmail.toLowerCase())) {
+      throw new TransactionalEmailDeliveryError("staging-recipient-blocked");
+    }
+    if (this.configuration.senderAllowlist) {
+      const sender = this.configuration.from.match(/^(?:[^<>]+\s+<)?([^<>\s]+@[^<>\s]+)>?$/)?.[1] ?? this.configuration.from;
+      if (!this.configuration.senderAllowlist.has(sender.toLowerCase())) throw new TransactionalEmailDeliveryError("staging-sender-blocked");
+    }
     const response = await this.request("https://api.resend.com/emails", {
       method: "POST",
       headers: {

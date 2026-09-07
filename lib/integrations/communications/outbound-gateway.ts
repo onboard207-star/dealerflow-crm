@@ -20,6 +20,13 @@ export interface OutboundMessageGateway {
   send(request: OutboundMessageRequest): Promise<OutboundMessageReceipt>;
 }
 
+export class OutboundMessageDeliveryError extends Error {
+  constructor(readonly code: "provider-rejected" | "provider-result-unknown") {
+    super("Outbound message delivery failed.");
+    this.name = "OutboundMessageDeliveryError";
+  }
+}
+
 export class OutboundMessageValidationError extends Error {
   readonly issues: readonly string[];
   constructor(issues: readonly string[]) {

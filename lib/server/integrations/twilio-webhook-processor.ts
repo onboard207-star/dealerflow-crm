@@ -12,12 +12,13 @@ export class TwilioWebhookProcessor {
       userId: "usr_webhook_system",
       organizationId: route.organizationId,
     }, async (client) => {
+      const providerEventId = event.kind === "message-status" ? `${event.eventId}:${event.status}` : event.eventId;
       const eventInsert = (await client.query(
         `INSERT INTO integration_events (id, organization_id, integration_id, provider,
          provider_event_id, event_type, payload) VALUES ($1,$2,$3,'twilio',$4,$5,$6::jsonb)
          ON CONFLICT (organization_id, provider, provider_event_id, event_type) DO NOTHING
          RETURNING id`,
-        [generateEntityId("evt"), route.organizationId, route.integrationId, event.eventId,
+        [generateEntityId("evt"), route.organizationId, route.integrationId, providerEventId,
          event.kind, JSON.stringify(payload)],
       )) as { rows: Array<{ id: string }> };
       const inboxId = eventInsert.rows[0]?.id;
@@ -40,6 +41,19 @@ export class TwilioWebhookProcessor {
            customerResult.rows[0]!.id, event.occurredAt, event.body, event.eventId,
            `twilio:inbound:${event.eventId}`],
         );
+        if (isStopMessage(event.body)) {
+          for (const purpose of ["operational", "marketing"] as const) {
+            await client.query(
+              `INSERT INTO communication_consent_events (id,organization_id,location_id,customer_id,channel,purpose,address,action,basis,evidence_reference,occurred_at,idempotency_key,created_by)
+               VALUES ($1,$2,$3,$4,'sms',$5,$6,'revoked','not-applicable',$7,$8,$9,NULL)
+               ON CONFLICT (organization_id,idempotency_key) DO NOTHING`,
+              [generateEntityId("cns"), route.organizationId, route.locationId ?? null,
+               customerResult.rows[0]!.id, purpose, event.from, `twilio-stop:${event.eventId}`,
+               event.occurredAt, `twilio:stop:${event.eventId}:${purpose}`],
+            );
+          }
+          await this.audit(client, route.organizationId, "consent.revoked_by_stop", communicationId, event.eventId);
+        }
         await this.audit(client, route.organizationId, "communication.received", communicationId, event.eventId);
         return this.finish(client, inboxId, "processed");
       }
@@ -86,4 +100,8 @@ export class TwilioWebhookProcessor {
       entity_id, source, correlation_id) VALUES ($1,$2,$3,'communication',$4,'twilio',$5)`,
       [generateEntityId("aud"), organizationId, action, entityId, correlationId]);
   }
+}
+
+function isStopMessage(body: string): boolean {
+  return /^(?:STOP|STOPALL|UNSUBSCRIBE|CANCEL|END|QUIT)$/i.test(body.trim());
 }

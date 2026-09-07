@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { OutboundMessageValidationError } from "@/lib/integrations/communications";
+import { OutboundMessageDeliveryError, OutboundMessageValidationError } from "@/lib/integrations/communications";
 import { TwilioMessagingGateway, type TwilioMessageTransport } from "./messaging-gateway";
 
 function gateway(transport: TwilioMessageTransport) {
@@ -27,5 +27,13 @@ describe("TwilioMessagingGateway", () => {
     expect(() => new TwilioMessagingGateway({ accountSid: "AC", authToken: "secret",
       from: "+12075550199", messagingServiceSid: "MG1", statusCallbackUrl: "https://crm.example.com/status" }, { create: vi.fn() }))
       .toThrow("exactly one");
+  });
+  it("classifies provider 4xx as rejected and ambiguous outcomes as unknown", async () => {
+    const rejected = vi.fn<TwilioMessageTransport["create"]>().mockRejectedValue(Object.assign(new Error("sensitive"), { status: 400 }));
+    await expect(gateway({ create: rejected }).send(request)).rejects.toEqual(new OutboundMessageDeliveryError("provider-rejected"));
+    const unavailable = vi.fn<TwilioMessageTransport["create"]>().mockRejectedValue(Object.assign(new Error("sensitive"), { status: 503 }));
+    await expect(gateway({ create: unavailable }).send(request)).rejects.toEqual(new OutboundMessageDeliveryError("provider-result-unknown"));
+    const malformed = vi.fn<TwilioMessageTransport["create"]>().mockResolvedValue({ sid: "", status: "" });
+    await expect(gateway({ create: malformed }).send(request)).rejects.toEqual(new OutboundMessageDeliveryError("provider-result-unknown"));
   });
 });

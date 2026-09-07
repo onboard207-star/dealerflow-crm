@@ -4,6 +4,7 @@ import { getDatabasePool } from "@/lib/server/database";
 import { ResendTransactionalEmailGateway, TransactionalEmailOperationsReader, TransactionalEmailWorker } from "@/lib/server/email";
 import { authenticateJobRequest } from "@/lib/server/jobs";
 import { OperationalReporter, StructuredTelemetry, resolveCorrelationId } from "@/lib/server/observability";
+import { parseStagingDestinationAllowlist } from "@/lib/integrations/communications";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,7 +19,10 @@ export async function POST(request: Request) {
   const limit = Number(new URL(request.url).searchParams.get("limit") ?? 25);
   if (!Number.isInteger(limit) || limit < 1 || limit > 100) return problem(400, "invalid_request", "limit must be between 1 and 100.",correlationId);
   try {
-    const gateway = new ResendTransactionalEmailGateway({ apiKey: environment.resendApiKey!, from: environment.emailFrom!, ...(environment.emailReplyTo ? { replyTo: environment.emailReplyTo } : {}) });
+    const staging = environment.appEnvironment === "staging";
+    const gateway = new ResendTransactionalEmailGateway({ apiKey: environment.resendApiKey!, from: environment.emailFrom!, ...(environment.emailReplyTo ? { replyTo: environment.emailReplyTo } : {}),
+      ...(staging ? { recipientAllowlist: parseStagingDestinationAllowlist(process.env.DEALERFLOW_STAGING_EMAIL_RECIPIENT_ALLOWLIST, "email"),
+        senderAllowlist: parseStagingDestinationAllowlist(process.env.DEALERFLOW_STAGING_EMAIL_SENDER_ALLOWLIST, "email") } : {}) });
     const result=await new TransactionalEmailWorker(getDatabasePool(), gateway).run(limit);const unhealthy=result.failed>0;
     await new OperationalReporter(environment).report({code:"email.job.completed",severity:unhealthy?"warning":"info",correlationId,attributes:{claimed:result.claimed,sent:result.sent,failed:result.failed}},{alert:unhealthy});
     return NextResponse.json(result, { headers: { "cache-control":"no-store","x-correlation-id":correlationId } });

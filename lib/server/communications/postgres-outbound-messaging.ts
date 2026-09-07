@@ -7,6 +7,8 @@ import type {
 import { generateEntityId } from "@/lib/core/identifiers";
 import { TwilioMessagingGateway } from "@/lib/integrations/twilio";
 import type { OutboundMessageReceipt } from "@/lib/integrations/communications";
+import { assertStagingDemoTenant, assertStagingSenderAllowed, parseStagingDestinationAllowlist,
+  StagingRestrictedMessageGateway } from "@/lib/integrations/communications";
 import type { OrganizationScope, RequestContext } from "@/lib/platform/data";
 import { withTenantDatabaseContext } from "@/lib/server/database";
 import { EnvironmentIntegrationCredentialResolver, type IntegrationCredentialResolver } from "@/lib/server/integrations";
@@ -66,7 +68,7 @@ export class PostgresOutboundMessagingProvider implements OutboundMessagingProvi
       updated_at = now() WHERE organization_id = $1 AND id = $2 AND status = 'dispatching' RETURNING id`, attemptId); }
   markRejected(scope: OrganizationScope, attemptId: string, failureCode: string) { return this.mutate(scope,
     `UPDATE communication_send_attempts SET status = 'rejected', failure_code = $3, updated_at = now()
-      WHERE organization_id = $1 AND id = $2 AND status = 'queued' RETURNING id`, attemptId, failureCode); }
+      WHERE organization_id = $1 AND id = $2 AND status IN ('queued','dispatching') RETURNING id`, attemptId, failureCode); }
   resolveDeliveryUnknown(context: RequestContext, attemptRecord: SendAttempt, input: {
     resolution: DeliveryResolution; providerMessageId?: string; evidenceReference: string;
   }): Promise<SendAttempt> {
@@ -173,13 +175,16 @@ class Session implements OutboundMessagingSession {
 
 export class PostgresOutboundGatewayResolver implements OutboundGatewayResolver {
   constructor(private readonly pool: Pool, private readonly context: { userId: string; organizationId: string },
-    private readonly credentials: IntegrationCredentialResolver = new EnvironmentIntegrationCredentialResolver()) {}
+    private readonly credentials: IntegrationCredentialResolver = new EnvironmentIntegrationCredentialResolver(),
+    private readonly environment: Readonly<Record<string, string | undefined>> = process.env) {}
   async resolve(scope: OrganizationScope, integrationId: string) {
     const config = await withTenantDatabaseContext(this.pool, this.context, async (client) => {
-      const result = (await client.query(`SELECT provider_account_id, credential_reference,
-        default_from_address FROM integration_accounts WHERE organization_id = $1 AND id = $2
+      const result = (await client.query(`SELECT integration.provider_account_id, integration.credential_reference,
+        integration.default_from_address, organization.data_class FROM integration_accounts integration
+        JOIN organizations organization ON organization.id=integration.organization_id
+        WHERE integration.organization_id = $1 AND integration.id = $2
         AND provider = 'twilio' AND active = true LIMIT 1`, [scope.organizationId, integrationId])) as {
-        rows: Array<{ provider_account_id: string; credential_reference: string; default_from_address: string | null }> };
+        rows: Array<{ provider_account_id: string; credential_reference: string; default_from_address: string | null; data_class: string }> };
       return result.rows[0];
     });
     if (!config?.default_from_address) throw new Error("Active Twilio sender is unavailable.");
@@ -187,8 +192,14 @@ export class PostgresOutboundGatewayResolver implements OutboundGatewayResolver 
       this.credentials.resolve(config.credential_reference),
       this.credentials.resolve(`${config.credential_reference}_WEBHOOK_URL`),
     ]);
-    return new TwilioMessagingGateway({ accountSid: config.provider_account_id, authToken,
+    const gateway = new TwilioMessagingGateway({ accountSid: config.provider_account_id, authToken,
       from: config.default_from_address, statusCallbackUrl });
+    if (this.environment.APP_ENV !== "staging") return gateway;
+    assertStagingDemoTenant(config.data_class);
+    const senders = parseStagingDestinationAllowlist(this.environment.DEALERFLOW_STAGING_SMS_SENDER_ALLOWLIST, "sms");
+    assertStagingSenderAllowed(config.default_from_address, senders);
+    const recipients = parseStagingDestinationAllowlist(this.environment.DEALERFLOW_STAGING_SMS_RECIPIENT_ALLOWLIST, "sms");
+    return new StagingRestrictedMessageGateway(gateway, recipients);
   }
 }
 

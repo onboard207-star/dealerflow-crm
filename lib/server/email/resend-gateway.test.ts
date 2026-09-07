@@ -24,4 +24,15 @@ describe("ResendTransactionalEmailGateway", () => {
     const gateway = new ResendTransactionalEmailGateway({ apiKey: "secret", from: "account@example.com", fetch: request });
     await expect(gateway.send(message)).rejects.toEqual(new TransactionalEmailDeliveryError("provider-http-422"));
   });
+
+  it("enforces staging sender and recipient allowlists before provider contact", async () => {
+    const request = vi.fn<typeof fetch>();
+    const blockedRecipient = new ResendTransactionalEmailGateway({ apiKey: "secret", from: "account@example.com", fetch: request,
+      recipientAllowlist: new Set(["controlled@example.com"]), senderAllowlist: new Set(["account@example.com"]) });
+    await expect(blockedRecipient.send(message)).rejects.toEqual(new TransactionalEmailDeliveryError("staging-recipient-blocked"));
+    const blockedSender = new ResendTransactionalEmailGateway({ apiKey: "secret", from: "other@example.com", fetch: request,
+      recipientAllowlist: new Set(["alex@example.com"]), senderAllowlist: new Set(["account@example.com"]) });
+    await expect(blockedSender.send(message)).rejects.toEqual(new TransactionalEmailDeliveryError("staging-sender-blocked"));
+    expect(request).not.toHaveBeenCalled();
+  });
 });

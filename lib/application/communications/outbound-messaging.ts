@@ -1,5 +1,5 @@
 import { generateEntityId } from "@/lib/core/identifiers";
-import type { OutboundMessageGateway, OutboundMessageReceipt } from "@/lib/integrations/communications";
+import { OutboundMessageDeliveryError, type OutboundMessageGateway, type OutboundMessageReceipt } from "@/lib/integrations/communications";
 import { assertAuthorized, type AuthorizationActor } from "@/lib/platform/auth";
 import type { OrganizationScope, RequestContext } from "@/lib/platform/data";
 import type { CommunicationChannel } from "./record-communication";
@@ -117,7 +117,10 @@ export class OutboundMessagingService {
         idempotencyKey: prepared.idempotencyKey, consent: { basis: prepared.consentBasis,
           capturedAt: prepared.consentOccurredAt, evidenceReference: prepared.consentEvidenceReference } });
       return { attempt: await this.provider.markAccepted(scope, prepared.id, receipt), dispatched: true };
-    } catch {
+    } catch (error) {
+      if (error instanceof OutboundMessageDeliveryError && error.code === "provider-rejected") {
+        return { attempt: await this.provider.markRejected(scope, prepared.id, "provider_rejected"), dispatched: true };
+      }
       return { attempt: await this.provider.markDeliveryUnknown(scope, prepared.id), dispatched: true };
     }
   }

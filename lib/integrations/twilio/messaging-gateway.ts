@@ -2,6 +2,7 @@ import twilio from "twilio";
 
 import {
   validateOutboundMessage,
+  OutboundMessageDeliveryError,
   type OutboundMessageGateway,
   type OutboundMessageReceipt,
   type OutboundMessageRequest,
@@ -40,15 +41,23 @@ export class TwilioMessagingGateway implements OutboundMessageGateway {
 
   async send(request: OutboundMessageRequest): Promise<OutboundMessageReceipt> {
     validateOutboundMessage(request);
-    const message = await this.transport.create({
-      to: request.to,
-      body: request.body.trim(),
-      statusCallback: this.configuration.statusCallbackUrl,
-      ...(this.configuration.from ? { from: this.configuration.from } : {}),
-      ...(this.configuration.messagingServiceSid
-        ? { messagingServiceSid: this.configuration.messagingServiceSid }
-        : {}),
-    });
+    let message: { sid: string; status: string; dateCreated?: Date | null };
+    try {
+      message = await this.transport.create({
+        to: request.to,
+        body: request.body.trim(),
+        statusCallback: this.configuration.statusCallbackUrl,
+        ...(this.configuration.from ? { from: this.configuration.from } : {}),
+        ...(this.configuration.messagingServiceSid
+          ? { messagingServiceSid: this.configuration.messagingServiceSid }
+          : {}),
+      });
+    } catch (error) {
+      const status = providerHttpStatus(error);
+      throw new OutboundMessageDeliveryError(status && status >= 400 && status < 500
+        ? "provider-rejected" : "provider-result-unknown");
+    }
+    if (!message.sid?.trim() || !message.status?.trim()) throw new OutboundMessageDeliveryError("provider-result-unknown");
     return {
       provider: "twilio",
       providerMessageId: message.sid,
@@ -56,6 +65,11 @@ export class TwilioMessagingGateway implements OutboundMessageGateway {
       providerStatus: message.status,
     };
   }
+}
+
+function providerHttpStatus(error: unknown): number | undefined {
+  if (!error || typeof error !== "object" || !("status" in error)) return undefined;
+  return typeof error.status === "number" ? error.status : undefined;
 }
 
 function createTransport(configuration: TwilioMessagingConfiguration): TwilioMessageTransport {
