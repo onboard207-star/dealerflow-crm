@@ -105,6 +105,12 @@ Forced RLS permits reads and read-state updates only when the current authentica
 
 `external_record_mappings` maps canonical application entities to provider records, including Airtable base, table, and record IDs. Mappings are unique by provider source identity and by canonical entity identity. A migration must not manufacture a relationship when its source record cannot be resolved.
 
+## Vehicle intelligence catalog
+
+The global Vehicle Intelligence catalog models Make, Model, Model Year, Trim, Configuration, and typed colors, packages, features, and specifications independently of tenant-owned physical inventory. Catalog releases retain source revision, manifest and record hashes, readiness, and provenance. Stable DealerFlow catalog IDs are deterministic from entity kind and declared stable source keys; provider record IDs remain optional provenance only.
+
+`vehicles` continues to own tenant-scoped VIN identity. `inventory_units` continues to own stock cycle, Location, price, media, and availability. `vehicle_catalog_matches` records an explicit tenant-scoped, evidenced Vehicle-to-Configuration match and permits at most one verified match per Vehicle. Catalog data cannot create or infer a VIN, stock number, physical availability, dealership price, Organization, or Location.
+
 ## Audit history
 
 `audit_logs` records organization, actor, action, entity, source, correlation ID, timestamp, and old/new values where appropriate. Audit records are append-only at the application layer.

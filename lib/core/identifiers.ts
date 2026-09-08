@@ -52,6 +52,8 @@ export type EntityIdPrefix =
   | "veh"
   | "vis"
   | "vhi"
+  | "vcm"
+  | "vcr"
   | "vse"
   | "usr";
 

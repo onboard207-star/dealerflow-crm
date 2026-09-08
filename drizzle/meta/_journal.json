@@ -379,6 +379,13 @@
       "when": 1788642000000,
       "tag": "0053_operator_invitation_rotation",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1788901200000,
+      "tag": "0054_vehicle_intelligence_catalog",
+      "breakpoints": true
     }
   ]
 }

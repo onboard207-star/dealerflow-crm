@@ -3,7 +3,27 @@
 **Date:** September 7, 2026  
 **Release under repair:** `21865ef1802a18b535208415b9189577055e9352`  
 **Environment:** `dealerflow-isolated-staging` / `org_demo_first_pilot_v1`  
-**Result:** BLOCKED AT PROVIDER CONFIGURATION — no communication sent
+**Result:** EMAIL PASSED — live SMS paused at the Twilio A2P/provider gate
+
+## September 8 email closure
+
+Email acceptance is closed. The live allowlisted Resend path passed, and the remaining eight historical queued messages are blocked by the staging recipient boundary exactly as designed. Those governed historical records are not defects and must not be rewritten or bypassed to manufacture a fully sent queue. Sender and recipient allowlists remain bare email addresses; the configured display-name From identity is parsed separately by the existing gateway.
+
+This closes the email portion of PILOT-P1-01 without introducing a second provider route or changing application code. SMS remains paused at the external Twilio A2P/sender-enablement gate.
+
+## September 8 Twilio activation
+
+The isolated service now has the server-only Twilio credential, exact callback URL, sender allowlist, and controlled-recipient allowlist. The running container confirmed all four values are present with `APP_ENV=staging`. DealerFlow has exactly one active Twilio integration scoped to `Synthetic Main Rooftop`, and Twilio's primary inbound webhook now points to the one-time signed DealerFlow route. The pre-existing Make.com route remains configured as the backup handler rather than being deleted.
+
+One new synthetic Customer/Lead was created through canonical lead intake using the controlled Twilio-verified recipient. Express written consent evidence was recorded from the owner's explicit staging-test authorization. One operational message was accepted by DealerFlow and queued by the canonical quiet-hours policy for the next permitted local window; no Twilio provider request occurred during this run.
+
+Twilio reports the only available toll-free sender as `Messaging disabled` and requires registration resubmission. DealerFlow must not claim provider acceptance, delivery, callback, inbound, STOP, or post-STOP evidence until Twilio enables messaging. The later Resend acceptance result is recorded above.
+
+## Live closure attempt
+
+A second live preflight was performed against deployed commit `c058141c171405cfea2ac6701f41b71caec14e49` after the approved communications scope was confirmed. The running service and the Render service Environment page independently showed that the Twilio, Resend, callback, sender-allowlist, and recipient-allowlist variables listed below were not installed on `dealerflow-isolated-staging`. The active deployment remained healthy at the expected commit, but no provider configuration restart or newer deployment was pending.
+
+The safety envelope therefore failed closed before any destination, message body, provider credential, or provider transaction was reached. No SMS, inbound webhook, STOP event, transactional email, or one-to-one customer email was attempted. P1-01 remains blocked at configuration and must not be represented as provider accepted.
 
 ## Existing architecture reused
 
@@ -11,7 +31,7 @@ DealerFlow already has one canonical communications authority: immutable consent
 
 No parallel messaging architecture was created.
 
-## Configuration discovered
+## Initial configuration discovered
 
 The isolated Render service reports `APP_ENV` configured. The following required values are absent:
 
@@ -54,13 +74,10 @@ Provider secrets remain environment-only and credential references remain server
 
 ## Exact remaining requirement
 
-An authorized operator must provide all of the following before live isolated-staging acceptance:
+The following must be completed before live isolated-staging acceptance:
 
-1. A Twilio test/subaccount Account SID and auth token with no production traffic.
-2. One controlled Twilio sender and its exact HTTPS DealerFlow status/webhook URL.
-3. One or more explicitly approved test phone numbers for the SMS recipient allowlist.
-4. A Resend test/restricted API key and verified non-production sender mailbox/domain.
-5. One or more explicitly approved test email recipients.
-6. Confirmation whether first-pilot customer communications include SMS, customer email, or SMS only; transactional account email remains required for normal invitations/password setup.
+1. Complete or resubmit Twilio toll-free registration and wait for messaging to become enabled, or provision a separate approved staging sender without disrupting an existing production route.
+2. After messaging is enabled, dispatch the already queued controlled message through the canonical job, then complete callback, retry, failure, inbound, replay, STOP, post-STOP, tenant, location, permission, privacy, and responsive acceptance.
+3. Preserve the accepted Resend staging path and its exact bare-address allowlists; do not reopen the eight correctly blocked historical messages.
 
-After configuration, rerun the real-provider acceptance for outbound, inbound, STOP, post-STOP denial, callback progression/replay, provider failures, timeline projection, tenant/location/permission attacks, and all three viewports. P1-01 remains open until that evidence exists.
+After Twilio enables the sender, rerun the real-provider SMS acceptance for outbound, inbound, STOP, post-STOP denial, callback progression/replay, provider failures, timeline projection, tenant/location/permission attacks, and all three viewports. The email portion is passed; only SMS remains externally gated.
