@@ -1,0 +1,10 @@
+import{beforeEach,describe,expect,it,vi}from"vitest";
+const project=vi.fn();
+vi.mock("@/lib/server/config",()=>({parseServerEnvironment:()=>({appEnvironment:"staging",jobSecret:"a-separate-job-secret-with-32-characters"})}));
+vi.mock("@/lib/server/jobs",()=>({authenticateJobRequest:(request:Request)=>request.headers.get("authorization")==="Bearer accepted"}));
+vi.mock("@/lib/server/database",()=>({getDatabasePool:()=>({})}));
+vi.mock("@/lib/server/vehicles",()=>({PostgresVehicleCatalogProjectionProvider:class{}}));
+vi.mock("@/lib/application/vehicle-catalog",async(importOriginal)=>{const actual=await importOriginal<typeof import("@/lib/application/vehicle-catalog")>();return{...actual,VehicleCatalogProjectionService:class{project=project;}};});
+import{POST}from"./route";
+const snapshot={baseId:"appVehicleCatalog",revision:"r1",tables:{"OEM / Makes":[{id:"recMake",fields:{"OEM ID":"OEM-HONDA",Name:"Honda"}}],Models:[],"Model Years":[],Trims:[],"Trim Configurations":[]}};
+describe("vehicle catalog staging job",()=>{beforeEach(()=>project.mockReset().mockResolvedValue({releaseId:"vcr_release"}));it("rejects unauthenticated requests",async()=>{expect((await POST(new Request("http://localhost",{method:"POST",body:JSON.stringify(snapshot)}))).status).toBe(401);});it("projects an authenticated governed snapshot",async()=>{const response=await POST(new Request("http://localhost",{method:"POST",headers:{authorization:"Bearer accepted"},body:JSON.stringify(snapshot)}));expect(response.status).toBe(200);expect(project).toHaveBeenCalledOnce();expect(await response.json()).toMatchObject({result:{releaseId:"vcr_release"},evidence:{sourceRevision:"r1",projectedNodeCount:1}});});});
