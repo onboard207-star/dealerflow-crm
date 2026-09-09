@@ -1,6 +1,6 @@
 # DealerFlow AI Build Status
 
-## SIMULATION RUN #1 PRODUCT HARDENING — LOCAL GATE PASSED
+## SIMULATION RUN #1 PRODUCT HARDENING — ISOLATED-STAGING REGRESSION PASSED
 
 - Canonical customer and vehicle workspaces now retain the purchased primary Vehicle relationship after delivery while continuing to distinguish active interests from completed purchases.
 - Delivery completion now fails closed before the scheduled start. An early completion requires explicit `deal.approve` authority and a mandatory reason; actor, reason, timestamp, status event, and a dedicated `delivery.completed_early` audit action are retained.
@@ -9,7 +9,16 @@
 - Profitability capture is disabled before invocation when the Deal lacks a physical Inventory Unit or authoritative inventory cost, and the UI names the missing prerequisite.
 - Bounded adjacent fixes distinguish Customer status from Buying Journey, humanize timeline statuses, explain disabled header actions, close transactional actions for delivered Leads, and explain list price versus accepted Quote selling price.
 - Full local validation passes: Drizzle schema check, product portfolio check, execution-system check, lint, strict TypeScript, 667 tests across 140 files, production build, and whitespace validation.
-- No database migration, deployment, staging mutation, production action, or Simulation Run #2 work has occurred. Isolated-staging migration and Run #1 UI regression remain pending.
+- Commit `415d63bde1a78bf08ffceaaedd3f647fbc0cc6d7` is pushed and live on `dealerflow-isolated-staging`; `/api/health` reports the exact commit and `status=ok`.
+- Migration `0055_simulation_run_one_hardening` completed through the isolated web service's normal migration path. The applied Drizzle row has the exact repository migration SHA-256 `7edb87d5def9c4029e5d8cd51c422d93c83276db6a0fbdf9ea58d1e504cbc30f`.
+- Live Manager regression now tells one coherent Run #1 story: Simulation Run One → `2026 Honda Accord LX` / `TEST-VI-LX-001` → Deal `DF-0432892E` delivered → immutable Quote v2 accepted and approved at `$28,395` → required documents complete → delivery complete → post-sale follow-up retained in history.
+- The Customer Header and Snapshot both resolve the purchased Accord LX, Customer state is distinguished from Buying Journey, and disabled quick actions name their unavailable prerequisite.
+- Quote v1 is visibly `Superseded`, remains viewable as immutable history, and exposes no Quote/approval/terms/profitability mutations. Quote v2 remains the sole accepted version.
+- `Respond to Website lead` is no longer open or overdue; its completed history remains visible. The delivered Lead card removes Contact, Appointment, and Deal actions and explains that the journey is closed.
+- The Vehicle workspace shows the governed catalog match, the completed customer purchase, the delivered Deal and accepted `$28,395` selling price while explaining that inventory list price is a separate authority.
+- Manager desktop and 390 × 844 mobile checks passed for the Customer and Vehicle workspaces. A separate authenticated Salesperson browser remains the final P1-02 visual-role UAT gate; existing Salesperson API denial evidence remains valid.
+- Historical Run #1 delivery timing remains immutable evidence created before the new invariant. No override was fabricated retroactively; all future early completion now requires authorized, reasoned, audited override evidence.
+- Production was not touched, staging was not reset/reseeded, real communications were not sent, and Simulation Run #2 was not started.
 
 ## P1-02 EXACT SYNTHETIC MATCH FIXTURE — VERIFIED IN ISOLATED STAGING
 
