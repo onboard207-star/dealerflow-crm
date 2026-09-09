@@ -38,7 +38,7 @@ export function VehicleCatalogMatchControl({
         </form>
       ) : (
         <p className="mt-4 rounded-lg bg-muted p-3 text-sm" role="status">
-          No verified or pilot-ready catalog configuration matches this vehicle&apos;s year, make, and model.
+          No verified or pilot-ready catalog configuration matches this vehicle&apos;s year, make, model, and declared trim.
         </p>
       )}
     </section>

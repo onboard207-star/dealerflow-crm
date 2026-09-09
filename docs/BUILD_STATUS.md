@@ -3,7 +3,7 @@
 ## VEHICLE INTELLIGENCE MATCH CANDIDATE CONSISTENCY — FIXED LOCALLY
 
 - Reproduced the isolated-staging refusal for synthetic stock `NDB1FDB2`: the physical Vehicle is `2026 Honda Accord Touring`, while the selected governed catalog trim is `Touring Hybrid`.
-- Preserved the strict Vehicle-to-Configuration write guard. Candidate discovery now applies the same normalized trim identity requirement whenever the physical Vehicle declares a trim, so the UI cannot offer a match that the authoritative write path must reject.
+- Preserved the strict Vehicle-to-Configuration write guard. Candidate discovery now applies the same normalized trim identity requirement whenever the physical Vehicle declares a trim, so the UI cannot offer a match that the authoritative write path must reject; the empty state explicitly identifies declared trim as part of eligibility.
 - No Vehicle, Inventory Unit, catalog release, match record, tenant, or production data was changed. The synthetic fixture/catalog identity divergence remains explicit rather than being inferred away.
 - Focused Vehicle Intelligence tests, lint, strict TypeScript, production build, and whitespace validation pass locally. Deployment and isolated-staging verification remain pending.
 
