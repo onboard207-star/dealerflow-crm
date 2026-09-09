@@ -86,6 +86,11 @@ describe("PostgresVehicleConfigurationMatchProvider", () => {
     });
 
     expect(queries.some((query) => query.includes("JOIN LATERAL"))).toBe(true);
+    expect(
+      queries.some((query) =>
+        query.includes("regexp_replace(lower(trim.name), '[^a-z0-9]', '', 'g')"),
+      ),
+    ).toBe(true);
     expect(queries.at(-1)).toBe("COMMIT");
   });
 

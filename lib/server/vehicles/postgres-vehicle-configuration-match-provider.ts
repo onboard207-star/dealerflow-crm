@@ -100,9 +100,13 @@ class Session implements VehicleConfigurationMatchSession {
        JOIN vehicle_catalog_makes make ON make.id = model.make_id
        WHERE model_year.year = $1 AND lower(make.name) = lower($2)
          AND lower(model.name) = lower($3)
+         AND (
+           $4 = '' OR
+           regexp_replace(lower(trim.name), '[^a-z0-9]', '', 'g') =
+             regexp_replace(lower($4), '[^a-z0-9]', '', 'g')
+         )
          AND configuration.readiness IN ('verified', 'pilot-ready')
-       ORDER BY CASE WHEN lower(trim.name) = lower($4) THEN 0 ELSE 1 END,
-                trim.name, configuration.name, configuration.id`,
+       ORDER BY trim.name, configuration.name, configuration.id`,
       [vehicle.year, vehicle.make, vehicle.model, vehicle.trim ?? ""],
     );
     return result.rows;
