@@ -5,7 +5,7 @@
 - Selected the accepted `2026 Honda Accord LX FWD CVT` catalog configuration (`vcf_79197e26b9c52b480a8d38d7a899ef15`, stable key `CFG-HONDA-ACCORD-2026-LX-FWD-CVT`, `pilot-ready`) without changing the accepted catalog release.
 - Added one staging-only, explicit-confirmation, expected-database-host-bound, idempotent provisioner for a clearly synthetic `2026 Honda Accord LX` physical Vehicle and Inventory Unit. The fixture uses test VIN `TESTCATALG26LX001`, stock `TEST-VI-LX-001`, and deliberately leaves price, color, media, customer, Deal, and delivery facts unset.
 - Provisioning validates the DEMO tenant/rooftop, exact Make → Model → Model Year → Trim → Configuration relationship, readiness, canonical Inventory Manager, and absence of conflicting identities before inserting anything. Replays verify and reuse the same fixture; they never update an existing record.
-- No database has been changed by this local implementation. Isolated-staging provisioning and Vehicle Intelligence UI acceptance remain pending.
+- The first isolated-staging execution correctly made no database change because the production image did not yet package the new governed script. The Docker runner now includes it alongside the existing staging provisioners; provisioning and Vehicle Intelligence UI acceptance remain pending.
 
 ## VEHICLE INTELLIGENCE MATCH CANDIDATE CONSISTENCY — FIXED LOCALLY
 
