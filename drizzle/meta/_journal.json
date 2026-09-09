@@ -386,6 +386,13 @@
       "when": 1788901200000,
       "tag": "0054_vehicle_intelligence_catalog",
       "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "7",
+      "when": 1788991200000,
+      "tag": "0055_simulation_run_one_hardening",
+      "breakpoints": true
     }
   ]
 }

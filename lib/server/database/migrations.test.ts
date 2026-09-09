@@ -310,4 +310,13 @@ describe("tenant database migrations", () => {
     expect(migration).toContain("operator-provision:%");
     expect(migration).not.toMatch(/TO (PUBLIC|CURRENT_USER)/);
   });
+
+  it("reconciles only pre-delivery open tasks while preserving history", () => {
+    const migration = readFileSync(join(migrationDirectory, "0055_simulation_run_one_hardening.sql"), "utf8");
+    expect(migration).toContain("task.created_at <= delivered.delivered_at");
+    expect(migration).toContain("Obsolete after Deal delivery.");
+    expect(migration).toContain("INSERT INTO task_status_events");
+    expect(migration).toContain("INSERT INTO audit_logs");
+    expect(migration).not.toContain("DELETE FROM tasks");
+  });
 });

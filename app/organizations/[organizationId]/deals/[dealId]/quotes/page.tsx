@@ -121,14 +121,14 @@ export default async function DealQuoteWorkspacePage({ params, searchParams }: P
 
             {workspace.quotes.length ? (
               <ul className="mt-4 space-y-4" role="list">
-                {workspace.quotes.map((quote) => (
+                {workspace.quotes.map((quote) => { const superseded = latest?.status === "accepted" && quote.version < latest.version; return (
                   <li className="rounded-xl border bg-card p-4 shadow-soft sm:p-5" key={quote.id}>
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
                           <h3 className="font-semibold">Quote v{quote.version}</h3>
-                          <Status value={quote.status} />
-                          {quote.approval ? <ApprovalStatus value={quote.approval.status} /> : null}
+                          <Status value={superseded ? "superseded" : quote.status} />
+                          {quote.approval && !superseded ? <ApprovalStatus value={quote.approval.status} /> : null}
                         </div>
                         <p className="mt-1 text-xs text-muted-foreground">
                           {quote.purchaseType} · created {formatDateTime(quote.createdAt)}
@@ -144,7 +144,7 @@ export default async function DealQuoteWorkspacePage({ params, searchParams }: P
                       <Fact label="Total" value={money(quote.totalCents)} />
                     </dl>
 
-                    {quote.approval ? (
+                    {superseded ? <p className="mt-4 rounded-lg border bg-muted/20 p-3 text-xs leading-5 text-muted-foreground">Historical immutable version. Superseded by accepted Quote v{latest.version}; no actions remain available.</p> : quote.approval ? (
                       <div className="mt-4 rounded-lg border bg-muted/20 p-3 text-xs leading-5 text-muted-foreground">
                         <p>
                           <strong className="text-foreground">Manager approval:</strong>{" "}
@@ -164,7 +164,7 @@ export default async function DealQuoteWorkspacePage({ params, searchParams }: P
                         Preview proposal
                       </Link>
 
-                      {quote.status === "draft" && !quote.approval && canRequest ? (
+                      {quote.status === "draft" && !superseded && !quote.approval && canRequest ? (
                         <form
                           action={requestQuoteApprovalAction.bind(null, organizationId, dealId, quote.id)}
                           className="flex min-w-0 flex-1 flex-col gap-2 sm:min-w-72"
@@ -181,7 +181,7 @@ export default async function DealQuoteWorkspacePage({ params, searchParams }: P
                         </form>
                       ) : null}
 
-                      {quote.status === "draft" &&
+                      {quote.status === "draft" && !superseded &&
                       canIssue &&
                       quote.approval?.status !== "pending" &&
                       quote.approval?.status !== "declined" ? (
@@ -193,7 +193,7 @@ export default async function DealQuoteWorkspacePage({ params, searchParams }: P
                       ) : null}
                     </div>
 
-                    {quote.status === "draft" && !quote.commercialTerms && context.membership.capabilities.includes("quote.revise") ? (
+                    {quote.status === "draft" && !superseded && !quote.commercialTerms && context.membership.capabilities.includes("quote.revise") ? (
                       <details className="mt-4 border-t pt-4">
                         <summary className="focus-ring cursor-pointer rounded-sm text-sm font-semibold">
                           Add trade / down payment / finance terms
@@ -268,7 +268,7 @@ export default async function DealQuoteWorkspacePage({ params, searchParams }: P
                       </section>
                     ) : null}
 
-                    {quote.status === "draft" && quote.purchaseType === "lease" && !quote.leaseTerms && context.membership.capabilities.includes("quote.revise") ? (
+                    {quote.status === "draft" && !superseded && quote.purchaseType === "lease" && !quote.leaseTerms && context.membership.capabilities.includes("quote.revise") ? (
                       <details className="mt-4 border-t pt-4">
                         <summary className="focus-ring cursor-pointer rounded-sm text-sm font-semibold">Add lease structure</summary>
                         <form action={attachQuoteLeaseTermsAction.bind(null, organizationId, dealId, quote.id)} className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -289,18 +289,18 @@ export default async function DealQuoteWorkspacePage({ params, searchParams }: P
                     ) : null}
 
                     {quote.incentives.length ? <section className="mt-4 rounded-lg border bg-muted/20 p-3"><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Incentives</p><ul className="mt-3 space-y-2">{quote.incentives.map((item) => <li className="flex items-center justify-between rounded-md border bg-background p-3 text-sm" key={item.id}><span><span className="font-medium">{item.programName}</span><span className="ml-2 text-xs text-muted-foreground">{money(item.amountCents)}</span></span><span className="rounded-full border px-2 py-0.5 text-xs font-semibold capitalize">{item.eligibilityStatus}</span></li>)}</ul></section> : null}
-                    {quote.status === "draft" && quote.discountLines.length > 0 && workspace.incentivePrograms.length > 0 && context.membership.capabilities.includes("quote.revise") ? (
+                    {quote.status === "draft" && !superseded && quote.discountLines.length > 0 && workspace.incentivePrograms.length > 0 && context.membership.capabilities.includes("quote.revise") ? (
                       <details className="mt-4 border-t pt-4"><summary className="focus-ring cursor-pointer rounded-sm text-sm font-semibold">Attach incentive provenance</summary><form action={attachIncentiveProgramAction.bind(null, organizationId, dealId, quote.id)} className="mt-4 grid gap-4 sm:grid-cols-2"><Field label="Quote discount line"><select className="focus-ring h-10 w-full rounded-lg border bg-background px-3 text-sm" name="quoteLineId" required><option value="">Choose discount line</option>{quote.discountLines.map((line) => <option key={line.id} value={line.id}>{line.description} · {money(line.amountCents)}</option>)}</select></Field><Field label="Incentive program"><select className="focus-ring h-10 w-full rounded-lg border bg-background px-3 text-sm" name="programId" required><option value="">Choose program</option>{workspace.incentivePrograms.map((program) => <option key={program.id} value={program.id}>{program.name} · {program.code}</option>)}</select></Field><Field label="Exact discount amount (cents)"><input className="focus-ring h-10 w-full rounded-lg border bg-background px-3 text-sm" inputMode="numeric" name="amountCents" required /></Field><button className="focus-ring min-h-10 rounded-lg border px-4 text-sm font-semibold sm:col-span-2">Attach for verification</button></form></details>
                     ) : null}
 
                     {canViewSensitive ? <section className="mt-4 rounded-lg border bg-muted/20 p-3"><div className="flex items-center justify-between"><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Internal F&amp;I profitability</p><strong className="text-sm">Backend gross {money(quote.backendGrossCents)}</strong></div>{quote.backendSnapshots.length ? <ul className="mt-3 space-y-2">{quote.backendSnapshots.map((item) => <li className="grid gap-2 rounded-md border bg-background p-3 text-xs sm:grid-cols-4" key={item.id}><Fact label="Product" value={item.productName} /><Fact label="Sell" value={money(item.sellCents)} /><Fact label="Cost" value={money(item.costCents)} /><Fact label="Gross" value={money(item.grossCents)} /></li>)}</ul> : null}</section> : null}
-                    {quote.status === "draft" && canViewSensitive && quote.productLines.length > 0 && workspace.backendProducts.length > 0 ? (
+                    {quote.status === "draft" && !superseded && canViewSensitive && quote.productLines.length > 0 && workspace.backendProducts.length > 0 ? (
                       <details className="mt-4 border-t pt-4"><summary className="focus-ring cursor-pointer rounded-sm text-sm font-semibold">Attach internal F&amp;I product cost</summary><form action={attachBackendProductCostAction.bind(null, organizationId, dealId, quote.id)} className="mt-4 grid gap-4 sm:grid-cols-2"><Field label="Quote product line"><select className="focus-ring h-10 w-full rounded-lg border bg-background px-3 text-sm" name="quoteLineId" required><option value="">Choose Quote line</option>{quote.productLines.map((line) => <option key={line.id} value={line.id}>{line.description} · {money(line.amountCents)}</option>)}</select></Field><Field label="Backend product catalog"><select className="focus-ring h-10 w-full rounded-lg border bg-background px-3 text-sm" name="productId" required><option value="">Choose product</option>{workspace.backendProducts.map((product) => <option key={product.id} value={product.id}>{product.name} · {product.code}</option>)}</select></Field><MoneyField label="Internal cost" name="cost" required /><button className="focus-ring min-h-10 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground sm:col-span-2">Save internal cost snapshot</button></form></details>
                     ) : null}
                     {canViewSensitive && quote.profitability ? <section className="mt-4 rounded-lg border bg-muted/20 p-3"><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Internal deal profitability</p><dl className="mt-3 grid gap-3 sm:grid-cols-3"><Fact label="Front gross" value={money(quote.profitability.frontGrossCents)} /><Fact label="Backend gross" value={money(quote.profitability.backendGrossCents)} /><Fact label="Total gross" value={money(quote.profitability.totalGrossCents)} /><Fact label="Vehicle cost" value={money(quote.profitability.vehicleCostCents)} /><Fact label="Pack" value={money(quote.profitability.packCents)} /><Fact label="Cost source" value={quote.profitability.costSourceLabel} /></dl></section> : null}
-                    {quote.status === "draft" && canViewSensitive && !quote.profitability ? <form action={captureQuoteProfitabilityAction.bind(null, organizationId, dealId, quote.id)} className="mt-4 border-t pt-4"><p className="text-xs text-muted-foreground">Profitability uses the latest authoritative inventory cost and the effective pack policy. If either input is unavailable or invalid, capture fails closed.</p><button className="focus-ring mt-3 min-h-10 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground">Capture immutable profitability</button></form> : null}
+                    {quote.status === "draft" && !superseded && canViewSensitive && !quote.profitability ? <form action={workspace.deal.profitabilityPrerequisite?.ready ? captureQuoteProfitabilityAction.bind(null, organizationId, dealId, quote.id) : undefined} className="mt-4 border-t pt-4"><p className="text-xs text-muted-foreground">{workspace.deal.profitabilityPrerequisite?.ready ? "Profitability will snapshot the authoritative inventory cost and effective pack policy for this immutable Quote version." : `Profitability cannot be captured yet. Missing: ${workspace.deal.profitabilityPrerequisite?.missing.join(", ") ?? "required profitability inputs"}.`}</p><button className="focus-ring mt-3 min-h-10 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50" disabled={!workspace.deal.profitabilityPrerequisite?.ready}>Capture immutable profitability</button></form> : null}
                   </li>
-                ))}
+                );})}
               </ul>
             ) : (
               <div className="mt-4 rounded-xl border bg-card p-8 text-center text-sm text-muted-foreground">

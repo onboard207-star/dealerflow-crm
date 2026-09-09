@@ -8,5 +8,6 @@ describe("PostgresTradeProvider", () => {
     expect(source).toContain('uniqueConstraint(error) === "inventory_units_active_vehicle_unique"');
     expect(source).toContain("already has an active dealership inventory record");
     expect(source).toContain("The acquired stock number is already in use.");
+    expect(source).toContain('"delivery.completed_early"');
   });
 });

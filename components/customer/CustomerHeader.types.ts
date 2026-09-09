@@ -37,6 +37,7 @@ export interface CustomerHeaderData {
   name: string;
   initials?: string;
   status: string;
+  buyingJourneyStatus?: string;
   temperature: CustomerTemperature;
   buyingScore?: CustomerScore;
   healthScore?: CustomerScore;
@@ -53,6 +54,7 @@ export type CustomerActionAvailability = Partial<Record<CustomerHeaderAction, bo
 interface CustomerHeaderBaseProps {
   className?: string;
   onAction?: (action: CustomerHeaderAction) => void;
+  actionUnavailableReasons?: Partial<Record<CustomerHeaderAction, string>>;
 }
 
 export interface CustomerHeaderReadyProps extends CustomerHeaderBaseProps {

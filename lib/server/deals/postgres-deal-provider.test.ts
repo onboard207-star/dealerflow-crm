@@ -15,5 +15,7 @@ describe("PostgresDealProvider", () => {
     expect(source).toContain("q.version=d.accepted_quote_version");
     expect(source).toContain("deal_document_requirements");
     expect(source).toContain("'canonical-quote','complete'");
+    expect(source).toContain("Obsolete after Deal delivery.");
+    expect(source).toContain("task_status_events");
   });
 });

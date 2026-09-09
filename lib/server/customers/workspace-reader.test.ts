@@ -1,9 +1,15 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 
 import type { DatabaseClient, DatabasePool } from "@/lib/server/database";
 import { CustomerWorkspaceReader } from "./workspace-reader";
 
 describe("CustomerWorkspaceReader", () => {
+  it("keeps the purchased primary vehicle visible after delivery", () => {
+    const source = readFileSync(new URL("./workspace-reader.ts", import.meta.url), "utf8");
+    expect(source).toContain("vi.status IN ('active','purchased')");
+    expect(source).toContain("CASE vi.status WHEN 'purchased' THEN 0 ELSE 1 END");
+  });
   it("applies allowed locations to the customer lookup before reading related data", async () => {
     const query = vi.fn<DatabaseClient["query"]>()
       .mockResolvedValueOnce({})

@@ -171,7 +171,8 @@ export function CustomerHeader(props: CustomerHeaderProps) {
                 >
                   {customer.name}
                 </h1>
-                <StatusBadge label={customer.status} />
+                <StatusBadge label={`Customer ${customer.status}`} />
+                {customer.buyingJourneyStatus ? <StatusBadge label={`Buying journey ${customer.buyingJourneyStatus}`} /> : null}
                 <TemperatureBadge temperature={customer.temperature} />
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
@@ -239,7 +240,7 @@ export function CustomerHeader(props: CustomerHeaderProps) {
                 variant={index === 0 && available ? "default" : "outline"}
                 className="h-11 min-w-0 px-3"
                 disabled={!available}
-                aria-describedby={!available ? unavailableMessageId : undefined}
+                aria-describedby={!available ? `${unavailableMessageId}-${action}` : undefined}
                 onClick={() => props.onAction?.(action)}
               >
                 <Icon className="size-4 shrink-0" aria-hidden="true" />
@@ -248,13 +249,7 @@ export function CustomerHeader(props: CustomerHeaderProps) {
             );
           })}
         </div>
-        <p id={unavailableMessageId} className="sr-only">
-          {isOffline
-            ? "This action is unavailable while offline."
-            : isArchived
-              ? "This action is unavailable for an archived customer."
-              : "This action is unavailable for this customer."}
-        </p>
+        {quickActions.map(({ action }) => <p id={`${unavailableMessageId}-${action}`} className="sr-only" key={action}>{isOffline ? "This action is unavailable while offline." : isArchived ? "This action is unavailable for an archived customer." : props.actionUnavailableReasons?.[action] ?? "This action is unavailable for this customer."}</p>)}
       </div>
     </section>
   );

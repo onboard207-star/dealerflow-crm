@@ -147,8 +147,9 @@ export class VehicleWorkspaceReader {
         JOIN customers customer ON customer.organization_id=interest.organization_id AND customer.id=interest.customer_id
         JOIN leads lead ON lead.organization_id=interest.organization_id AND lead.id=interest.lead_id
         LEFT JOIN users owner ON owner.id=lead.assigned_user_id
-        WHERE interest.organization_id=$1 AND interest.vehicle_id=$2 AND interest.status='active'
-          AND lead.status IN ('open','working','qualified')
+        WHERE interest.organization_id=$1 AND interest.vehicle_id=$2
+          AND ((interest.status='active' AND lead.status IN ('open','working','qualified'))
+            OR (interest.status='purchased' AND lead.status='sold'))
           AND ($3::boolean OR lead.location_id=ANY($4::text[]))
         ORDER BY CASE interest.role WHEN 'primary' THEN 0 ELSE 1 END,lead.updated_at DESC LIMIT 25`,
         [scope.organizationId, row.vehicle_id, allLocations, locationIds],

@@ -59,6 +59,18 @@ class Session implements DealSession {
       const leadUpdate=await this.db.query<{from_status:"open"|"working"|"qualified"}>(`WITH current AS (SELECT status FROM leads WHERE organization_id=$1 AND id=$2 AND customer_id=$3 AND status IN ('open','working','qualified') FOR UPDATE), updated AS (UPDATE leads lead SET status='sold',stage='delivered',lost_reason=NULL,updated_by=$4,updated_at=now() FROM current WHERE lead.organization_id=$1 AND lead.id=$2 RETURNING current.status AS from_status) SELECT from_status FROM updated`,[record.organizationId,record.leadId,record.customerId,context.actorId]);
       if(!leadUpdate.rows[0])throw new DealIntegrityError("The Lead is no longer eligible for sale completion.");
       await this.db.query("INSERT INTO lead_status_events(id,organization_id,lead_id,from_status,to_status,occurred_at,idempotency_key,created_by) VALUES($1,$2,$3,$4,'sold',now(),$5,$6)",[generateEntityId("lse"),record.organizationId,record.leadId,leadUpdate.rows[0].from_status,`deal-delivered:${record.id}`,context.actorId]);
+      const obsoleteTasks=await this.db.query<{id:string;from_status:"open"|"in-progress"}>(`WITH current AS (
+        SELECT id,status FROM tasks WHERE organization_id=$1 AND customer_id=$2
+          AND (lead_id=$3 OR lead_id IS NULL) AND status IN ('open','in-progress') FOR UPDATE
+      ), updated AS (
+        UPDATE tasks task SET status='cancelled',updated_by=$4,updated_at=now()
+        FROM current WHERE task.organization_id=$1 AND task.id=current.id
+        RETURNING task.id,current.status AS from_status
+      ) SELECT id,from_status FROM updated`,[record.organizationId,record.customerId,record.leadId,context.actorId]);
+      for(const task of obsoleteTasks.rows){
+        await this.db.query("INSERT INTO task_status_events(id,organization_id,task_id,from_status,to_status,reason,idempotency_key,created_by) VALUES($1,$2,$3,$4,'cancelled',$5,$6,$7)",[generateEntityId("tse"),record.organizationId,task.id,task.from_status,"Obsolete after Deal delivery.",`deal-delivered:${record.id}:task:${task.id}`,context.actorId]);
+        await this.db.query("INSERT INTO audit_logs(id,organization_id,actor_id,action,entity_type,entity_id,source,correlation_id) VALUES($1,$2,$3,'task.cancelled','task',$4,'application',$5)",[generateEntityId("aud"),record.organizationId,context.actorId,task.id,context.correlationId]);
+      }
       await this.db.query(`UPDATE lead_vehicle_interests SET status = CASE WHEN vehicle_id = $4 THEN 'purchased'::vehicle_interest_status ELSE 'inactive'::vehicle_interest_status END,
         updated_by = $5, updated_at = now() WHERE organization_id = $1 AND lead_id = $2 AND customer_id = $3 AND status = 'active'`,
       [record.organizationId, record.leadId, record.customerId, record.primaryVehicleId, context.actorId]);

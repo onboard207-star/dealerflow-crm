@@ -142,6 +142,7 @@ export default async function VehicleWorkspacePage({ params, searchParams }: Pag
                 <Fact label="Sold" value={formatDate(record.inventory.soldAt)} />
                 <Fact label="Last updated" value={formatDate(record.inventory.updatedAt)} />
               </dl>
+              <p className="mt-5 border-t pt-4 text-xs text-muted-foreground">List price is the current inventory asking price. An accepted customer selling price is an immutable Deal/Quote fact and appears under Related deals.</p>
             </section>
 
             {record.catalogIntelligence ? (
@@ -217,7 +218,7 @@ export default async function VehicleWorkspacePage({ params, searchParams }: Pag
                   <Users aria-hidden="true" className="size-5 text-muted-foreground" />
                   <h2 id="matches-heading" className="font-semibold">Interested customers</h2>
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">Exact active vehicle interests only.</p>
+                <p className="mt-1 text-xs text-muted-foreground">Active interests and completed purchases linked to this exact vehicle.</p>
                 {record.matches.length ? (
                   <ul className="mt-4 divide-y" role="list">
                     {record.matches.map((match) => (
@@ -238,7 +239,7 @@ export default async function VehicleWorkspacePage({ params, searchParams }: Pag
                     ))}
                   </ul>
                 ) : (
-                  <p className="mt-4 text-sm text-muted-foreground">No active customers are linked to this exact vehicle.</p>
+                  <p className="mt-4 text-sm text-muted-foreground">No customers are linked to this exact vehicle.</p>
                 )}
               </section>
             ) : null}

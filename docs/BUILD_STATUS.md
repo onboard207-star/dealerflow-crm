@@ -1,5 +1,16 @@
 # DealerFlow AI Build Status
 
+## SIMULATION RUN #1 PRODUCT HARDENING — LOCAL GATE PASSED
+
+- Canonical customer and vehicle workspaces now retain the purchased primary Vehicle relationship after delivery while continuing to distinguish active interests from completed purchases.
+- Delivery completion now fails closed before the scheduled start. An early completion requires explicit `deal.approve` authority and a mandatory reason; actor, reason, timestamp, status event, and a dedicated `delivery.completed_early` audit action are retained.
+- Older immutable Quote versions are presented as historical and superseded after a newer exact version is accepted. Their prior approval evidence remains visible, but their Quote, approval, terms, and profitability actions are removed.
+- Deal delivery now cancels obsolete open/in-progress customer workflow tasks in the same transaction and writes task status/audit evidence instead of deleting history. Migration `0055_simulation_run_one_hardening` reconciles only tasks created at or before existing delivered events, preserving post-sale follow-up.
+- Profitability capture is disabled before invocation when the Deal lacks a physical Inventory Unit or authoritative inventory cost, and the UI names the missing prerequisite.
+- Bounded adjacent fixes distinguish Customer status from Buying Journey, humanize timeline statuses, explain disabled header actions, close transactional actions for delivered Leads, and explain list price versus accepted Quote selling price.
+- Full local validation passes: Drizzle schema check, product portfolio check, execution-system check, lint, strict TypeScript, 667 tests across 140 files, production build, and whitespace validation.
+- No database migration, deployment, staging mutation, production action, or Simulation Run #2 work has occurred. Isolated-staging migration and Run #1 UI regression remain pending.
+
 ## P1-02 EXACT SYNTHETIC MATCH FIXTURE — VERIFIED IN ISOLATED STAGING
 
 - Selected the accepted `2026 Honda Accord LX FWD CVT` catalog configuration (`vcf_79197e26b9c52b480a8d38d7a899ef15`, stable key `CFG-HONDA-ACCORD-2026-LX-FWD-CVT`, `pilot-ready`) without changing the accepted catalog release.

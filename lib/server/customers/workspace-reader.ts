@@ -59,8 +59,10 @@ export class CustomerWorkspaceReader {
            WHERE i.organization_id = vi.organization_id AND i.vehicle_id = vi.vehicle_id
              AND ($4::boolean OR i.location_id = ANY($5::text[]))
            ORDER BY CASE i.status WHEN 'available' THEN 0 WHEN 'hold' THEN 1 ELSE 2 END, i.updated_at DESC LIMIT 1) inventory ON true
-         WHERE vi.organization_id = $1 AND vi.customer_id = $2 AND vi.lead_id = $3 AND vi.status = 'active'
-         ORDER BY CASE vi.role WHEN 'primary' THEN 0 WHEN 'alternative' THEN 1 ELSE 2 END, vi.priority, vi.created_at`,
+         WHERE vi.organization_id = $1 AND vi.customer_id = $2 AND vi.lead_id = $3
+           AND vi.status IN ('active','purchased')
+         ORDER BY CASE vi.status WHEN 'purchased' THEN 0 ELSE 1 END,
+           CASE vi.role WHEN 'primary' THEN 0 WHEN 'alternative' THEN 1 ELSE 2 END, vi.priority, vi.created_at`,
         [organizationId, customerId, lead.id, allLocations, locationIds],
       )) as { rows: Array<{ id: string; vehicle_id: string; role: "primary" | "alternative" | "trade"; status: string; priority: number; year: number; make: string; model: string; trim: string | null; exterior_color: string | null; vin: string; inventory_id: string | null; inventory_location_id: string | null; stock_number: string | null; inventory_status: string | null; list_price_cents: number | null }> } : { rows: [] };
       const dealResult = visibility.deals && lead ? (await client.query(

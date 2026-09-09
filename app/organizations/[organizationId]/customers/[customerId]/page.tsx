@@ -110,6 +110,7 @@ export default async function CustomerPage({ params }: PageProps) {
     <CustomerWorkspace
       headerProps={{ state: record.customer.status === "archived" ? "archived" : "ready", customer: {
         id: record.customer.id, name: record.customer.displayName, status: record.customer.status,
+        ...(record.lead ? { buyingJourneyStatus: record.lead.stage } : {}),
         temperature: "unknown", ...(record.customer.email ? { email: record.customer.email } : {}),
         ...(record.customer.phone ? { phone: record.customer.phone } : {}),
         ...(record.lead?.assignedUserName ? { assignedSalesperson: { name: record.lead.assignedUserName } } : {}),
@@ -119,6 +120,13 @@ export default async function CustomerPage({ params }: PageProps) {
           dateLabel: new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: record.nextAppointment.timezone }).format(appointmentDate),
           timeLabel: new Intl.DateTimeFormat("en-US", { timeStyle: "short", timeZone: record.nextAppointment.timezone }).format(appointmentDate),
           type: record.nextAppointment.type, status: record.nextAppointment.status } } : {}),
+      }, actionUnavailableReasons: {
+        call: record.customer.phone ? "Calling is not available from this workspace." : "Call unavailable because this customer has no phone number.",
+        text: record.customer.phone ? "Texting requires an active sender, consent, and an enabled messaging action." : "Text unavailable because this customer has no phone number.",
+        email: record.customer.email ? "Email sending is not available from this header." : "Email unavailable because this customer has no email address.",
+        appointment: record.lead?.status === "sold" ? "Appointment creation is unavailable because this buying journey is delivered." : "Use the appointment section to schedule an appointment.",
+        notes: "Use the customer communication section to record an interaction note.",
+        more: "No additional header actions are available for this customer.",
       }}}
       aiCommandProps={toAICommandProps(recommendationRun)}
       aiControls={<AIRecommendationControls
@@ -212,6 +220,7 @@ export default async function CustomerPage({ params }: PageProps) {
       />}
       deliveryControls={<DeliveryHandoffControls
         canUpdate={has("deal.update") && has("inventory.read")}
+        canOverrideEarlyCompletion={has("deal.approve")}
         organizationId={organizationId}
         {...(record.deal ? { deal: { id: record.deal.id, status: record.deal.status } } : {})}
         {...(record.delivery ? { delivery: record.delivery } : {})}

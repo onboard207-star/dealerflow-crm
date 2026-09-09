@@ -15,6 +15,7 @@ export interface DealQuoteWorkspace {
     vehicleLabel: string;
     vin: string;
     stockNumber?: string;
+    profitabilityPrerequisite?: { ready: boolean; missing: readonly string[] };
   };
   quotes: Array<{
     id: string;
@@ -119,6 +120,7 @@ export class DealQuoteWorkspaceReader {
           model: string;
           trim: string | null;
           stock_number: string | null;
+          inventory_unit_id: string | null;
         }>(
           `SELECT
              d.id,
@@ -134,6 +136,7 @@ export class DealQuoteWorkspaceReader {
              v.model,
              v.trim,
              i.stock_number
+             ,d.inventory_unit_id
            FROM deals d
            JOIN customers c
              ON c.organization_id = d.organization_id AND c.id = d.customer_id
@@ -149,6 +152,14 @@ export class DealQuoteWorkspaceReader {
         );
         const row = deal.rows[0];
         if (!row) return null;
+        const costAvailability = row.inventory_unit_id ? await db.query<{ exists: boolean }>(
+          "SELECT EXISTS(SELECT 1 FROM inventory_cost_snapshots WHERE organization_id=$1 AND inventory_unit_id=$2) AS exists",
+          [context.organizationId, row.inventory_unit_id],
+        ) : { rows: [{ exists: false }] };
+        const missingProfitabilityInputs = [
+          ...(!row.inventory_unit_id ? ["A linked physical inventory unit"] : []),
+          ...(row.inventory_unit_id && !costAvailability.rows[0]?.exists ? ["Authoritative inventory cost"] : []),
+        ];
 
         const quotes = await db.query<{
           id: string;
@@ -373,6 +384,7 @@ export class DealQuoteWorkspaceReader {
             vehicleLabel: `${row.year} ${row.make} ${row.model}${row.trim ? ` ${row.trim}` : ""}`,
             vin: row.vin,
             ...(row.stock_number ? { stockNumber: row.stock_number } : {}),
+            profitabilityPrerequisite: { ready: missingProfitabilityInputs.length === 0, missing: missingProfitabilityInputs },
           },
           quotes: quotes.rows.map((quote) => ({
             id: quote.id,

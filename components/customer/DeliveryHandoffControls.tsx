@@ -11,9 +11,10 @@ interface DeliveryHandoffControlsProps {
   deal?: { id: string; status: string };
   delivery?: { id: string; status: "scheduled" | "ready" | "completed" | "cancelled"; startsAt: string; endsAt: string; timezone: string };
   canUpdate: boolean;
+  canOverrideEarlyCompletion?: boolean;
 }
 
-export function DeliveryHandoffControls({ organizationId, deal, delivery, canUpdate }: DeliveryHandoffControlsProps) {
+export function DeliveryHandoffControls({ organizationId, deal, delivery, canUpdate, canOverrideEarlyCompletion = false }: DeliveryHandoffControlsProps) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string>();
@@ -26,12 +27,12 @@ export function DeliveryHandoffControls({ organizationId, deal, delivery, canUpd
     await send(`/api/organizations/${organizationId}/deals/${deal.id}/delivery`, { startsAt, endsAt, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, notes: field(form, "notes") });
   }
 
-  async function transition(toStatus: "ready" | "completed" | "cancelled", reason?: string) {
+  async function transition(toStatus: "ready" | "completed" | "cancelled", reason?: string, earlyCompletionOverride?: boolean) {
     if (!delivery) return;
-    await send(`/api/organizations/${organizationId}/deliveries/${delivery.id}/transitions`, { toStatus, ...(reason ? { reason } : {}) });
+    await send(`/api/organizations/${organizationId}/deliveries/${delivery.id}/transitions`, { toStatus, ...(reason ? { reason } : {}), ...(earlyCompletionOverride ? { earlyCompletionOverride } : {}) });
   }
 
-  async function send(url: string, body: Record<string, string>) {
+  async function send(url: string, body: Record<string, string | boolean>) {
     setPending(true); setMessage(undefined);
     try {
       const response = await fetch(url, { method: "POST", headers: { "content-type": "application/json", "idempotency-key": `delivery:${crypto.randomUUID()}` }, body: JSON.stringify(body) });
@@ -55,7 +56,8 @@ export function DeliveryHandoffControls({ organizationId, deal, delivery, canUpd
         <div className="sm:col-span-2"><Button disabled={pending} type="submit">{pending ? "Scheduling…" : "Schedule delivery"}</Button></div>
       </form> : null}
       {delivery && canUpdate && delivery.status === "scheduled" ? <div className="mt-4"><Button disabled={pending} onClick={() => transition("ready")} type="button">Mark ready</Button></div> : null}
-      {delivery && canUpdate && delivery.status === "ready" ? <div className="mt-4"><Button disabled={pending} onClick={() => transition("completed")} type="button">Confirm customer handoff</Button></div> : null}
+      {delivery && canUpdate && delivery.status === "ready" && new Date() >= new Date(delivery.startsAt) ? <div className="mt-4"><Button disabled={pending} onClick={() => transition("completed")} type="button">Confirm customer handoff</Button></div> : null}
+      {delivery && canUpdate && delivery.status === "ready" && new Date() < new Date(delivery.startsAt) ? <div className="mt-4 rounded-lg border bg-muted/30 p-3"><p className="text-sm text-muted-foreground">Customer handoff is scheduled for {formatDate(delivery.startsAt, delivery.timezone)}. Normal completion becomes available at that time.</p>{canOverrideEarlyCompletion ? <form className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-end" onSubmit={(event)=>{event.preventDefault();void transition("completed",field(new FormData(event.currentTarget),"reason"),true);}}><label className="min-w-0 flex-1 text-sm font-medium">Early-completion reason<input className={inputClass} maxLength={1000} name="reason" required /></label><Button disabled={pending} type="submit" variant="outline">Complete with override</Button></form>:null}</div> : null}
       {delivery && canUpdate && ["scheduled", "ready"].includes(delivery.status) ? <form className="mt-3 flex flex-col gap-3 border-t pt-3 sm:flex-row sm:items-end" onSubmit={(event) => { event.preventDefault(); const form = new FormData(event.currentTarget); void transition("cancelled", field(form, "reason")); }}><label className="min-w-0 flex-1 text-sm font-medium">Cancellation reason<input className={inputClass} maxLength={1000} name="reason" required /></label><Button disabled={pending} type="submit" variant="outline">Cancel delivery</Button></form> : null}
     </section>
   );
