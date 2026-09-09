@@ -60,10 +60,8 @@ Before a release can become accepted:
 
 ## Remaining acceptance work
 
-- Exercise live exact-match replay through the canonical matcher and confirm the single existing match is reused.
-- Attempt a different eligible Configuration after the accepted match and confirm conflict refusal preserves the original match.
-- Complete insufficient-role denial and responsive runtime acceptance for Salesperson and Inventory/Manager-capable users. Manager desktop/mobile rendering and wrong-tenant denial are already verified.
-- Mark `PILOT-P1-02` passed only after these remaining live negative and cross-role checks are recorded.
+- Complete hands-on responsive Vehicle Intelligence review in a separately authenticated Salesperson browser session. Salesperson write denial is already verified through the authenticated application API.
+- Record explicit human role-UAT approval before marking the overall pilot gate passed. The deterministic catalog, match, negative-authorization, and Manager/Inventory-capable acceptance checks are complete.
 
 ## Isolated-staging controlled match — September 9, 2026
 
@@ -76,9 +74,13 @@ Before a release can become accepted:
 - Post-match inspection found exactly one match with four evidence fields. VIN, stock, price, color, location, ownership boundary, status/lifecycle, media, and delivery/sold state were not changed.
 - Manager desktop and mobile-width UI checks passed. A wrong-tenant request failed without exposing the fixture.
 - Production, existing accepted inventory, stock `NDB1FDB2`, and the accepted catalog release were not modified.
+- Canonical match replay returned `200` twice with `created: false`; a different Configuration returned `409`; an authenticated Salesperson attempt returned `403`. The original Configuration remained authoritative.
 
 ## Simulation Run #1 checkpoint
 
 - A clearly synthetic Lead/customer was created in the existing demo tenant and linked to stock `TEST-VI-LX-001`.
 - The journey progressed through safe contact logging, qualification, confirmed appointment, showroom arrival/check-in/start/completion, and Deal `DF-0432892E`.
-- Quote creation is fail-closed because the governed fixture has no selling price. No price, finance term, incentive, cost, pack, lender, or eligibility value was inferred.
+- Founder-approved simulation price `$28,395` was recorded only on immutable Quote versions; the physical Inventory Unit price remained unset. No other pricing or finance value was inferred.
+- Quote v2 was requested by an authenticated Salesperson and approved by a distinct authenticated General Manager after Salesperson self-approval returned `403`. The customer-safe proposal passed privacy review, exact v2 acceptance succeeded, and alternate v1 acceptance returned `409`.
+- The Deal progressed through approval, contracting, required-document completion, delivery readiness, scheduled/ready/completed delivery, final delivered state, and post-delivery follow-up visibility.
+- The Customer workspace visibly reconciles the accepted Quote, completed documents, completed delivery, sold Lead, follow-up task, and chronological timeline. No P0/P1 application defect was found during this continuation.

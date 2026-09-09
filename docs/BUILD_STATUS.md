@@ -11,6 +11,16 @@
 - A wrong-tenant workspace request failed without disclosing the fixture. Live insufficient-role, match-conflict, and cross-role responsive acceptance remain open, so `PILOT-P1-02` is not yet marked passed.
 - Simulation Run #1 has started against the governed fixture: a clearly synthetic Lead/customer progressed through contact, qualification, confirmed appointment, showroom arrival/check-in/start/completion, and Deal creation (`DF-0432892E`). It is paused at Quote because the synthetic Inventory Unit intentionally has no selling price and DealerFlow correctly refuses to fabricate one.
 
+### Live closure continuation — September 9, 2026
+
+- Founder explicitly approved `$28,395` as the simulation-only selling price for `TEST-VI-LX-001`, equal to the governed catalog MSRP Base. Quote v1 was created in the Manager UI with that exact price and no discount, fee, tax, product, accessory, trade, finance, lender, incentive, cost, pack, or eligibility value.
+- The initial Manager request correctly proved self-approval refusal. An existing unexpired Better Auth Salesperson session then created/requested immutable Quote v2 at the same approved price; Salesperson self-approval returned `403`, the distinct authenticated General Manager approval returned `200`, and the customer-safe proposal rendered without internal profitability or manager-rationale fields.
+- Exact Quote v2 acceptance returned `200`; attempted acceptance of alternate v1 returned `409`. The Deal then passed pending approval, Manager approval, contracting, required-document evidence/completion, delivery scheduling/readiness/completion, delivered state, and post-delivery follow-up creation.
+- The Customer workspace visibly reports Deal `DF-0432892E` delivered, Quote v2 accepted/approved at `$28,395`, canonical and uploaded required documents complete, delivery complete, Lead sold, and the open synthetic post-delivery follow-up in both Tasks and Timeline.
+- Vehicle Intelligence exact-match replay returned `200` twice with `created: false`; a conflicting Configuration returned `409`; the authenticated Salesperson mutation returned `403`. The accepted Configuration remained unchanged.
+- Manager desktop/mobile acceptance, Manager/Inventory-capable behavior, wrong-tenant denial, and Salesperson API permission behavior are verified. A separate authenticated Salesperson browser session is still required for hands-on responsive role UAT; permissions were not weakened to remove that human gate.
+- Isolated staging health reports `status=ok`, `APP_ENV=staging`, and deployed commit `f24a767d7cac724771f4377489d7cfd8366d4dec`. No application repair was required, and production, `NDB1FDB2`, existing accepted Inventory Units, and real communications were untouched.
+
 ## VEHICLE INTELLIGENCE MATCH CANDIDATE CONSISTENCY — FIXED LOCALLY
 
 - Reproduced the isolated-staging refusal for synthetic stock `NDB1FDB2`: the physical Vehicle is `2026 Honda Accord Touring`, while the selected governed catalog trim is `Touring Hybrid`.
