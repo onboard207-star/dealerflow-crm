@@ -660,3 +660,10 @@
 - Added an authenticated candidate-read path that returns only exact year/make/model candidates at verified or pilot-ready readiness. It provides canonical DealerFlow Configuration IDs for controlled review without database access or Airtable identifiers; match creation remains separately restricted to `inventory.update`.
 - Local validation passes: Drizzle migration check, product-portfolio reconciliation, execution-system reconciliation, ESLint with no warnings, strict TypeScript, 661 tests across 139 files, optimized production build, and whitespace integrity. The repository still has no configured formatter or Prettier dependency.
 - Isolated-staging matching, cross-role/tenant/location negative acceptance, idempotent replay/conflict acceptance, and responsive Salesperson/Manager/Inventory UI acceptance remain required before `PILOT-P1-02` can be marked passed.
+
+### Simulation Run #1 readiness checkpoint
+
+- Live review identified one P1 workflow gap: the governed Vehicle-to-Configuration service and API were deployed, but no dealership user could initiate a match from the application UI. This prevented the required human-reviewable simulation even though the underlying authorization and evidence path existed.
+- Added a narrow match control to the existing Vehicle workspace. Inventory-capable users can select only exact year/make/model candidates already classified verified or pilot-ready; other users retain read-only Vehicle Intelligence visibility. The control uses the canonical service and preserves the same conflict, idempotency, tenant, rooftop, and capability enforcement.
+- The control explicitly states that VIN, stock, price, location, media, and inventory status remain unchanged. It uses semantic form controls, native keyboard behavior, visible focus styling, existing design tokens, and a mobile-first layout.
+- No schema, catalog release, seed data, accepted journey data, communications path, or physical Inventory record changed in this implementation checkpoint. Live matching and role/responsive acceptance remain pending deployment.
