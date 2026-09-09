@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { authenticate, match } = vi.hoisted(() => ({
+const { authenticate, candidates, match } = vi.hoisted(() => ({
   authenticate: vi.fn(),
+  candidates: vi.fn(),
   match: vi.fn(),
 }));
 
@@ -22,12 +23,13 @@ vi.mock("@/lib/application/vehicle-catalog", async (importOriginal) => {
   return {
     ...actual,
     VehicleConfigurationMatchService: class {
+      candidates = candidates;
       match = match;
     },
   };
 });
 
-import { POST } from "./route";
+import { GET, POST } from "./route";
 
 const context = {
   params: Promise.resolve({ organizationId: "org_demo12", vehicleId: "veh_vehicle1" }),
@@ -40,6 +42,7 @@ describe("vehicle catalog match route", () => {
       created: true,
       match: { id: "vcm_match1", status: "verified" },
     });
+    candidates.mockReset().mockResolvedValue({ configurations: [] });
   });
 
   it("requires a canonical authenticated request body", async () => {
@@ -73,5 +76,11 @@ describe("vehicle catalog match route", () => {
         configurationId: "vcf_12345678901234567890123456789012",
       }),
     );
+  });
+
+  it("lists only candidates resolved by the governed service", async () => {
+    const response = await GET(new Request("http://localhost"), context);
+    expect(response.status).toBe(200);
+    expect(candidates).toHaveBeenCalledWith(expect.objectContaining({ vehicleId: "veh_vehicle1" }));
   });
 });

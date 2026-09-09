@@ -22,6 +22,27 @@ interface Context {
   params: Promise<{ organizationId: string; vehicleId: string }>;
 }
 
+export async function GET(request: Request, context: Context) {
+  const correlationId = request.headers.get("x-correlation-id")?.trim() || `req_${randomUUID()}`;
+  try {
+    const { organizationId, vehicleId } = await context.params;
+    const pool = getDatabasePool();
+    const actor = await authenticateOrganizationRequest(
+      request,
+      organizationId,
+      new PostgresMembershipReader(pool),
+    );
+    const result = await new VehicleConfigurationMatchService(
+      new PostgresVehicleConfigurationMatchProvider(pool, { userId: actor.userId, organizationId }),
+    ).candidates({ actor, organizationId, vehicleId });
+    return NextResponse.json(result, {
+      headers: { "cache-control": "private, no-store", "x-correlation-id": correlationId },
+    });
+  } catch (error) {
+    return failure(error, correlationId);
+  }
+}
+
 export async function POST(request: Request, context: Context) {
   const correlationId =
     request.headers.get("x-correlation-id")?.trim() || `req_${randomUUID()}`;
@@ -60,30 +81,18 @@ export async function POST(request: Request, context: Context) {
       },
     });
   } catch (error) {
-    if (error instanceof SyntaxError) {
-      return problem(400, "invalid_json", "Request body must be valid JSON.", correlationId);
-    }
-    if (error instanceof AuthenticationError) {
-      return problem(401, "unauthorized", error.message, correlationId);
-    }
-    if (error instanceof MembershipError || error instanceof AuthorizationError) {
-      return problem(
-        403,
-        "forbidden",
-        "You do not have permission to verify vehicle catalog matches.",
-        correlationId,
-      );
-    }
-    if (error instanceof VehicleConfigurationMatchError) {
-      return problem(409, "data_conflict", error.message, correlationId);
-    }
-    return problem(
-      500,
-      "internal_error",
-      "The vehicle catalog match could not be recorded.",
-      correlationId,
-    );
+    return failure(error, correlationId);
   }
+}
+
+function failure(error: unknown, correlationId: string) {
+  if (error instanceof SyntaxError) return problem(400, "invalid_json", "Request body must be valid JSON.", correlationId);
+  if (error instanceof AuthenticationError) return problem(401, "unauthorized", error.message, correlationId);
+  if (error instanceof MembershipError || error instanceof AuthorizationError) {
+    return problem(403, "forbidden", "You do not have permission to verify vehicle catalog matches.", correlationId);
+  }
+  if (error instanceof VehicleConfigurationMatchError) return problem(409, "data_conflict", error.message, correlationId);
+  return problem(500, "internal_error", "The vehicle catalog match could not be recorded.", correlationId);
 }
 
 function objectValue(value: unknown): Record<string, unknown> {

@@ -68,6 +68,17 @@ describe("PostgresVehicleConfigurationMatchProvider", () => {
       expect(
         await session.findConfiguration("vcf_12345678901234567890123456789012"),
       ).toMatchObject({ readiness: "pilot-ready", model: "CR-V" });
+      expect(
+        await session.listEligibleConfigurations({
+          id: "veh_vehicle1",
+          organizationId: "org_demo12",
+          locationId: "loc_main1",
+          year: 2026,
+          make: "Honda",
+          model: "CR-V",
+          trim: "Sport-L Hybrid",
+        }),
+      ).toHaveLength(1);
       expect(await session.findVerified("org_demo12", "veh_vehicle1")).toMatchObject({
         matchedBy: "usr_inventory1",
         status: "verified",

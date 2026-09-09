@@ -74,7 +74,7 @@ class Session implements VehicleConfigurationMatchSession {
   ): Promise<CatalogMatchConfiguration | undefined> {
     const result = await this.db.query<ConfigurationRow>(
       `SELECT configuration.id, model_year.year, make.name AS make, model.name AS model,
-              trim.name AS trim, configuration.readiness
+              trim.name AS trim, configuration.name, configuration.readiness
        FROM vehicle_catalog_configurations configuration
        JOIN vehicle_catalog_trims trim ON trim.id = configuration.trim_id
        JOIN vehicle_catalog_model_years model_year ON model_year.id = trim.model_year_id
@@ -85,6 +85,27 @@ class Session implements VehicleConfigurationMatchSession {
       [configurationId],
     );
     return result.rows[0];
+  }
+
+  async listEligibleConfigurations(
+    vehicle: CatalogMatchVehicle,
+  ): Promise<readonly CatalogMatchConfiguration[]> {
+    const result = await this.db.query<ConfigurationRow>(
+      `SELECT configuration.id, model_year.year, make.name AS make, model.name AS model,
+              trim.name AS trim, configuration.name, configuration.readiness
+       FROM vehicle_catalog_configurations configuration
+       JOIN vehicle_catalog_trims trim ON trim.id = configuration.trim_id
+       JOIN vehicle_catalog_model_years model_year ON model_year.id = trim.model_year_id
+       JOIN vehicle_catalog_models model ON model.id = model_year.model_id
+       JOIN vehicle_catalog_makes make ON make.id = model.make_id
+       WHERE model_year.year = $1 AND lower(make.name) = lower($2)
+         AND lower(model.name) = lower($3)
+         AND configuration.readiness IN ('verified', 'pilot-ready')
+       ORDER BY CASE WHEN lower(trim.name) = lower($4) THEN 0 ELSE 1 END,
+                trim.name, configuration.name, configuration.id`,
+      [vehicle.year, vehicle.make, vehicle.model, vehicle.trim ?? ""],
+    );
+    return result.rows;
   }
 
   async findVerified(
