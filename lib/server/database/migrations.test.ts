@@ -319,4 +319,15 @@ describe("tenant database migrations", () => {
     expect(migration).toContain("INSERT INTO audit_logs");
     expect(migration).not.toContain("DELETE FROM tasks");
   });
+
+  it("adds an immutable tenant-safe Deal vehicle-change lifecycle", () => {
+    const migration = readFileSync(join(migrationDirectory, "0056_deal_vehicle_change_lifecycle.sql"), "utf8");
+    expect(migration).toContain("deal_vehicle_change_events");
+    expect(migration).toContain("deal_vehicle_change_events_customer_lead_fk");
+    expect(migration).toContain("deal_vehicle_change_events_to_inventory_fk");
+    expect(migration).toContain('ALTER TABLE "deal_vehicle_change_events" FORCE ROW LEVEL SECURITY');
+    expect(migration).toContain("invalidated_quote_ids");
+    expect(migration).not.toContain("FOR UPDATE");
+    expect(migration).not.toContain("FOR DELETE");
+  });
 });

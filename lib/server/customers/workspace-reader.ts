@@ -8,7 +8,7 @@ export interface CustomerWorkspaceRecord {
   nextAppointment?: { id: string; type: string; status: string; startsAt: string; timezone: string; assignedUserId?: string };
   currentVisit?: { id: string; locationId: string; status: "checked-in" | "active"; purpose: string; arrivedAt: string; startedAt?: string; appointmentId?: string; assignedUserId?: string };
   vehicleInterests: readonly { id: string; vehicleId: string; role: "primary" | "alternative" | "trade"; status: string; priority: number; year: number; make: string; model: string; trim?: string; exteriorColor?: string; vin: string; inventoryId?: string; inventoryLocationId?: string; stockNumber?: string; inventoryStatus?: string; listPriceCents?: number }[];
-  deal?: { id: string; dealNumber: string; status: "draft" | "working" | "pending-approval" | "approved" | "contracted" | "delivered" | "cancelled"; purchaseType?: string; agreedPriceCents?: number };
+  deal?: { id: string; dealNumber: string; status: "draft" | "working" | "pending-approval" | "approved" | "contracted" | "delivered" | "cancelled"; primaryVehicleId: string; inventoryUnitId?: string; purchaseType?: string; agreedPriceCents?: number };
   quote?: { id: string; version: number; status: "draft" | "presented" | "accepted" | "rejected" | "expired"; purchaseType: "cash" | "finance" | "lease"; currency: string; totalCents: number; expiresAt?: string; approvalStatus?: "pending" | "approved" | "declined" };
   tradeAppraisal?: { id: string; vehicleId: string; version: number; status: "draft" | "presented" | "accepted" | "rejected" | "expired" | "acquired"; allowanceCents: number; payoffCents: number; equityCents: number; vehicleLabel: string };
   delivery?: { id: string; status: "scheduled" | "ready" | "completed" | "cancelled"; startsAt: string; endsAt: string; timezone: string; completedAt?: string };
@@ -66,11 +66,11 @@ export class CustomerWorkspaceReader {
         [organizationId, customerId, lead.id, allLocations, locationIds],
       )) as { rows: Array<{ id: string; vehicle_id: string; role: "primary" | "alternative" | "trade"; status: string; priority: number; year: number; make: string; model: string; trim: string | null; exterior_color: string | null; vin: string; inventory_id: string | null; inventory_location_id: string | null; stock_number: string | null; inventory_status: string | null; list_price_cents: number | null }> } : { rows: [] };
       const dealResult = visibility.deals && lead ? (await client.query(
-        `SELECT id, deal_number, status, purchase_type, agreed_price_cents FROM deals
+        `SELECT id, deal_number, status, purchase_type, agreed_price_cents, primary_vehicle_id, inventory_unit_id FROM deals
          WHERE organization_id = $1 AND customer_id = $2 AND lead_id = $3
          ORDER BY updated_at DESC LIMIT 1`,
         [organizationId, customerId, lead.id],
-      )) as { rows: Array<{ id: string; deal_number: string; status: "draft" | "working" | "pending-approval" | "approved" | "contracted" | "delivered" | "cancelled"; purchase_type: string | null; agreed_price_cents: number | null }> } : { rows: [] };
+      )) as { rows: Array<{ id: string; deal_number: string; status: "draft" | "working" | "pending-approval" | "approved" | "contracted" | "delivered" | "cancelled"; purchase_type: string | null; agreed_price_cents: number | null; primary_vehicle_id: string; inventory_unit_id: string | null }> } : { rows: [] };
       const currentDealForQuote = dealResult.rows[0];
       const quoteResult = visibility.deals && currentDealForQuote ? (await client.query(
         `SELECT quote.id, quote.version, quote.status, quote.purchase_type, quote.currency, quote.total_cents,
@@ -159,7 +159,16 @@ export class CustomerWorkspaceReader {
           UNION ALL SELECT e.id, 'deal', 'Deal status changed', d.deal_number, e.to_status::text, e.occurred_at
             FROM deal_status_events e JOIN deals d ON d.organization_id = e.organization_id AND d.id = e.deal_id
             WHERE d.organization_id = $1 AND d.customer_id = $2 AND $7::boolean
-          UNION ALL SELECT e.id, 'quote', 'Quote status changed', 'Version ' || q.version::text, e.to_status::text, e.occurred_at
+          UNION ALL SELECT e.id, 'vehicle', 'Deal vehicle changed',
+            old_vehicle.year::text || ' ' || old_vehicle.make || ' ' || old_vehicle.model || ' → ' || new_vehicle.year::text || ' ' || new_vehicle.make || ' ' || new_vehicle.model || '. ' || e.reason,
+            'changed', e.occurred_at
+            FROM deal_vehicle_change_events e
+            JOIN deals d ON d.organization_id=e.organization_id AND d.id=e.deal_id
+            JOIN vehicles old_vehicle ON old_vehicle.organization_id=e.organization_id AND old_vehicle.id=e.from_vehicle_id
+            JOIN vehicles new_vehicle ON new_vehicle.organization_id=e.organization_id AND new_vehicle.id=e.to_vehicle_id
+            WHERE d.organization_id=$1 AND d.customer_id=$2 AND $7::boolean
+          UNION ALL SELECT e.id, 'quote', 'Quote status changed',
+            'Version ' || q.version::text || COALESCE('. ' || e.reason, ''), e.to_status::text, e.occurred_at
             FROM deal_quote_status_events e JOIN deal_quotes q ON q.organization_id = e.organization_id AND q.id = e.quote_id
             JOIN deals d ON d.organization_id = q.organization_id AND d.id = q.deal_id
             WHERE d.organization_id = $1 AND d.customer_id = $2 AND $7::boolean
@@ -218,6 +227,8 @@ export class CustomerWorkspaceReader {
           ...(row.inventory_status ? { inventoryStatus: row.inventory_status } : {}),
           ...(row.list_price_cents !== null ? { listPriceCents: row.list_price_cents } : {}) })),
         ...(currentDeal ? { deal: { id: currentDeal.id, dealNumber: currentDeal.deal_number, status: currentDeal.status,
+          primaryVehicleId: currentDeal.primary_vehicle_id,
+          ...(currentDeal.inventory_unit_id ? { inventoryUnitId: currentDeal.inventory_unit_id } : {}),
           ...(currentDeal.purchase_type ? { purchaseType: currentDeal.purchase_type } : {}),
           ...(currentDeal.agreed_price_cents !== null ? { agreedPriceCents: currentDeal.agreed_price_cents } : {}) } } : {}),
         ...(currentQuote ? { quote: { id: currentQuote.id, version: currentQuote.version, status: currentQuote.status,

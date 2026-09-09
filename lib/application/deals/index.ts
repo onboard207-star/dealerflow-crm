@@ -1,4 +1,5 @@
 export * from "./manage-deal";
+export * from "./manage-deal-vehicle";
 export * from "./manage-quote";
 export * from "./manage-quote-approval";
 export * from "./manage-quote-approval-policy";

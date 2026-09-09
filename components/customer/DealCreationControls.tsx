@@ -21,7 +21,7 @@ interface DealCreationControlsProps {
   appointmentId?: string;
   showroomVisitId?: string;
   ownerUserId?: string;
-  existingDeal?: { id: string; dealNumber: string; status: "draft" | "working" | "pending-approval" | "approved" | "contracted" | "delivered" | "cancelled"; deliveryCompleted: boolean };
+  existingDeal?: { id: string; dealNumber: string; status: "draft" | "working" | "pending-approval" | "approved" | "contracted" | "delivered" | "cancelled"; primaryVehicleId: string; inventoryUnitId?: string; deliveryCompleted: boolean };
   vehicles: readonly DealVehicleOption[];
   canCreate: boolean;
   canUpdate: boolean;
@@ -69,6 +69,27 @@ export function DealCreationControls({ organizationId, customerId, leadId, appoi
     } finally { setPending(false); }
   }
 
+  async function changeVehicle(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!existingDeal || !leadId) return;
+    const form = new FormData(event.currentTarget);
+    const vehicle = vehicles.find((item) => item.inventoryUnitId === field(form, "inventoryUnitId"));
+    if (!vehicle) { setMessage("Select the new primary inventory vehicle."); return; }
+    setPending(true); setMessage(undefined);
+    try {
+      const response = await fetch(`/api/organizations/${organizationId}/deals/${existingDeal.id}/vehicle`, {
+        method: "POST",
+        headers: { "content-type": "application/json", "idempotency-key": `deal-vehicle:${crypto.randomUUID()}` },
+        body: JSON.stringify({ customerId, leadId, vehicleId: vehicle.vehicleId, inventoryUnitId: vehicle.inventoryUnitId, reason: field(form, "reason") }),
+      });
+      if (!response.ok) throw new Error(await readProblem(response));
+      setMessage("Deal vehicle changed. Any draft Quote was made historical; create a new Quote version.");
+      router.refresh();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "The Deal vehicle could not be changed.");
+    } finally { setPending(false); }
+  }
+
   return (
     <section aria-labelledby="deal-creation-heading" className="rounded-xl border bg-card p-4 text-card-foreground shadow-soft sm:p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -78,6 +99,17 @@ export function DealCreationControls({ organizationId, customerId, leadId, appoi
       <p aria-live="polite" className="mt-3 text-sm text-muted-foreground" role="status">{message}</p>
       {existingDeal && existingDeal.status !== "delivered" && existingDeal.status !== "cancelled" ? <div className="mt-4 space-y-3">
         <DealNextAction deal={existingDeal} canApprove={canApprove} canUpdate={canUpdate} disabled={pending} onTransition={transition} />
+        {canUpdate && leadId && ["draft", "working"].includes(existingDeal.status) && vehicles.some((vehicle) => vehicle.vehicleId !== existingDeal.primaryVehicleId || vehicle.inventoryUnitId !== existingDeal.inventoryUnitId) ? (
+          <details className="border-t pt-3">
+            <summary className="focus-ring cursor-pointer rounded-sm text-sm font-semibold">Change Deal vehicle</summary>
+            <p className="mt-2 text-xs leading-5 text-muted-foreground">Available only before approval. Any current draft Quote becomes immutable history and new commercial terms are required.</p>
+            <form className="mt-3 grid gap-3 sm:grid-cols-2" onSubmit={changeVehicle}>
+              <label className="text-sm font-medium sm:col-span-2">New primary inventory vehicle<select className={inputClass} name="inventoryUnitId" required><option value="">Select vehicle</option>{vehicles.filter((vehicle) => vehicle.vehicleId !== existingDeal.primaryVehicleId || vehicle.inventoryUnitId !== existingDeal.inventoryUnitId).map((vehicle) => <option key={vehicle.inventoryUnitId} value={vehicle.inventoryUnitId}>{vehicle.label} · {vehicle.detail}</option>)}</select></label>
+              <label className="text-sm font-medium sm:col-span-2">Reason for change<input className={inputClass} maxLength={1000} name="reason" required /></label>
+              <div className="sm:col-span-2"><Button disabled={pending} type="submit">{pending ? "Changing vehicle…" : "Change Deal vehicle"}</Button></div>
+            </form>
+          </details>
+        ) : null}
         {canUpdate ? <form className="flex flex-col gap-3 border-t pt-3 sm:flex-row sm:items-end" onSubmit={(event) => { event.preventDefault(); const form = new FormData(event.currentTarget); void transition("cancelled", field(form, "reason")); }}><label className="min-w-0 flex-1 text-sm font-medium">Cancellation reason<input className={inputClass} maxLength={1000} name="reason" required /></label><Button disabled={pending} type="submit" variant="outline">Cancel Deal</Button></form> : null}
       </div> : null}
       {!existingDeal && !leadId ? <p className="mt-3 rounded-lg border border-dashed bg-muted/30 p-3 text-sm text-muted-foreground">An active Lead is required before creating a Deal.</p> : null}

@@ -144,7 +144,11 @@ export default async function DealQuoteWorkspacePage({ params, searchParams }: P
                       <Fact label="Total" value={money(quote.totalCents)} />
                     </dl>
 
-                    {superseded ? <p className="mt-4 rounded-lg border bg-muted/20 p-3 text-xs leading-5 text-muted-foreground">Historical immutable version. Superseded by accepted Quote v{latest.version}; no actions remain available.</p> : quote.approval ? (
+                    {superseded ? <p className="mt-4 rounded-lg border bg-muted/20 p-3 text-xs leading-5 text-muted-foreground">Historical immutable version. Superseded by accepted Quote v{latest.version}; no actions remain available.</p> : quote.status === "expired" && quote.statusReason ? (
+                      <p className="mt-4 rounded-lg border bg-muted/20 p-3 text-xs leading-5 text-muted-foreground">
+                        Historical immutable version. {quote.statusReason} New commercial terms require a new Quote version.
+                      </p>
+                    ) : quote.approval ? (
                       <div className="mt-4 rounded-lg border bg-muted/20 p-3 text-xs leading-5 text-muted-foreground">
                         <p>
                           <strong className="text-foreground">Manager approval:</strong>{" "}

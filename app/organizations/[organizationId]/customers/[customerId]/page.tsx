@@ -198,7 +198,14 @@ export default async function CustomerPage({ params }: PageProps) {
         {...(record.currentVisit ? { showroomVisitId: record.currentVisit.id } : {})}
         vehicles={dealVehicles}
         {...(record.lead && ["open", "working", "qualified"].includes(record.lead.status) ? { leadId: record.lead.id } : {})}
-        {...(record.deal && record.deal.status !== "cancelled" ? { existingDeal: { id: record.deal.id, dealNumber: record.deal.dealNumber, status: record.deal.status, deliveryCompleted: record.delivery?.status === "completed" } } : {})}
+        {...(record.deal && record.deal.status !== "cancelled" ? { existingDeal: {
+          id: record.deal.id,
+          dealNumber: record.deal.dealNumber,
+          status: record.deal.status,
+          primaryVehicleId: record.deal.primaryVehicleId,
+          ...(record.deal.inventoryUnitId ? { inventoryUnitId: record.deal.inventoryUnitId } : {}),
+          deliveryCompleted: record.delivery?.status === "completed",
+        } } : {})}
       />}
       quoteControls={<QuoteControls
         canCreate={has("quote.create")}

@@ -1,4 +1,5 @@
 export * from "./postgres-deal-provider";
+export * from "./postgres-deal-vehicle-provider";
 export * from "./deal-directory";
 export * from "./deal-quote-workspace-reader";
 export * from "./desking-reader";

@@ -31,6 +31,7 @@ export interface DealQuoteWorkspace {
     expiresAt?: string;
     presentedAt?: string;
     acceptedAt?: string;
+    statusReason?: string;
     approval?: {
       id: string;
       status: "pending" | "approved" | "declined";
@@ -218,6 +219,7 @@ export class DealQuoteWorkspaceReader {
           cost_source_reference: string | null;
           cost_effective_at: Date | null;
           profit_captured_at: Date | null;
+          status_reason: string | null;
         }>(
           `SELECT
              q.id,
@@ -276,6 +278,11 @@ export class DealQuoteWorkspaceReader {
              ,ics.source_reference AS cost_source_reference
              ,ics.effective_at AS cost_effective_at
              ,pfs.captured_at AS profit_captured_at
+             ,(SELECT event.reason
+                 FROM deal_quote_status_events event
+                WHERE event.organization_id=q.organization_id AND event.quote_id=q.id
+                ORDER BY event.occurred_at DESC, event.id DESC
+                LIMIT 1) AS status_reason
            FROM deal_quotes q
            LEFT JOIN deal_quote_approvals a
              ON a.organization_id = q.organization_id AND a.quote_id = q.id
@@ -400,6 +407,7 @@ export class DealQuoteWorkspaceReader {
             ...(quote.expires_at ? { expiresAt: quote.expires_at.toISOString() } : {}),
             ...(quote.presented_at ? { presentedAt: quote.presented_at.toISOString() } : {}),
             ...(quote.accepted_at ? { acceptedAt: quote.accepted_at.toISOString() } : {}),
+            ...(quote.status_reason ? { statusReason: quote.status_reason } : {}),
             ...(quote.approval_id && quote.approval_status && quote.requested_at
               ? {
                   approval: {
