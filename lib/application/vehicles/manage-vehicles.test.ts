@@ -16,6 +16,7 @@ class MemoryProvider implements VehicleProvider, VehicleSession {
   async createInventory(_context: RequestContext, input: Omit<InventoryUnitRecord, "status">) { const item: InventoryUnitRecord = { ...input, status: "available" }; this.inventory.push(item); return item; }
   async findInterestByIdempotency(scope: { organizationId: string }, key: string) { return this.interests.find((item) => item.organizationId === scope.organizationId && item.idempotencyKey === key) ?? null; }
   async interestContextExists(_scope: { organizationId: string }, input: { customerId: string; leadId: string; vehicleId: string; role: "primary" | "alternative" | "trade" }) { this.contextInput = input; return this.contextExists; }
+  async deactivateCurrentPrimary(_context: RequestContext, input: { customerId: string; leadId: string; exceptVehicleId: string }) { let changed=0;this.interests=this.interests.map((item)=>{if(item.customerId===input.customerId&&item.leadId===input.leadId&&item.role==="primary"&&item.status==="active"&&item.vehicleId!==input.exceptVehicleId){changed+=1;return{...item,status:"inactive"};}return item;});return changed; }
   async createInterest(_context: RequestContext, input: Omit<VehicleInterestRecord, "status">) { const item: VehicleInterestRecord = { ...input, status: "active" }; this.interests.push(item); return item; }
 }
 
@@ -33,6 +34,7 @@ describe("VehicleInterestService", () => {
   it("links a customer lead to a canonical vehicle idempotently", async () => { const provider = new MemoryProvider(); const service = new VehicleInterestService(provider); const first = await service.add(interestRequest()); const second = await service.add(interestRequest()); expect(first.created).toBe(true); expect(second.created).toBe(false); expect(provider.interests).toHaveLength(1); expect(provider.contextInput).toEqual({ customerId: "cus_jordan", leadId: "led_jordan", vehicleId: "veh_crv", role: "primary" }); });
   it("rejects a vehicle that is outside the verified lead-customer context", async () => { const provider = new MemoryProvider(); provider.contextExists = false; await expect(new VehicleInterestService(provider).add(interestRequest())).rejects.toBeInstanceOf(VehicleIntegrityError); });
   it("requires an authorized dealership location for every interest", async () => { const request = interestRequest(); delete request.locationId; await expect(new VehicleInterestService(new MemoryProvider()).add(request)).rejects.toBeInstanceOf(VehicleValidationError); });
+  it("atomically retires the prior primary interest when the customer switches vehicles", async () => { const provider=new MemoryProvider();const service=new VehicleInterestService(provider);await service.add(interestRequest({vehicleId:"veh_first",idempotencyKey:"interest:first"}));await service.add(interestRequest({vehicleId:"veh_second",idempotencyKey:"interest:second"}));expect(provider.interests).toEqual([expect.objectContaining({vehicleId:"veh_first",status:"inactive"}),expect.objectContaining({vehicleId:"veh_second",status:"active"})]); });
 });
 
 describe("TradeVehicleService", () => {

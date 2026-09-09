@@ -44,6 +44,15 @@ class Session implements VehicleSession {
         AND ($6='trade' OR EXISTS(SELECT 1 FROM inventory_units i WHERE i.organization_id=l.organization_id
           AND i.vehicle_id=v.id AND i.location_id=$5 AND i.status IN ('available','hold')))) AS exists`,
     [scope.organizationId, input.customerId, input.leadId, input.vehicleId, scope.locationId ?? null, input.role]); return result.rows[0]?.exists === true; }
+  async deactivateCurrentPrimary(context: RequestContext, input: { customerId: string; leadId: string; exceptVehicleId: string }) {
+    const result = await this.db.query<{ id: string }>(`UPDATE lead_vehicle_interests
+      SET status='inactive',updated_by=$5,updated_at=now()
+      WHERE organization_id=$1 AND customer_id=$2 AND lead_id=$3 AND role='primary'
+        AND status='active' AND vehicle_id<>$4 RETURNING id`,
+    [context.organizationId, input.customerId, input.leadId, input.exceptVehicleId, context.actorId]);
+    for (const row of result.rows) await audit(this.db, context, "vehicle_interest.superseded", "vehicle_interest", row.id);
+    return result.rows.length;
+  }
   async createInterest(context: RequestContext, input: Omit<VehicleInterestRecord, "status">) { const result = await this.db.query<InterestRow>(`INSERT INTO lead_vehicle_interests
       (id, organization_id, customer_id, lead_id, vehicle_id, role, status, priority, notes, idempotency_key, created_by, updated_by)
       VALUES ($1,$2,$3,$4,$5,$6,'active',$7,$8,$9,$10,$10) RETURNING *`,

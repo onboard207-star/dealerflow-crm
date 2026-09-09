@@ -19,6 +19,7 @@ export interface VehicleSession {
   createInventory(context: RequestContext, input: Omit<InventoryUnitRecord, "status">): Promise<InventoryUnitRecord>;
   findInterestByIdempotency(scope: OrganizationScope, key: string): Promise<VehicleInterestRecord | null>;
   interestContextExists(scope: OrganizationScope, input: { customerId: string; leadId: string; vehicleId: string; role: VehicleInterestRole }): Promise<boolean>;
+  deactivateCurrentPrimary(context: RequestContext, input: { customerId: string; leadId: string; exceptVehicleId: string }): Promise<number>;
   createInterest(context: RequestContext, input: Omit<VehicleInterestRecord, "status">): Promise<VehicleInterestRecord>;
 }
 export interface VehicleProvider { transaction<Result>(operation: (session: VehicleSession) => Promise<Result>): Promise<Result>; }
@@ -59,6 +60,15 @@ export class VehicleInterestService {
       const existing = await session.findInterestByIdempotency(request, request.idempotencyKey);
       if (existing) return { interest: existing, created: false };
       if (!await session.interestContextExists(request, { customerId: request.customerId, leadId: request.leadId, vehicleId: request.vehicleId, role: request.role })) throw new VehicleIntegrityError("The lead, customer, vehicle, or location context is unavailable.");
+      const context = requestContext(request);
+      if (request.role === "primary") {
+        await session.acquireIdempotencyLock(request, `primary-interest:${request.leadId}`);
+        await session.deactivateCurrentPrimary(context, {
+          customerId: request.customerId,
+          leadId: request.leadId,
+          exceptVehicleId: request.vehicleId,
+        });
+      }
       const interest = await session.createInterest(requestContext(request), { id: generateEntityId("vhi"), organizationId: request.organizationId,
         ...(request.locationId ? { locationId: request.locationId } : {}), customerId: request.customerId, leadId: request.leadId,
         vehicleId: request.vehicleId, role: request.role, priority: normalized.priority,
