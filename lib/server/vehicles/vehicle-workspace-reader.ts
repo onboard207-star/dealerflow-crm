@@ -21,6 +21,19 @@ export interface VehicleWorkspaceRecord {
     trim?: string;
     exteriorColor?: string;
   };
+  catalogIntelligence?: {
+    configurationId: string;
+    configurationName: string;
+    readiness: string;
+    drivetrain?: string;
+    powertrain?: string;
+    engine?: string;
+    transmission?: string;
+    bodyStyle?: string;
+    seatCount?: number;
+    matchedAt: string;
+    attributes: readonly { kind: string; name: string; value?: string; unit?: string }[];
+  };
   media: readonly {
     id: string;
     url: string;
@@ -107,6 +120,25 @@ export class VehicleWorkspaceReader {
         ORDER BY occurred_at DESC,id DESC LIMIT 50`,
         [scope.organizationId, inventoryUnitId],
       ) as { rows: EventRow[] };
+      const catalogResult = await client.query(
+        `SELECT configuration.id AS configuration_id, configuration.name AS configuration_name,
+          configuration.readiness, configuration.drivetrain, configuration.powertrain,
+          configuration.engine, configuration.transmission, configuration.body_style,
+          configuration.seat_count, match.matched_at,
+          COALESCE(jsonb_agg(jsonb_build_object(
+            'kind', attribute.kind, 'name', attribute.name, 'value', attribute.value, 'unit', attribute.unit
+          ) ORDER BY attribute.kind, attribute.name)
+          FILTER (WHERE attribute.id IS NOT NULL), '[]'::jsonb) AS attributes
+        FROM vehicle_catalog_matches match
+        JOIN vehicle_catalog_configurations configuration ON configuration.id=match.configuration_id
+        LEFT JOIN vehicle_catalog_configuration_attributes relationship
+          ON relationship.configuration_id=configuration.id
+        LEFT JOIN vehicle_catalog_attributes attribute ON attribute.id=relationship.attribute_id
+        WHERE match.organization_id=$1 AND match.vehicle_id=$2 AND match.status='verified'
+        GROUP BY configuration.id,match.matched_at
+        LIMIT 1`,
+        [scope.organizationId, row.vehicle_id],
+      ) as { rows: CatalogRow[] };
       const matchResult = scope.includeCustomerMatches ? await client.query(
         `SELECT interest.id AS interest_id,interest.customer_id,customer.display_name AS customer_name,
           lead.id AS lead_id,lead.status::text AS lead_status,lead.stage AS lead_stage,
@@ -144,6 +176,9 @@ export class VehicleWorkspaceReader {
           ...(row.trim ? { trim: row.trim } : {}),
           ...(row.exterior_color ? { exteriorColor: row.exterior_color } : {}),
         },
+        ...(catalogResult.rows[0]
+          ? { catalogIntelligence: catalog(catalogResult.rows[0]) }
+          : {}),
         media: mediaResult.rows.map((asset) => ({
           id: asset.id,
           url: asset.delivery_url,
@@ -185,3 +220,25 @@ interface MediaRow { id:string;delivery_url:string;content_type:"image/jpeg"|"im
 interface EventRow { id:string;kind:string;from_status:string|null;to_status:string;old_price_cents:number|null;new_price_cents:number|null;reason:string|null;occurred_at:Date }
 interface MatchRow { interest_id:string;customer_id:string;customer_name:string;lead_id:string;lead_status:string;lead_stage:string;assigned_user_name:string|null;role:string }
 interface DealRow { id:string;customer_id:string;customer_name:string;deal_number:string;status:string;agreed_price_cents:number|null }
+interface CatalogRow { configuration_id:string;configuration_name:string;readiness:string;drivetrain:string|null;powertrain:string|null;engine:string|null;transmission:string|null;body_style:string|null;seat_count:number|null;matched_at:Date;attributes:readonly {kind:string;name:string;value:string|null;unit:string|null}[] }
+
+function catalog(row: CatalogRow): NonNullable<VehicleWorkspaceRecord["catalogIntelligence"]> {
+  return {
+    configurationId: row.configuration_id,
+    configurationName: row.configuration_name,
+    readiness: row.readiness,
+    ...(row.drivetrain ? { drivetrain: row.drivetrain } : {}),
+    ...(row.powertrain ? { powertrain: row.powertrain } : {}),
+    ...(row.engine ? { engine: row.engine } : {}),
+    ...(row.transmission ? { transmission: row.transmission } : {}),
+    ...(row.body_style ? { bodyStyle: row.body_style } : {}),
+    ...(row.seat_count !== null ? { seatCount: row.seat_count } : {}),
+    matchedAt: row.matched_at.toISOString(),
+    attributes: row.attributes.map((attribute) => ({
+      kind: attribute.kind,
+      name: attribute.name,
+      ...(attribute.value ? { value: attribute.value } : {}),
+      ...(attribute.unit ? { unit: attribute.unit } : {}),
+    })),
+  };
+}

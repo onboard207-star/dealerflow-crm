@@ -121,6 +121,44 @@ export default async function VehicleWorkspacePage({ params }: PageProps) {
               </dl>
             </section>
 
+            {record.catalogIntelligence ? (
+              <section className="rounded-xl border bg-card p-5 shadow-soft sm:p-6" aria-labelledby="intelligence-heading">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Verified catalog match</p>
+                    <h2 id="intelligence-heading" className="mt-1 text-lg font-semibold">Vehicle intelligence</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">Governed configuration facts; physical inventory facts remain authoritative above.</p>
+                  </div>
+                  <span className="w-fit rounded-full border bg-muted px-2.5 py-1 text-xs font-medium capitalize">
+                    {record.catalogIntelligence.readiness.replace("-", " ")}
+                  </span>
+                </div>
+                <dl className="mt-5 grid gap-x-6 gap-y-5 sm:grid-cols-2 xl:grid-cols-3">
+                  <Fact label="Configuration" value={record.catalogIntelligence.configurationName} />
+                  <Fact label="Powertrain" value={record.catalogIntelligence.powertrain ?? "Not declared"} />
+                  <Fact label="Drivetrain" value={record.catalogIntelligence.drivetrain ?? "Not declared"} />
+                  <Fact label="Engine" value={record.catalogIntelligence.engine ?? "Not declared"} />
+                  <Fact label="Transmission" value={record.catalogIntelligence.transmission ?? "Not declared"} />
+                  <Fact label="Body style" value={record.catalogIntelligence.bodyStyle ?? "Not declared"} />
+                  <Fact label="Seating" value={record.catalogIntelligence.seatCount === undefined ? "Not declared" : String(record.catalogIntelligence.seatCount)} />
+                  <Fact label="Verified" value={formatDate(record.catalogIntelligence.matchedAt)} />
+                </dl>
+                {record.catalogIntelligence.attributes.length ? (
+                  <div className="mt-6 border-t pt-5">
+                    <h3 className="text-sm font-semibold">Configuration highlights</h3>
+                    <ul className="mt-3 grid gap-2 text-sm sm:grid-cols-2" role="list">
+                      {record.catalogIntelligence.attributes.slice(0, 12).map((attribute) => (
+                        <li className="rounded-lg bg-muted/50 px-3 py-2" key={`${attribute.kind}:${attribute.name}`}>
+                          <span className="font-medium">{attribute.name}</span>
+                          {attribute.value ? <span className="text-muted-foreground"> · {attribute.value}{attribute.unit ? ` ${attribute.unit}` : ""}</span> : null}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </section>
+            ) : null}
+
             <section className="rounded-xl border bg-card p-5 shadow-soft sm:p-6" aria-labelledby="activity-heading">
               <div className="flex items-center gap-2">
                 <Clock3 aria-hidden="true" className="size-5 text-muted-foreground" />

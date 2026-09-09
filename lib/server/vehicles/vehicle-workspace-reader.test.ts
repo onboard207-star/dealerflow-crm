@@ -58,6 +58,21 @@ describe("VehicleWorkspaceReader", () => {
       })
       .mockResolvedValueOnce({
         rows: [{
+          configuration_id: "vcf_12345678901234567890123456789012",
+          configuration_name: "CR-V Sport-L Hybrid AWD",
+          readiness: "pilot-ready",
+          drivetrain: "AWD",
+          powertrain: "Hybrid",
+          engine: "2.0L",
+          transmission: "e-CVT",
+          body_style: "SUV",
+          seat_count: 5,
+          matched_at: new Date("2026-09-08T12:00:00.000Z"),
+          attributes: [{ kind: "feature", name: "Heated front seats", value: null, unit: null }],
+        }],
+      })
+      .mockResolvedValueOnce({
+        rows: [{
           interest_id: "vhi_interest01",
           customer_id: "cus_customer01",
           customer_name: "Jordan Lee",
@@ -101,13 +116,19 @@ describe("VehicleWorkspaceReader", () => {
     expect(result?.matches[0]).toMatchObject({ customerName: "Jordan Lee", role: "primary" });
     expect(result?.media[0]).toMatchObject({ id: "ima_vehicle01", contentType: "image/webp", sortOrder: 0, sourceType: "actual", isPrimary: true, originalFilename: "front.webp" });
     expect(result?.deals[0]).toMatchObject({ dealNumber: "D-260042", agreedPriceCents: 4200000 });
+    expect(result?.catalogIntelligence).toMatchObject({
+      configurationName: "CR-V Sport-L Hybrid AWD",
+      readiness: "pilot-ready",
+      drivetrain: "AWD",
+      attributes: [{ kind: "feature", name: "Heated front seats" }],
+    });
     expect(query.mock.calls[2]?.[0]).toContain("i.location_id=ANY($4::text[])");
     expect(query.mock.calls[2]?.[1]).toEqual(["org_dealerflow", "inv_vehicle01", false, ["loc_main01"]]);
     expect(query.mock.calls[3]?.[0]).toContain("location_id=$3 AND vehicle_id=$4");
     expect(query.mock.calls[3]?.[1]).toEqual(["org_dealerflow", "inv_vehicle01", "loc_main01", "veh_vehicle01"]);
-    expect(query.mock.calls[5]?.[0]).toContain("lead.location_id=ANY($4::text[])");
-    expect(query.mock.calls[5]?.[1]).toEqual(["org_dealerflow", "veh_vehicle01", false, ["loc_main01"]]);
-    expect(query.mock.calls[6]?.[0]).toContain("deal.location_id=ANY($4::text[])");
+    expect(query.mock.calls[6]?.[0]).toContain("lead.location_id=ANY($4::text[])");
+    expect(query.mock.calls[6]?.[1]).toEqual(["org_dealerflow", "veh_vehicle01", false, ["loc_main01"]]);
+    expect(query.mock.calls[7]?.[0]).toContain("deal.location_id=ANY($4::text[])");
     expect(client.release).toHaveBeenCalledOnce();
   });
 
@@ -139,6 +160,7 @@ describe("VehicleWorkspaceReader", () => {
       .mockResolvedValueOnce({ rows: [inventoryRow] })
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({});
     const client: DatabaseClient = { query, release: vi.fn() };
     const pool: DatabasePool = { connect: vi.fn().mockResolvedValue(client) };
@@ -153,6 +175,6 @@ describe("VehicleWorkspaceReader", () => {
 
     expect(result?.matches).toEqual([]);
     expect(result?.deals).toEqual([]);
-    expect(query).toHaveBeenCalledTimes(6);
+    expect(query).toHaveBeenCalledTimes(7);
   });
 });
