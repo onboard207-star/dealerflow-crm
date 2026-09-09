@@ -1,11 +1,15 @@
 # DealerFlow AI Build Status
 
-## P1-02 EXACT SYNTHETIC MATCH FIXTURE — READY FOR ISOLATED STAGING
+## P1-02 EXACT SYNTHETIC MATCH FIXTURE — VERIFIED IN ISOLATED STAGING
 
 - Selected the accepted `2026 Honda Accord LX FWD CVT` catalog configuration (`vcf_79197e26b9c52b480a8d38d7a899ef15`, stable key `CFG-HONDA-ACCORD-2026-LX-FWD-CVT`, `pilot-ready`) without changing the accepted catalog release.
 - Added one staging-only, explicit-confirmation, expected-database-host-bound, idempotent provisioner for a clearly synthetic `2026 Honda Accord LX` physical Vehicle and Inventory Unit. The fixture uses test VIN `TESTCATALG26LX001`, stock `TEST-VI-LX-001`, and deliberately leaves price, color, media, customer, Deal, and delivery facts unset.
 - Provisioning validates the DEMO tenant/rooftop, exact Make → Model → Model Year → Trim → Configuration relationship, readiness, canonical Inventory Manager, and absence of conflicting identities before inserting anything. Replays verify and reuse the same fixture; they never update an existing record.
-- The first isolated-staging execution correctly made no database change because the production image did not yet package the new governed script. The Docker runner now includes it alongside the existing staging provisioners; provisioning and Vehicle Intelligence UI acceptance remain pending.
+- Deployed exact commit `f24a767d7cac724771f4377489d7cfd8366d4dec` to `dealerflow-isolated-staging`. The governed provisioner created exactly one fixture, and an immediate replay returned `existing` with the same Vehicle and Inventory Unit IDs.
+- The Manager UI offered exactly the accepted `2026 Honda Accord LX FWD CVT` candidate. Matching succeeded and displayed the governed configuration in the Vehicle workspace at desktop and 390 × 844 mobile viewport widths.
+- Post-match database evidence retained VIN `TESTCATALG26LX001`, stock `TEST-VI-LX-001`, null price/color, original location/status, and null sold state. Exactly one match exists with four identity evidence fields; no physical Inventory authority changed.
+- A wrong-tenant workspace request failed without disclosing the fixture. Live insufficient-role, match-conflict, and cross-role responsive acceptance remain open, so `PILOT-P1-02` is not yet marked passed.
+- Simulation Run #1 has started against the governed fixture: a clearly synthetic Lead/customer progressed through contact, qualification, confirmed appointment, showroom arrival/check-in/start/completion, and Deal creation (`DF-0432892E`). It is paused at Quote because the synthetic Inventory Unit intentionally has no selling price and DealerFlow correctly refuses to fabricate one.
 
 ## VEHICLE INTELLIGENCE MATCH CANDIDATE CONSISTENCY — FIXED LOCALLY
 

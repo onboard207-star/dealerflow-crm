@@ -2,7 +2,7 @@
 
 **Assessment date:** September 8, 2026  
 **Gate:** PILOT-P1-02  
-**Status:** Governed extractor/projector implemented locally; source acceptance and staging migration pending
+**Status:** Catalog projection and first controlled isolated-staging match accepted; remaining negative and cross-role UI checks pending
 
 ## Boundary
 
@@ -60,10 +60,25 @@ Before a release can become accepted:
 
 ## Remaining acceptance work
 
-- Complete full-source extraction and relationship QA, including all paginated records and linked color/package/feature/specification rows.
-- Produce a reconciliation report with source/projected counts, missing relationships, duplicate stable keys, readiness distribution, and hashes.
-- Apply migration `0054` only to authorized isolated staging, then validate forced RLS and importer refusal without its explicit context.
-- Match controlled synthetic Vehicles to accepted configurations and verify tenant/location behavior without changing the accepted Lead-to-Delivered journey.
-- Complete responsive and role-based runtime acceptance before marking PILOT-P1-02 passed.
+- Exercise live exact-match replay through the canonical matcher and confirm the single existing match is reused.
+- Attempt a different eligible Configuration after the accepted match and confirm conflict refusal preserves the original match.
+- Complete insufficient-role denial and responsive runtime acceptance for Salesperson and Inventory/Manager-capable users. Manager desktop/mobile rendering and wrong-tenant denial are already verified.
+- Mark `PILOT-P1-02` passed only after these remaining live negative and cross-role checks are recorded.
 
-No migration, source write, staging deployment, production action, or physical Inventory mutation was performed by this local foundation batch.
+## Isolated-staging controlled match — September 9, 2026
+
+- Runtime commit: `f24a767d7cac724771f4377489d7cfd8366d4dec`.
+- Accepted Configuration: `vcf_79197e26b9c52b480a8d38d7a899ef15` / `CFG-HONDA-ACCORD-2026-LX-FWD-CVT` (`pilot-ready`).
+- Governed fixture: Vehicle `veh_9b20bdf99f89a54695c799a40a9743c5`, Inventory Unit `inv_9b20bdf99f89a54695c799a40a9743c5`, test VIN `TESTCATALG26LX001`, stock `TEST-VI-LX-001`.
+- Exact identity verification passed for 2026 / Honda / Accord / LX. The selected Configuration belongs to the canonical LX Trim and is eligible under the current readiness rules.
+- The staging-only provisioner requires explicit confirmation and the exact isolated database host. First execution returned `created`; replay returned `existing` with the same deterministic IDs.
+- The authenticated Manager selected the single exact candidate using the actual Vehicle Intelligence control. The workspace then displayed the configuration, readiness, powertrain, drivetrain, engine, transmission, colors, and highlights.
+- Post-match inspection found exactly one match with four evidence fields. VIN, stock, price, color, location, ownership boundary, status/lifecycle, media, and delivery/sold state were not changed.
+- Manager desktop and mobile-width UI checks passed. A wrong-tenant request failed without exposing the fixture.
+- Production, existing accepted inventory, stock `NDB1FDB2`, and the accepted catalog release were not modified.
+
+## Simulation Run #1 checkpoint
+
+- A clearly synthetic Lead/customer was created in the existing demo tenant and linked to stock `TEST-VI-LX-001`.
+- The journey progressed through safe contact logging, qualification, confirmed appointment, showroom arrival/check-in/start/completion, and Deal `DF-0432892E`.
+- Quote creation is fail-closed because the governed fixture has no selling price. No price, finance term, incentive, cost, pack, lender, or eligibility value was inferred.
