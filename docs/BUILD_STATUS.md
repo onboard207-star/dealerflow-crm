@@ -1,14 +1,17 @@
 # DealerFlow AI Build Status
 
-## SIMULATION RUN #2 — GOVERNED PRE-APPROVAL VEHICLE CHANGE IN PROGRESS
+## SIMULATION RUN #2 — GOVERNED PRE-APPROVAL VEHICLE CHANGE P1 REPAIR
 
 - Added one canonical Deal vehicle-change lifecycle for draft/working Deals. It verifies the exact tenant, rooftop, Deal, Customer, Lead, active primary Vehicle interest, target Vehicle, and available Inventory Unit before mutation.
 - The change is transactional, idempotent, advisory-locked, and compare-and-swap protected. Immutable evidence retains the old/new Vehicle and Inventory Unit, reason, actor, time, invalidated Quote IDs, and correlated audit event.
 - Any current draft Quote is explicitly expired with a status event explaining that the vehicle change invalidated it. The Quote remains immutable and visible as history; the workspace requires a new Quote version for new commercial terms.
 - Vehicle replacement fails closed once Quote approval, presentation/acceptance, documents, or delivery has begun, and whenever the Deal is no longer draft/working.
 - The Customer workspace exposes the governed action only for authorized users with a changed active primary available Inventory Unit. Existing Run #1 records are not modified by the implementation.
-- Local gates pass: Drizzle schema check, portfolio and execution-system checks, lint, strict TypeScript, 684 tests across 142 files at bounded concurrency, optimized production build, and whitespace validation. The first full-suite attempt encountered an isolated Vitest worker-start timeout after its assertions passed; the bounded-concurrency rerun completed cleanly.
-- Migration `0056_deal_vehicle_change_lifecycle` is local only. No staging migration, deployment, Run #2 data mutation, or production action has occurred yet.
+- Commit `346a56dfabf5ecc28226df1b95b7e5f04daf2e02` is live on isolated staging, migration `0056_deal_vehicle_change_lifecycle` is applied with its exact repository hash, and the Run #1 Manager regression remains coherent and unchanged.
+- Run #2 created one governed synthetic Internet Lead/customer and progressed through contact attempt, initial appointment, no-show with evidence, overdue follow-up, reschedule, showroom arrival, synthetic trade capture/appraisal, initial-vehicle Deal creation, and primary-interest switch.
+- Live execution exposed a P1 integration defect: migration `0050` correctly made Deal journey authority immutable, but the new provider attempted the protected Vehicle rewrite before establishing its immutable lifecycle event. PostgreSQL failed closed with `deal journey authority fields are immutable`; no partial Deal mutation occurred.
+- Migration `0057_governed_deal_vehicle_rewrite` now preserves every non-vehicle authority field and permits a Vehicle/Inventory Unit rewrite only when an exact immutable old/new lifecycle event already exists in the same transaction. The provider records that evidence before its compare-and-swap update; rollback remains atomic.
+- Repair validation passes: Drizzle schema check, lint, strict TypeScript, 687 tests across 143 files at bounded concurrency, optimized production build, and whitespace validation. Deployment of this repair and resumed Run #2 acceptance are next; production remains untouched.
 
 ## SIMULATION RUN #1 PRODUCT HARDENING — ISOLATED-STAGING REGRESSION PASSED
 

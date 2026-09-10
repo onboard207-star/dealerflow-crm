@@ -147,23 +147,6 @@ class Session implements DealVehicleChangeSession {
       );
     }
 
-    const updated = await this.db.query<{ id: string }>(
-      "UPDATE deals SET primary_vehicle_id=$3,inventory_unit_id=$4,updated_by=$5,updated_at=$6 WHERE organization_id=$1 AND id=$2 AND primary_vehicle_id=$7 AND inventory_unit_id IS NOT DISTINCT FROM $8 AND status IN ('draft','working') RETURNING id",
-      [
-        event.organizationId,
-        event.dealId,
-        event.toVehicleId,
-        event.toInventoryUnitId,
-        context.actorId,
-        event.occurredAt,
-        event.fromVehicleId,
-        event.fromInventoryUnitId ?? null,
-      ],
-    );
-    if (!updated.rows[0]) {
-      throw new DealVehicleChangeIntegrityError("The Deal changed concurrently; no Vehicle replacement was applied.");
-    }
-
     const invalidatedQuoteIds = quotes.rows.map((quote) => quote.id);
     await this.db.query(
       "INSERT INTO deal_vehicle_change_events(id,organization_id,location_id,deal_id,customer_id,lead_id,from_vehicle_id,from_inventory_unit_id,to_vehicle_id,to_inventory_unit_id,reason,invalidated_quote_ids,occurred_at,idempotency_key,created_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)",
@@ -185,6 +168,24 @@ class Session implements DealVehicleChangeSession {
         context.actorId,
       ],
     );
+
+    const updated = await this.db.query<{ id: string }>(
+      "UPDATE deals SET primary_vehicle_id=$3,inventory_unit_id=$4,updated_by=$5,updated_at=$6 WHERE organization_id=$1 AND id=$2 AND primary_vehicle_id=$7 AND inventory_unit_id IS NOT DISTINCT FROM $8 AND status IN ('draft','working') RETURNING id",
+      [
+        event.organizationId,
+        event.dealId,
+        event.toVehicleId,
+        event.toInventoryUnitId,
+        context.actorId,
+        event.occurredAt,
+        event.fromVehicleId,
+        event.fromInventoryUnitId ?? null,
+      ],
+    );
+    if (!updated.rows[0]) {
+      throw new DealVehicleChangeIntegrityError("The Deal changed concurrently; no Vehicle replacement was applied.");
+    }
+
     await this.db.query(
       "INSERT INTO audit_logs(id,organization_id,actor_id,action,entity_type,entity_id,source,correlation_id,old_values,new_values) VALUES($1,$2,$3,'deal.vehicle_changed','deal',$4,'application',$5,$6::jsonb,$7::jsonb)",
       [

@@ -24,6 +24,13 @@ describe("PostgresDealVehicleChangeProvider", () => {
     expect(source).toContain("Invalidated by Deal vehicle change.");
   });
 
+  it("establishes immutable evidence before the protected Deal authority update", () => {
+    const evidence = source.indexOf("INSERT INTO deal_vehicle_change_events");
+    const update = source.indexOf("UPDATE deals SET primary_vehicle_id");
+    expect(evidence).toBeGreaterThan(-1);
+    expect(update).toBeGreaterThan(evidence);
+  });
+
   it("uses a compare-and-swap update before retaining immutable evidence and audit history", () => {
     expect(source).toContain("primary_vehicle_id=$7");
     expect(source).toContain("status IN ('draft','working')");
