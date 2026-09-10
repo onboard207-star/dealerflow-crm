@@ -1,5 +1,12 @@
 # DealerFlow AI Build Status
 
+## DEAL TRANSACTION WORKSPACE — ARCHITECTURE RECONCILED
+
+- Reconciled the requested Customer/Lead → Vehicle → Quote → Proposal → Desking → Manager decision → revision/approval → Deal → delivery experience against the current branch before implementation.
+- The complete transaction path already exists across the canonical Customer, Quote, Desking, printable proposal, Vehicle, and delivery workspaces. These surfaces share CRM, Quote, approval, tenant-configuration, and Vehicle & Inventory authorities; no duplicate Deal Workspace, proposal model, desking state table, lifecycle, or Airtable-shaped React adapter was introduced.
+- Updated `docs/ARCHITECTURE.md` with the surface-to-authority map, verified coverage, responsive/data-adapter/AI boundaries, and explicit product gaps. Lender submission, credit/funding, durable e-signature, durable document storage, and provider-backed PDF sharing remain honestly unavailable rather than mocked.
+- This reconciliation is documentation-only and does not modify the protected Run #1 baseline, active Run #2 records, application behavior, staging database, deployment, or production.
+
 ## SIMULATION RUN #2 — GOVERNED PRE-APPROVAL VEHICLE CHANGE P1 REPAIR
 
 - Added one canonical Deal vehicle-change lifecycle for draft/working Deals. It verifies the exact tenant, rooftop, Deal, Customer, Lead, active primary Vehicle interest, target Vehicle, and available Inventory Unit before mutation.

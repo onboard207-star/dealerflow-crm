@@ -14,6 +14,37 @@
 
 Application code must access runtime data through provider interfaces. UI components do not call Airtable, a database, or external vendors directly.
 
+## Deal transaction workspace reconciliation
+
+The dealership transaction experience is intentionally composed from existing authoritative workspaces rather than a new parallel `DealWorkspace` authority:
+
+| User concern | Current application surface | Canonical authority |
+| --- | --- | --- |
+| Customer, Lead, current vehicle, tasks, appointments, communications, trade, Deal, documents, delivery, and timeline | Customer Workspace | CRM runtime read models over the underlying records |
+| Immutable commercial versions, trade/down-payment/finance terms, approval request, proposal status, and profitability prerequisites | Deal Quote workspace | `deal_quotes`, Quote line/term records, and approval records |
+| Manager review, return/decline reason, approval decision, responsible staff, timestamps, and recent decisions | Deal Desking | The same Quote approval records; no separate desk transaction |
+| Customer-presentable figures and dealership branding | Version-specific printable proposal | One immutable Quote version and tenant configuration |
+| Vehicle identity, inventory availability, catalog intelligence, stock cycle, price, and media | Vehicle Workspace | Vehicle & Inventory runtime |
+
+This composition preserves semantic reading order and responsive behavior without copying Customer, Vehicle, Quote, or Deal state into a page-specific model. A revision is a new immutable Quote version. A manager decline terminates that version's approval lifecycle and requires a new version; it is not a competing Lead or Deal status. Proposal rendering reads the exact Quote version and deliberately excludes internal profitability, manager rationale, and provider provenance.
+
+### Verified implementation coverage
+
+- Quote amounts remain integer-cent, typed line items; unknown payment, rate, lender, incentive, product, cost, pack, or eligibility data is explicitly unavailable and is never inferred.
+- Trade allowance, payoff, equity, cash down, amount financed, finance terms, lease terms, products, incentives, and profitability use distinct governed records where implemented.
+- Salesperson approval requests and manager decisions use separate capabilities and prohibit the requester from deciding their own request.
+- Customer presentation, internal manager review, and Deal lifecycle consume the same Quote version rather than maintaining disconnected proposal or desking copies.
+- Organization branding, terminology, enabled features, role capabilities, and location grants resolve through tenant configuration and authorization. Reusable UI contains no dealership- or make-specific branding.
+- React components consume typed DealerFlow read models and application services. Airtable-specific fields are confined to the governed vehicle-catalog extraction/provenance boundary and are not used by transactional UI.
+- AI guidance remains advisory, evidence-bound, and human-reviewed. Missing provider evidence renders an honest unavailable or empty state and cannot mutate transaction records.
+
+### Deliberately bounded gaps
+
+- DealerFlow does not claim lender submission, credit approval, funding, durable e-signature, or durable document-object storage. Existing tabs and proposals label these boundaries rather than presenting mocks as completed integrations.
+- Printable proposals are the future PDF/share seam, but browser print/save is the only supported output today.
+- Manager review is represented by the immutable Quote approval lifecycle (`pending`, `approved`, `declined`). A second competing desking-state table is prohibited unless future requirements identify information that cannot be derived from Quote, approval, and Deal authorities.
+- Full authenticated responsive role UAT remains an acceptance activity, not a reason to weaken authorization or create a synthetic session.
+
 ## Application layers
 
 ```text
