@@ -38,6 +38,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/node_modules/drizzle-orm ./node_m
 COPY --from=builder --chown=nextjs:nodejs /app/config ./config
 COPY --from=builder --chown=nextjs:nodejs /app/drizzle ./drizzle
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/render-migrate.mjs ./scripts/render-migrate.mjs
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/provision-tenant.mjs ./scripts/provision-tenant.mjs
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/provision-staging-salesperson.mjs ./scripts/provision-staging-salesperson.mjs
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/provision-staging-vehicle-intelligence-fixture.mjs ./scripts/provision-staging-vehicle-intelligence-fixture.mjs
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/smoke-staging-lead-idempotency.mjs ./scripts/smoke-staging-lead-idempotency.mjs

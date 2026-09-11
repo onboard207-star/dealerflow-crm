@@ -33,6 +33,7 @@ describe("release artifacts", () => {
     expect(dockerfile).toContain("COPY drizzle ./drizzle");
     expect(dockerfile).toContain("COPY config ./config");
     expect(dockerfile).toContain("COPY scripts/provision-tenant.mjs");
+    expect(dockerfile.match(/COPY .*scripts\/provision-tenant\.mjs/g)).toHaveLength(2);
     expect(dockerfile).toContain("USER nextjs");
     expect(dockerfile).toContain("HEALTHCHECK");
     expect(dockerfile).toContain("/app/.next/standalone");
