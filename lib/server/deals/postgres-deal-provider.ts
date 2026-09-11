@@ -71,6 +71,28 @@ class Session implements DealSession {
         await this.db.query("INSERT INTO task_status_events(id,organization_id,task_id,from_status,to_status,reason,idempotency_key,created_by) VALUES($1,$2,$3,$4,'cancelled',$5,$6,$7)",[generateEntityId("tse"),record.organizationId,task.id,task.from_status,"Obsolete after Deal delivery.",`deal-delivered:${record.id}:task:${task.id}`,context.actorId]);
         await this.db.query("INSERT INTO audit_logs(id,organization_id,actor_id,action,entity_type,entity_id,source,correlation_id) VALUES($1,$2,$3,'task.cancelled','task',$4,'application',$5)",[generateEntityId("aud"),record.organizationId,context.actorId,task.id,context.correlationId]);
       }
+      const unusedTradeAppraisals=await this.db.query<{id:string;from_status:"draft"|"presented"}>(`WITH current AS (
+        SELECT appraisal.id,appraisal.status FROM trade_appraisals appraisal
+        WHERE appraisal.organization_id=$1 AND appraisal.deal_id=$2
+          AND appraisal.status IN ('draft','presented')
+          AND NOT EXISTS (
+            SELECT 1 FROM deal_quotes quote
+            JOIN deal_quote_commercial_terms terms ON terms.organization_id=quote.organization_id AND terms.quote_id=quote.id
+            WHERE quote.organization_id=appraisal.organization_id AND quote.deal_id=appraisal.deal_id
+              AND quote.id=$3 AND quote.version=$4 AND quote.status='accepted'
+              AND terms.trade_appraisal_id=appraisal.id
+          ) FOR UPDATE
+      ), updated AS (
+        UPDATE trade_appraisals appraisal SET status='expired',updated_by=$5,updated_at=now()
+        FROM current WHERE appraisal.organization_id=$1 AND appraisal.id=current.id
+          AND appraisal.status=current.status
+        RETURNING appraisal.id,current.status AS from_status
+      ) SELECT id,from_status FROM updated`,[record.organizationId,record.id,record.acceptedQuoteId??null,record.acceptedQuoteVersion??null,context.actorId]);
+      for(const appraisal of unusedTradeAppraisals.rows){
+        const reason="Deal delivered without this appraisal being accepted into the final Quote.";
+        await this.db.query("INSERT INTO trade_appraisal_status_events(id,organization_id,appraisal_id,from_status,to_status,reason,idempotency_key,created_by) VALUES($1,$2,$3,$4,'expired',$5,$6,$7)",[generateEntityId("tas"),record.organizationId,appraisal.id,appraisal.from_status,reason,`deal-delivered:${record.id}:trade:${appraisal.id}`,context.actorId]);
+        await this.db.query("INSERT INTO audit_logs(id,organization_id,actor_id,action,entity_type,entity_id,source,correlation_id) VALUES($1,$2,$3,'trade_appraisal.status_changed','trade_appraisal',$4,'application',$5)",[generateEntityId("aud"),record.organizationId,context.actorId,appraisal.id,context.correlationId]);
+      }
       await this.db.query(`UPDATE lead_vehicle_interests SET status = CASE WHEN vehicle_id = $4 THEN 'purchased'::vehicle_interest_status ELSE 'inactive'::vehicle_interest_status END,
         updated_by = $5, updated_at = now() WHERE organization_id = $1 AND lead_id = $2 AND customer_id = $3 AND status = 'active'`,
       [record.organizationId, record.leadId, record.customerId, record.primaryVehicleId, context.actorId]);
