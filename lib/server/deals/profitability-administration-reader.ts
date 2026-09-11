@@ -44,7 +44,7 @@ export class ProfitabilityAdministrationReader {
     const search = input.search?.trim().slice(0, 100) ?? "";
     return withTenantDatabaseContext(this.pool, { userId: input.actor.userId, organizationId: input.organizationId }, async (client) => {
       const inventory = await client.query(`SELECT unit.id,unit.location_id,unit.stock_number,unit.status::text,vehicle.vin,vehicle.year,vehicle.make,vehicle.model,vehicle.trim,
-          cost.id cost_id,cost.version,cost.cost_cents,cost.source_type,cost.source_label,cost.source_reference,cost.effective_at,cost.captured_at,person.name recorded_by
+          cost.id cost_id,cost.version,cost.cost_cents,cost.source_type,cost.source_label,cost.source_reference,cost.effective_at,cost.captured_at,person.display_name recorded_by
         FROM inventory_units unit
         JOIN vehicles vehicle ON vehicle.organization_id=unit.organization_id AND vehicle.id=unit.vehicle_id
         LEFT JOIN LATERAL (SELECT * FROM inventory_cost_snapshots WHERE organization_id=unit.organization_id AND inventory_unit_id=unit.id ORDER BY version DESC LIMIT 1) cost ON true

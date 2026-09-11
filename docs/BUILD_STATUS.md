@@ -1,5 +1,13 @@
 # DealerFlow AI Build Status
 
+## SIMULATION RUN #2 — PROFITABILITY ATTRIBUTION P1 REPAIR
+
+- Confirmed the deterministic profitability administration failure: the reader joined canonical `users` records but selected legacy/nonexistent `person.name` instead of `person.display_name` for immutable inventory-cost attribution.
+- Corrected only that canonical column reference. Profitability calculations, cost authority, pack resolution, permissions, tenant/location scope, and UI behavior are unchanged.
+- Added focused regression coverage requiring `person.display_name` and rejecting a return to `person.name` in the inventory-cost query.
+- Validation passes: Drizzle schema check, ESLint with no warnings, strict TypeScript, 687 tests across 143 files, optimized production build, and whitespace validation. The repository has no configured formatter.
+- Run #2 remains paused at the required distinct authenticated Salesperson action for Quote v1 approval submission. Separation of duties has not been weakened and the Manager session has not been used to impersonate the Salesperson.
+
 ## DEAL TRANSACTION WORKSPACE — ARCHITECTURE RECONCILED
 
 - Reconciled the requested Customer/Lead → Vehicle → Quote → Proposal → Desking → Manager decision → revision/approval → Deal → delivery experience against the current branch before implementation.
