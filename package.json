@@ -15,6 +15,7 @@
     "tenant:provision": "node scripts/provision-tenant.mjs",
     "staging:salesperson:provision": "node scripts/provision-staging-salesperson.mjs",
     "staging:manager:provision": "node scripts/provision-staging-salesperson.mjs --role-key general-manager",
+    "staging:sales-manager:provision": "node scripts/provision-staging-salesperson.mjs --role-key sales-manager",
     "staging:vehicle-intelligence-fixture": "node scripts/provision-staging-vehicle-intelligence-fixture.mjs",
     "tenant:seed-template": "node scripts/seed-dealership-template.mjs",
     "synthetic:seed": "node scripts/seed-synthetic-pilot.mjs --confirm SYNTHETIC-DEMO",

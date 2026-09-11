@@ -1,7 +1,8 @@
 export type TransactionalEmailKind =
   | "email-verification"
   | "password-reset"
-  | "organization-invitation";
+  | "organization-invitation"
+  | "commercial-demo-request";
 
 export interface TransactionalEmailMessage {
   kind: TransactionalEmailKind;

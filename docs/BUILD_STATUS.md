@@ -1,5 +1,17 @@
 # DealerFlow AI Build Status
 
+## P1-03 / P1-04 PILOT READINESS — ACTIVE
+
+- P1-02 Vehicle Intelligence and Simulation Runs #1/#2 are protected accepted baselines. No new P0/P1 regression has reopened them.
+- Isolated staging now uses `node scripts/render-migrate.mjs` as its Render pre-deploy command while preserving manual deployment control. A migration failure therefore prevents application promotion.
+- Render evidence confirms the isolated Docker service targets `codex/staging-deployment`, uses `/api/health`, runs one instance in Virginia, and is paired with the available isolated PostgreSQL 18 database. Production was not inspected or changed.
+- The recovery runbook now records the actual isolated-staging posture, restore evidence contract, rollback criteria, pilot alert matrix, durable-job recovery requirements, and seven controlled support drills. A real backup restore remains blocked on approval to create a disposable billable recovery database; neither staging nor production will be overwritten for a drill.
+- The last 24-hour Render audit showed one continuous application instance, low CPU/memory use, low database connection pressure, one isolated HTTP 500, and Better Auth proxy-IP warnings. Better Auth now uses Render's overwritten `X-Forwarded-For` client address so authentication rate limiting does not collapse into one shared bucket.
+- The canonical tenant provisioner now accepts an explicitly confirmed `data_class=demo` clean-room target, preserves deterministic identities, and fails closed on classification/identity conflicts. The governed staging identity path now supports the canonical Sales Manager role in addition to Salesperson and General Manager.
+- `/book-demo` is now a governed pre-tenant Commercial Demo Request intake: server validation, HMAC network fingerprinting, bounded rate limits, daily deduplication, conflicting-idempotency refusal, immutable events, transactional owner-email queueing, and truthful UI. It does not create a dealership, Customer, or Lead.
+- Migration `0058_commercial_demo_requests` and final validation/deployment evidence are pending in this batch. Clean-room creation, user authentication, catalog/inventory smoke, minimal accepted-Quote journey, bilateral tenant isolation, and a real restore drill remain open acceptance gates.
+- P1-01 email remains passed. SMS remains truthfully unavailable while Twilio A2P is an external provider gate; no SMS success is fabricated.
+
 ## SIMULATION RUN #2 — PROFITABILITY ATTRIBUTION P1 REPAIR
 
 - Confirmed the deterministic profitability administration failure: the reader joined canonical `users` records but selected legacy/nonexistent `person.name` instead of `person.display_name` for immutable inventory-cost attribution.

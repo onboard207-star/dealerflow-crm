@@ -123,7 +123,7 @@ export const incentiveEligibilityStatusEnum = pgEnum("incentive_eligibility_stat
 export const backendProductTypeEnum = pgEnum("backend_product_type", ["service-contract", "gap", "maintenance", "tire-wheel", "appearance", "key-replacement", "accessory", "other"]);
 export const tradeAppraisalStatusEnum = pgEnum("trade_appraisal_status", ["draft", "presented", "accepted", "rejected", "expired", "acquired"]);
 export const deliveryStatusEnum = pgEnum("delivery_status", ["scheduled", "ready", "completed", "cancelled"]);
-export const transactionalEmailKindEnum = pgEnum("transactional_email_kind", ["email-verification", "password-reset", "organization-invitation"]);
+export const transactionalEmailKindEnum = pgEnum("transactional_email_kind", ["email-verification", "password-reset", "organization-invitation", "commercial-demo-request"]);
 export const transactionalEmailStatusEnum = pgEnum("transactional_email_status", ["queued", "sending", "sent", "failed"]);
 export const aiRecommendationStatusEnum = pgEnum("ai_recommendation_status", ["pending","completed","refused","failed"]);
 export const aiReviewDecisionEnum = pgEnum("ai_review_decision", ["accepted","dismissed"]);
@@ -166,6 +166,22 @@ export const transactionalEmailMessages = pgTable(
     check("transactional_email_invitation_scope", sql`(${table.invitationId} is null) = (${table.organizationId} is null)`),
     foreignKey({ columns: [table.organizationId, table.invitationId], foreignColumns: [organizationInvitations.organizationId, organizationInvitations.id], name: "transactional_email_same_org_invitation_fk" }),
   ],
+);
+
+export const commercialDemoRequests = pgTable(
+  "commercial_demo_requests",
+  {
+    id: text("id").primaryKey(), firstName: text("first_name").notNull(), lastName: text("last_name").notNull(), workEmail: text("work_email").notNull(), phone: text("phone"), dealershipName: text("dealership_name").notNull(), role: text("role").notNull(), rooftopRange: text("rooftop_range").notNull(), currentCrm: text("current_crm"), primaryInterest: text("primary_interest").notNull(), preferredContactMethod: text("preferred_contact_method").notNull(), notes: text("notes"), status: text("status").default("received").notNull(), idempotencyKey: text("idempotency_key").notNull(), deduplicationKey: text("deduplication_key").notNull(), requestFingerprint: text("request_fingerprint").notNull(), networkFingerprint: text("network_fingerprint").notNull(), ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("commercial_demo_requests_idempotency_unique").on(table.idempotencyKey), uniqueIndex("commercial_demo_requests_deduplication_unique").on(table.deduplicationKey), index("commercial_demo_requests_network_created_idx").on(table.networkFingerprint,table.createdAt), index("commercial_demo_requests_email_created_idx").on(table.workEmail,table.createdAt), check("commercial_demo_requests_id_format",sql`${table.id} ~ '^cdr_[a-z0-9_-]{6,64}$'`), check("commercial_demo_requests_status",sql`${table.status} in ('received','notification-queued','notified','notification-failed','closed')`), check("commercial_demo_requests_contact",sql`${table.preferredContactMethod} in ('Email','Phone')`),
+  ],
+);
+
+export const commercialDemoRequestEvents = pgTable(
+  "commercial_demo_request_events",
+  { id:text("id").primaryKey(),requestId:text("request_id").notNull().references(()=>commercialDemoRequests.id,{onDelete:"restrict"}),eventType:text("event_type").notNull(),evidence:jsonb("evidence").$type<Record<string,unknown>>(),createdAt:timestamp("created_at",{withTimezone:true}).defaultNow().notNull() },
+  (table)=>[index("commercial_demo_request_events_request_idx").on(table.requestId,table.createdAt),check("commercial_demo_request_events_id_format",sql`${table.id} ~ '^cde_[a-z0-9_-]{6,64}$'`)],
 );
 
 export const organizations = pgTable(

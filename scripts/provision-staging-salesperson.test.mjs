@@ -92,7 +92,7 @@ describe("staging Manager provisioner", () => {
   it("requires the Manager-specific confirmation and rejects unsupported roles", () => {
     const environment = { APP_ENV: "staging", DATABASE_URL: "postgresql://user:secret@isolated.example.internal/database" };
     expect(() => parseStagingSalespersonArguments(managerArgs.with(3, "PROVISION-SYNTHETIC-STAGING-SALESPERSON"), environment)).toThrow("PROVISION-SYNTHETIC-STAGING-MANAGER");
-    expect(() => parseStagingSalespersonArguments(managerArgs.with(1, "platform-administrator"), environment)).toThrow("salesperson or general-manager");
+    expect(() => parseStagingSalespersonArguments(managerArgs.with(1, "platform-administrator"), environment)).toThrow("salesperson, sales-manager, or general-manager");
     expect(() => parseStagingSalespersonArguments([...managerArgs, "--setup-link-confirm", "WRONG"], environment)).toThrow("RETURN-ONE-TIME-SETUP-LINK");
     expect(parseStagingSalespersonArguments([...managerArgs, "--setup-link-confirm", "RETURN-ONE-TIME-SETUP-LINK"], environment).returnSetupUrl).toBe(true);
   });

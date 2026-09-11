@@ -48,3 +48,21 @@ The recommended initial scope remains Sales, BDC, Sales Management, Inventory, a
 4. Add persistent tenant-isolated implementation projects and connect staged import batches to their launch gates.
 5. Build protected raw-file upload storage, authorized canonical commit, reconciliation, and batch reversal.
 6. Rehearse fictional onboarding through those real workflows before onboarding a real dealer.
+
+## Clean-room synthetic rehearsal
+
+The canonical provisioner supports an explicitly classified demo tenant through `--data-class demo --confirm SYNTHETIC-DEMO`. This is the only supported path for the clean-room rehearsal. It creates deterministic Organization, configuration, rooftop, system roles/capabilities, immutable audit evidence, and an Owner invitation; retry must reconcile the same identities or fail on a conflict.
+
+After provisioning, the existing dealership template may seed only an active `data_class=demo` Organization. The staging identity provisioner may invite the minimum Owner, Sales Manager, and Salesperson identities through Better Auth and canonical organization/location role grants. Synthetic physical inventory must use the governed template/import path and `TEST` identity conventions. Airtable record IDs never become runtime authority.
+
+Clean-room acceptance requires:
+
+- invitation-based authentication for the three pilot roles;
+- exact organization, rooftop, membership, role, and location verification;
+- catalog reads from the accepted shared catalog with tenant-scoped physical inventory;
+- a minimal Lead → Customer → Vehicle Interest → Appointment → Showroom → Deal → Quote → Manager Approval → exact-version acceptance journey;
+- bilateral wrong-tenant denial against the existing simulation tenant;
+- idempotent replay, conflicting-input refusal, and retained audit evidence;
+- a documented cleanup plan that does not delete accepted evidence without approval.
+
+Provisioning and deterministic seeding do not activate communications, billing, production, or a real dealership. Authentication remains a human gate because passwords and one-time setup links must not be committed or printed into operational evidence.

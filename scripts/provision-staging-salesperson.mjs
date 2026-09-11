@@ -15,6 +15,11 @@ const roleProfiles = Object.freeze({
     auditAction: "staging.synthetic_manager.provisioning_requested",
     label: "General Manager",
   },
+  "sales-manager": {
+    confirmation: "PROVISION-SYNTHETIC-STAGING-SALES-MANAGER",
+    auditAction: "staging.synthetic_sales_manager.provisioning_requested",
+    label: "Sales Manager",
+  },
 });
 
 export function parseStagingSalespersonArguments(values, environment = process.env) {
@@ -32,7 +37,7 @@ export function parseStagingSalespersonArguments(values, environment = process.e
   }
   const roleKey = options["role-key"] ?? "salesperson";
   const roleProfile = roleProfiles[roleKey];
-  if (!roleProfile) throw new Error("--role-key must be salesperson or general-manager.");
+  if (!roleProfile) throw new Error("--role-key must be salesperson, sales-manager, or general-manager.");
   if (options.confirm !== roleProfile.confirmation) throw new Error(`--confirm must equal ${roleProfile.confirmation}.`);
   const returnSetupUrl = options["setup-link-confirm"] === "RETURN-ONE-TIME-SETUP-LINK";
   if (options["setup-link-confirm"] && !returnSetupUrl) throw new Error("--setup-link-confirm must equal RETURN-ONE-TIME-SETUP-LINK.");
@@ -67,7 +72,7 @@ export async function provisionStagingSalesperson(pool, input) {
   const roleKey = input.roleKey ?? "salesperson";
   const roleProfile = roleProfiles[roleKey];
   if (!roleProfile) throw new Error("Unsupported staging identity role.");
-  const identityKey = roleKey === "salesperson" ? "staging-salesperson" : "staging-general-manager";
+  const identityKey = `staging-${roleKey}`;
   const invitationId = deterministicId("oin", `${input.organizationId}:${identityKey}:${input.email}`);
   const idempotencyKey = `operator-provision:${input.organizationId}:${identityKey}:${input.email}`;
   try {

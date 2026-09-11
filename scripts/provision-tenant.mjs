@@ -27,7 +27,11 @@ export function parseArguments(values) {
   applicationUrl.pathname = "/"; applicationUrl.search = ""; applicationUrl.hash = "";
   const timezone = parsed.timezone || "America/New_York";
   try { new Intl.DateTimeFormat("en-US", { timeZone: timezone }); } catch { throw new Error("Timezone must be a valid IANA timezone."); }
-  return { organizationSlug: parsed["organization-slug"], organizationName: bounded(parsed["organization-name"], "Organization name", 200), ownerEmail: parsed["owner-email"].toLowerCase(), locationSlug: parsed["location-slug"], locationName: bounded(parsed["location-name"], "Location name", 200), timezone, applicationUrl: applicationUrl.origin };
+  const dataClass = parsed["data-class"] || "production";
+  if (!['demo', 'pilot', 'production'].includes(dataClass)) throw new Error("--data-class must be demo, pilot, or production.");
+  if (dataClass === "demo" && parsed.confirm !== "SYNTHETIC-DEMO") throw new Error("Demo tenant provisioning requires --confirm SYNTHETIC-DEMO.");
+  if (dataClass !== "demo" && parsed.confirm) throw new Error("--confirm is only accepted for synthetic demo tenant provisioning.");
+  return { organizationSlug: parsed["organization-slug"], organizationName: bounded(parsed["organization-name"], "Organization name", 200), ownerEmail: parsed["owner-email"].toLowerCase(), locationSlug: parsed["location-slug"], locationName: bounded(parsed["location-name"], "Location name", 200), timezone, applicationUrl: applicationUrl.origin, dataClass };
 }
 
 export function buildProvisioningPlan(input) {
@@ -46,8 +50,8 @@ export async function provisionTenant(pool, plan) {
   try {
     await client.query("BEGIN");
     await client.query("SELECT set_config('app.user_id',$1,true),set_config('app.organization_id',$2,true),set_config('app.operator_provision','enabled',true)", [deterministicId("usr", "operator-provisioner"), plan.organizationId]);
-    await client.query("INSERT INTO organizations(id,slug,name,vertical) VALUES($1,$2,$3,'automotive') ON CONFLICT(id) DO NOTHING", [plan.organizationId, plan.organizationSlug, plan.organizationName]);
-    await requireExact(client, "SELECT id FROM organizations WHERE id=$1 AND slug=$2 AND name=$3 AND vertical='automotive' AND active=true", [plan.organizationId, plan.organizationSlug, plan.organizationName], "Organization identity conflicts with an existing tenant.");
+    await client.query("INSERT INTO organizations(id,slug,name,vertical,data_class) VALUES($1,$2,$3,'automotive',$4) ON CONFLICT(id) DO NOTHING", [plan.organizationId, plan.organizationSlug, plan.organizationName, plan.dataClass]);
+    await requireExact(client, "SELECT id FROM organizations WHERE id=$1 AND slug=$2 AND name=$3 AND vertical='automotive' AND data_class=$4 AND active=true", [plan.organizationId, plan.organizationSlug, plan.organizationName, plan.dataClass], "Organization identity conflicts with an existing tenant.");
     await client.query("WITH inserted AS (INSERT INTO organization_configurations(organization_id,product_name,brand,features,terminology,version) VALUES($1,$2,$3::jsonb,$4::jsonb,$5::jsonb,$6) ON CONFLICT(organization_id) DO NOTHING RETURNING organization_id) INSERT INTO organization_configuration_versions(id,organization_id,configuration,change_kind,created_by) SELECT $7,inserted.organization_id,$8::jsonb,'update',NULL FROM inserted ON CONFLICT(id) DO NOTHING", [plan.organizationId, plan.configuration.brand.productName, JSON.stringify(plan.configuration.brand), JSON.stringify(plan.configuration.features), JSON.stringify(plan.configuration.terminology), randomUUID(), plan.configurationVersionId, JSON.stringify(plan.configuration)]);
     await client.query("INSERT INTO locations(id,organization_id,slug,name,timezone) VALUES($1,$2,$3,$4,$5) ON CONFLICT(id) DO NOTHING", [plan.locationId, plan.organizationId, plan.locationSlug, plan.locationName, plan.timezone]);
     await requireExact(client, "SELECT id FROM locations WHERE organization_id=$1 AND id=$2 AND slug=$3 AND name=$4 AND timezone=$5 AND active=true", [plan.organizationId, plan.locationId, plan.locationSlug, plan.locationName, plan.timezone], "Location identity conflicts with an existing rooftop.");
@@ -63,7 +67,7 @@ export async function provisionTenant(pool, plan) {
       await client.query("INSERT INTO organization_invitation_roles(invitation_id,organization_id,role_id) VALUES($1,$2,$3)", [plan.invitationId, plan.organizationId, ownerRole.id]);
       await queueInvitation(client, plan, token);
     }
-    await client.query("INSERT INTO audit_logs(id,organization_id,actor_id,action,entity_type,entity_id,source,correlation_id,new_values) VALUES($1,$2,NULL,'organization.provisioned','organization',$2,'operator',$3,$4::jsonb)", [`aud_${randomUUID().replaceAll("-", "")}`, plan.organizationId, `provision:${randomUUID()}`, JSON.stringify({ organizationSlug: plan.organizationSlug, locationId: plan.locationId, ownerInvitationId: plan.invitationId })]);
+    await client.query("INSERT INTO audit_logs(id,organization_id,actor_id,action,entity_type,entity_id,source,correlation_id,new_values) VALUES($1,$2,NULL,'organization.provisioned','organization',$2,'operator',$3,$4::jsonb)", [`aud_${randomUUID().replaceAll("-", "")}`, plan.organizationId, `provision:${randomUUID()}`, JSON.stringify({ organizationSlug: plan.organizationSlug, locationId: plan.locationId, ownerInvitationId: plan.invitationId, dataClass: plan.dataClass })]);
     await client.query("COMMIT");
     return { organizationId: plan.organizationId, locationId: plan.locationId, ownerInvitationId: plan.invitationId };
   } catch (error) { await client.query("ROLLBACK"); throw error; } finally { client.release(); }

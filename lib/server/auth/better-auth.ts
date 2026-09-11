@@ -101,6 +101,12 @@ function createAuth() {
       },
     },
     advanced: {
+      ipAddress: {
+        // Render overwrites X-Forwarded-For and places the public client first.
+        // Restrict Better Auth to that platform-provided header so rate limits do
+        // not collapse into a single shared bucket behind the load balancer.
+        ipAddressHeaders: ["x-forwarded-for"],
+      },
       database: {
         generateId: ({ model }) =>
           model === "user" || model === "users"
