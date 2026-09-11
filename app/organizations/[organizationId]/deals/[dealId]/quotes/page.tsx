@@ -5,6 +5,7 @@ import { AppShell } from "@/components/app-shell";
 import { DealQuoteWorkspaceReader } from "@/lib/server/deals";
 import { loadDirectoryContext } from "../../../_lib/load-directory-context";
 import {
+  acceptQuoteVersionAction,
   createQuoteVersionAction,
   attachQuoteTermsAction,
   attachQuoteLeaseTermsAction,
@@ -211,6 +212,26 @@ export default async function DealQuoteWorkspacePage({ params, searchParams }: P
                         <form action={presentQuoteAction.bind(null, organizationId, dealId, quote.id)}>
                           <button className="focus-ring min-h-10 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90">
                             Present Quote
+                          </button>
+                        </form>
+                      ) : null}
+
+                      {quote.status === "presented" &&
+                      quote.approval?.status === "approved" &&
+                      context.membership.capabilities.includes("quote.revise") ? (
+                        <form
+                          action={acceptQuoteVersionAction.bind(null, organizationId, dealId, quote.id)}
+                          className="flex min-w-0 flex-1 flex-col gap-2 sm:min-w-72"
+                        >
+                          <input
+                            className="focus-ring h-10 rounded-lg border bg-background px-3 text-sm"
+                            maxLength={1000}
+                            name="evidence"
+                            placeholder={`Required acceptance evidence for Quote v${quote.version}`}
+                            required
+                          />
+                          <button className="focus-ring min-h-10 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90">
+                            Record exact v{quote.version} customer acceptance
                           </button>
                         </form>
                       ) : null}

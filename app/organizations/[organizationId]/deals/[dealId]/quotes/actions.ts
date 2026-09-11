@@ -231,6 +231,40 @@ export async function presentQuoteAction(
   }
 }
 
+export async function acceptQuoteVersionAction(
+  organizationId: string,
+  dealId: string,
+  quoteId: string,
+  formData: FormData,
+) {
+  const base = `/organizations/${organizationId}/deals/${dealId}/quotes`;
+  try {
+    const context = await loadDirectoryContext(organizationId, "deal.read");
+    const evidence = String(formData.get("evidence") ?? "").trim();
+    if (!evidence) throw new Error("Customer acceptance evidence is required.");
+    await new QuoteService(
+      new PostgresQuoteProvider(context.pool, {
+        userId: context.session.user.id,
+        organizationId,
+      }),
+    ).transition({
+      actor: context.actor,
+      organizationId,
+      correlationId: `quote-accept:${randomUUID()}`,
+      idempotencyKey: `quote-accept:${quoteId}:${randomUUID()}`,
+      quoteId,
+      toStatus: "accepted",
+      reason: evidence,
+    });
+    revalidatePath(base);
+    revalidatePath(`/organizations/${organizationId}/customers`);
+    redirect(`${base}?notice=${encodeURIComponent("Exact Quote version accepted.")}`);
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    redirect(`${base}?error=${encodeURIComponent(message(error, "Customer acceptance could not be recorded."))}`);
+  }
+}
+
 export async function attachQuoteTermsAction(organizationId: string, dealId: string, quoteId: string, formData: FormData) {
   const base = `/organizations/${organizationId}/deals/${dealId}/quotes`;
   try {
