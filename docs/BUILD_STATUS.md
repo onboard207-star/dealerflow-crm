@@ -747,3 +747,11 @@
 - Added a narrow match control to the existing Vehicle workspace. Inventory-capable users can select only exact year/make/model candidates already classified verified or pilot-ready; other users retain read-only Vehicle Intelligence visibility. The control uses the canonical service and preserves the same conflict, idempotency, tenant, rooftop, and capability enforcement.
 - The control explicitly states that VIN, stock, price, location, media, and inventory status remain unchanged. It uses semantic form controls, native keyboard behavior, visible focus styling, existing design tokens, and a mobile-first layout.
 - No schema, catalog release, seed data, accepted journey data, communications path, or physical Inventory record changed in this implementation checkpoint. Live matching and role/responsive acceptance remain pending deployment.
+
+### Simulation Run #2 separation-of-duties recovery checkpoint
+
+- Run #2 Quote v1 and its Manager-originated pending approval remain immutable failed UAT evidence. The approval request is not reassigned, rewritten, backdated, deleted, or represented as Salesperson-originated.
+- The existing Quote lifecycle already supports an audited `draft` to `expired` transition with a mandatory reason and `quote.revise` authorization. Added a narrow server action and Quote-workspace control so an authorized user can invoke that governed transition without direct database manipulation.
+- Retiring a Quote preserves its immutable version and approval history, removes it from current actionable work, and requires the normal revision workflow to create the next commercial proposal. No new approval status, parallel lifecycle, schema migration, or authentication bypass was introduced.
+- Local validation passes: Drizzle migration validation, ESLint with no warnings, strict TypeScript, 687 tests across 143 files, optimized production build, and whitespace integrity.
+- Deployment and live retirement of Run #2 Quote v1 remain required. Before the next approval request, the separate session must be visibly and canonically verified as `DealerFlow Synthetic Salesperson`; separation of duties remains mandatory.

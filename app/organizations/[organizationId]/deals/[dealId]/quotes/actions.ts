@@ -169,6 +169,38 @@ export async function requestQuoteApprovalAction(
   }
 }
 
+export async function expireQuoteVersionAction(
+  organizationId: string,
+  dealId: string,
+  quoteId: string,
+  formData: FormData,
+) {
+  const base = `/organizations/${organizationId}/deals/${dealId}/quotes`;
+  try {
+    const context = await loadDirectoryContext(organizationId, "deal.read");
+    const reason = String(formData.get("reason") ?? "").trim();
+    await new QuoteService(
+      new PostgresQuoteProvider(context.pool, {
+        userId: context.session.user.id,
+        organizationId,
+      }),
+    ).transition({
+      actor: context.actor,
+      organizationId,
+      correlationId: `quote-expire:${randomUUID()}`,
+      idempotencyKey: `quote-expire:${quoteId}:${randomUUID()}`,
+      quoteId,
+      toStatus: "expired",
+      reason,
+    });
+    revalidatePath(base);
+    redirect(`${base}?notice=${encodeURIComponent("Quote version retired as immutable history.")}`);
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    redirect(`${base}?error=${encodeURIComponent(message(error, "Quote version could not be retired."))}`);
+  }
+}
+
 export async function presentQuoteAction(
   organizationId: string,
   dealId: string,

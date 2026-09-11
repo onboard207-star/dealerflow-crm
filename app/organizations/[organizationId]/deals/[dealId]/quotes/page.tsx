@@ -11,6 +11,7 @@ import {
   attachIncentiveProgramAction,
   attachBackendProductCostAction,
   captureQuoteProfitabilityAction,
+  expireQuoteVersionAction,
   presentQuoteAction,
   requestQuoteApprovalAction,
 } from "./actions";
@@ -181,6 +182,24 @@ export default async function DealQuoteWorkspacePage({ params, searchParams }: P
                           />
                           <button className="focus-ring min-h-10 rounded-lg border px-3 text-sm font-medium hover:bg-muted">
                             Request manager approval
+                          </button>
+                        </form>
+                      ) : null}
+
+                      {quote.status === "draft" && !superseded && context.membership.capabilities.includes("quote.revise") ? (
+                        <form
+                          action={expireQuoteVersionAction.bind(null, organizationId, dealId, quote.id)}
+                          className="flex min-w-0 flex-1 flex-col gap-2 sm:min-w-72"
+                        >
+                          <input
+                            className="focus-ring h-10 rounded-lg border bg-background px-3 text-sm"
+                            maxLength={1000}
+                            name="reason"
+                            placeholder="Required retirement reason"
+                            required
+                          />
+                          <button className="focus-ring min-h-10 rounded-lg border px-3 text-sm font-medium hover:bg-muted">
+                            Retire Quote version
                           </button>
                         </form>
                       ) : null}
