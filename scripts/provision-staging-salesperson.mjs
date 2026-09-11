@@ -20,7 +20,14 @@ const roleProfiles = Object.freeze({
     auditAction: "staging.synthetic_sales_manager.provisioning_requested",
     label: "Sales Manager",
   },
+  "finance-manager": {
+    confirmation: "PROVISION-SYNTHETIC-STAGING-FINANCE-MANAGER",
+    auditAction: "staging.synthetic_finance_manager.provisioning_requested",
+    label: "Finance Manager",
+  },
 });
+
+const setupLinkRoleKeys = new Set(["general-manager", "finance-manager"]);
 
 export function parseStagingSalespersonArguments(values, environment = process.env) {
   if (environment.APP_ENV !== "staging") {
@@ -37,11 +44,11 @@ export function parseStagingSalespersonArguments(values, environment = process.e
   }
   const roleKey = options["role-key"] ?? "salesperson";
   const roleProfile = roleProfiles[roleKey];
-  if (!roleProfile) throw new Error("--role-key must be salesperson, sales-manager, or general-manager.");
+  if (!roleProfile) throw new Error("--role-key must be salesperson, sales-manager, general-manager, or finance-manager.");
   if (options.confirm !== roleProfile.confirmation) throw new Error(`--confirm must equal ${roleProfile.confirmation}.`);
   const returnSetupUrl = options["setup-link-confirm"] === "RETURN-ONE-TIME-SETUP-LINK";
   if (options["setup-link-confirm"] && !returnSetupUrl) throw new Error("--setup-link-confirm must equal RETURN-ONE-TIME-SETUP-LINK.");
-  if (returnSetupUrl && roleKey !== "general-manager") throw new Error("One-time setup-link return is restricted to the governed staging Manager flow.");
+  if (returnSetupUrl && !setupLinkRoleKeys.has(roleKey)) throw new Error("One-time setup-link return is restricted to governed staging Manager flows.");
   if (!/^org_[a-z0-9_-]{6,64}$/.test(options["organization-id"])) throw new Error("Organization ID is invalid.");
   if (!/^loc_[a-z0-9_-]{6,64}$/.test(options["location-id"])) throw new Error("Location ID is invalid.");
   if (!/^\S+\+[^@]+@\S+\.\S+$/.test(options.email)) throw new Error("Use a clearly synthetic plus-addressed email.");
@@ -134,7 +141,15 @@ export async function provisionStagingSalesperson(pool, input) {
         return { status: "identity-reconciled", userId: user.id, organizationId: input.organizationId, locationId: input.locationId, roleKey, invitationId };
       }
       await client.query("COMMIT");
-      return { status: ready ? "ready" : "existing-user-incomplete", userId: user.id, organizationId: input.organizationId, locationId: input.locationId, roleKey, invitationId };
+      return {
+        status: ready ? "ready" : "existing-user-incomplete",
+        userId: user.id,
+        organizationId: input.organizationId,
+        locationId: input.locationId,
+        roleKey,
+        invitationId,
+        ...(ready ? {} : { reasons: existingUserIncompleteReasons({ user, credentialAccountExists: Boolean(account.rows[0]), membership: membership.rows[0] }) }),
+      };
     }
 
     const existingInvitation = await client.query(
@@ -159,7 +174,10 @@ export async function provisionStagingSalesperson(pool, input) {
       );
       if (!rotated.rows[0]) throw new Error("The existing staging Manager invitation is unavailable or has reached its resend limit.");
       await queueInvitationEmail(client, { invitationId, input, roleProfile, actionUrl, suffix: `setup:${rotated.rows[0].resend_count}` });
-      await insertAudit(client, { input, invitationId, action: "staging.synthetic_manager.setup_link_rotated", roleKey });
+      const setupLinkAuditAction = roleKey === "general-manager"
+        ? "staging.synthetic_manager.setup_link_rotated"
+        : `staging.synthetic_${roleKey.replaceAll("-", "_")}.setup_link_rotated`;
+      await insertAudit(client, { input, invitationId, action: setupLinkAuditAction, roleKey });
       await client.query("COMMIT");
       return { status: "setup-link-rotated", organizationId: input.organizationId, locationId: input.locationId, roleKey, invitationId, setupUrl: actionUrl.toString() };
     }
@@ -185,6 +203,19 @@ export async function provisionStagingSalesperson(pool, input) {
   } finally {
     client.release();
   }
+}
+
+function existingUserIncompleteReasons({ user, credentialAccountExists, membership }) {
+  const reasons = [];
+  if (!user.active) reasons.push("user-inactive");
+  if (!user.email_verified) reasons.push("email-unverified");
+  if (!credentialAccountExists) reasons.push("credential-account-missing");
+  if (!membership) reasons.push("membership-missing");
+  else {
+    if (!membership.expected_role) reasons.push("role-grant-missing");
+    if (!membership.location_access) reasons.push("location-grant-missing");
+  }
+  return reasons;
 }
 
 async function queueInvitationEmail(client, { invitationId, input, roleProfile, actionUrl, suffix }) {

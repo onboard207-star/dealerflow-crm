@@ -92,9 +92,69 @@ describe("staging Manager provisioner", () => {
   it("requires the Manager-specific confirmation and rejects unsupported roles", () => {
     const environment = { APP_ENV: "staging", DATABASE_URL: "postgresql://user:secret@isolated.example.internal/database" };
     expect(() => parseStagingSalespersonArguments(managerArgs.with(3, "PROVISION-SYNTHETIC-STAGING-SALESPERSON"), environment)).toThrow("PROVISION-SYNTHETIC-STAGING-MANAGER");
-    expect(() => parseStagingSalespersonArguments(managerArgs.with(1, "platform-administrator"), environment)).toThrow("salesperson, sales-manager, or general-manager");
+    expect(() => parseStagingSalespersonArguments(managerArgs.with(1, "platform-administrator"), environment)).toThrow("salesperson, sales-manager, general-manager, or finance-manager");
     expect(() => parseStagingSalespersonArguments([...managerArgs, "--setup-link-confirm", "WRONG"], environment)).toThrow("RETURN-ONE-TIME-SETUP-LINK");
     expect(parseStagingSalespersonArguments([...managerArgs, "--setup-link-confirm", "RETURN-ONE-TIME-SETUP-LINK"], environment).returnSetupUrl).toBe(true);
+  });
+
+  it("supports the canonical Finance Manager role through the governed invitation path", async () => {
+    const financeArgs = managerArgs
+      .with(1, "finance-manager")
+      .with(3, "PROVISION-SYNTHETIC-STAGING-FINANCE-MANAGER")
+      .with(5, "synthetic+finance-manager@example.com");
+    const environment = { APP_ENV: "staging", DATABASE_URL: "postgresql://user:secret@isolated.example.internal/database" };
+    expect(parseStagingSalespersonArguments([...financeArgs, "--setup-link-confirm", "RETURN-ONE-TIME-SETUP-LINK"], environment)).toMatchObject({
+      roleKey: "finance-manager",
+      returnSetupUrl: true,
+    });
+
+    const query = vi.fn()
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ organization_id: "org", location_id: "loc", role_id: "rol_finance" }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValue({ rows: [] });
+    const client = { query, release: vi.fn() };
+    const result = await provisionStagingSalesperson({ connect: vi.fn().mockResolvedValue(client) }, {
+      applicationUrl: "https://staging.example.com",
+      email: "synthetic+finance-manager@example.com",
+      organizationId: "org_demo_first_pilot_v1",
+      locationId: "loc_demo_main_rooftop_v1",
+      roleKey: "finance-manager",
+    });
+    expect(result).toMatchObject({ status: "invitation-created", roleKey: "finance-manager" });
+    expect(query.mock.calls.find(([statement]) => String(statement).includes("JOIN roles"))?.[1]).toEqual(["org_demo_first_pilot_v1", "loc_demo_main_rooftop_v1", "finance-manager"]);
+    const sql = query.mock.calls.map(([statement]) => statement).join("\n");
+    expect(query.mock.calls.some(([, values]) => values?.includes("staging.synthetic_finance_manager.provisioning_requested"))).toBe(true);
+    expect(sql).not.toContain("INSERT INTO auth_accounts");
+    expect(sql).not.toContain("INSERT INTO auth_sessions");
+  });
+
+  it("returns structured recovery reasons for an incomplete existing user", async () => {
+    const query = vi.fn(async (statement) => {
+      if (String(statement).includes("JOIN roles")) return { rows: [{ organization_id: "org", location_id: "loc", role_id: "rol_finance", role_capabilities: [] }] };
+      if (String(statement).startsWith("SELECT id,email_verified")) return { rows: [{ id: "usr_finance", email_verified: false, active: false }] };
+      if (String(statement).startsWith("SELECT 1 FROM auth_accounts")) return { rows: [] };
+      if (String(statement).includes("FROM organization_memberships membership")) return { rows: [] };
+      return { rows: [] };
+    });
+    const client = { query, release: vi.fn() };
+    const result = await provisionStagingSalesperson({ connect: vi.fn().mockResolvedValue(client) }, {
+      applicationUrl: "https://staging.example.com",
+      email: "synthetic+finance-manager@example.com",
+      organizationId: "org_demo_first_pilot_v1",
+      locationId: "loc_demo_main_rooftop_v1",
+      roleKey: "finance-manager",
+    });
+    expect(result).toMatchObject({
+      status: "existing-user-incomplete",
+      roleKey: "finance-manager",
+      reasons: ["user-inactive", "email-unverified", "credential-account-missing", "membership-missing"],
+    });
+    const sql = query.mock.calls.map(([statement]) => statement).join("\n");
+    expect(sql).not.toContain("INSERT INTO auth_accounts");
+    expect(sql).not.toContain("INSERT INTO auth_sessions");
   });
 
   it("creates one canonical General Manager invitation without creating auth records", async () => {
