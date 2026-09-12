@@ -9,6 +9,13 @@ export function deterministicId(prefix, value) {
   return `${prefix}_${createHash("sha256").update(value).digest("hex").slice(0, 32)}`;
 }
 
+export function resolveDatabaseSslMode(environment = process.env) {
+  const mode = environment.DATABASE_SSL_MODE
+    ?? (["staging", "production"].includes(environment.APP_ENV || "development") ? "verify-full" : "disable");
+  if (!["disable", "verify-full"].includes(mode)) throw new Error("DATABASE_SSL_MODE must be disable or verify-full.");
+  return mode;
+}
+
 export function parseArguments(values) {
   const parsed = {};
   for (let index = 0; index < values.length; index += 2) {
@@ -95,7 +102,8 @@ function escapeHtml(value) { return value.replaceAll("&", "&amp;").replaceAll("<
 
 async function main() {
   const databaseUrl = process.env.DATABASE_URL?.trim(); if (!databaseUrl) throw new Error("DATABASE_URL is required.");
-  const pool = new Pool({ connectionString: databaseUrl, ssl: ["staging", "production"].includes(process.env.APP_ENV || "development") ? { rejectUnauthorized: true } : undefined, max: 1, application_name: "dealerflow-provisioner" });
+  const databaseSslMode = resolveDatabaseSslMode();
+  const pool = new Pool({ connectionString: databaseUrl, ssl: databaseSslMode === "disable" ? false : { rejectUnauthorized: true }, max: 1, application_name: "dealerflow-provisioner" });
   try { process.stdout.write(`${JSON.stringify(await provisionTenant(pool, buildProvisioningPlan(parseArguments(process.argv.slice(2)))))}\n`); } finally { await pool.end(); }
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main().catch(error => { process.stderr.write(`Tenant provisioning failed: ${error instanceof Error ? error.message : "Unknown error"}\n`); process.exitCode = 1; });
