@@ -1,5 +1,16 @@
 # DealerFlow AI Build Status
 
+## 2026-09-13 — Governed team-message notifications
+
+- Added `team-message` as a canonical in-app notification kind and fan-out from successful DealerFlow Communications sends to every other active, location-eligible conversation participant. The sender is excluded, message content is not copied into notifications, and each notification links to the exact organization-scoped conversation.
+- Notification creation remains atomic with message persistence. Message idempotency returns before fan-out on replay, while notification dedupe keys derive from the immutable message ID and recipient. A failed notification insert rolls back the message instead of producing a partially delivered internal communication.
+- Live staging acceptance identified PostgreSQL `42501` at the notification-insert stage. The root cause was `INSERT ... ON CONFLICT DO NOTHING` requiring conflict visibility under recipient-only forced RLS. The final path uses ordinary inserts, matching the existing notification trigger pattern, without bypassing RLS; migrations `0065` and `0066` preserve the corrective history and remove the rejected security-definer experiment.
+- Safe operational telemetry reports only correlation ID, failure stage, database code, and available database metadata; it does not log message content, credentials, or recipient-sensitive values.
+- The client now reports the successful governed fan-out count without forcing a server-component remount that clears the confirmation. Existing polling refreshes the immutable message list while preserving user feedback.
+- Full validation passes: ESLint with no warnings, strict TypeScript, 746 tests across 154 files, optimized production build, and whitespace validation. The repository has no configured formatter.
+- Commits `3dd6e897023b11bd617abb20c24ed45e29c42039`, `9c4b1df128621a2fcaefcd5335ed5a67e5f325cb`, and `501f80146a70dd3cf472d22cede95fea4333c995` are pushed. Final commit `501f80146a70dd3cf472d22cede95fea4333c995` is live on `dealerflow-isolated-staging` as Render deploy `dep-dajgt11594qs73c5ivu0`; `/api/health` reports that exact SHA.
+- Authenticated Manager acceptance sent a clearly synthetic message in `Synthetic Sales Desk` exactly once. DealerFlow visibly confirmed `Message sent · 3 teammates notified.`, matching the three other active participants. Simulation Runs #1/#2 and production were not changed. Reciprocal notification-menu viewing remains a separate authenticated-recipient visual check; backend fan-out and atomic persistence are accepted.
+
 ## 2026-09-13 — Governed Quote and document sharing in Communications
 
 - Replaced the normal raw-ID workflow for commercial records with an authorized Quote/document picker. Choices are resolved server-side from canonical Deal, Customer, Quote, and document-requirement records and limited to the actor's tenant, Location grants, and `quote.read` / `document.read` capabilities.
