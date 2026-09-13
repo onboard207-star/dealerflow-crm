@@ -26,11 +26,11 @@ Only active conversation participants may read messages. Only active participant
 
 Binary attachments are not enabled until the governed storage boundary supports malware scanning, content-type and size validation, tenant/Location authorization, retention, audit evidence, and safe download headers. The interface states this limitation rather than presenting a nonfunctional upload control.
 
-Quotes and documents should be shared as secure references to immutable DealerFlow versions. Future binary attachment support must not replace the canonical Deal document authority.
+Quotes and Deal document requirements are shared through an authorized picker backed by canonical DealerFlow records. The message stores a secure internal reference to the immutable Quote version or document requirement; it does not copy commercial terms or replace the canonical Deal document authority. Binary attachment support remains a separate future storage capability.
 
 ## Appointments and workflow actions
 
-The conversation workspace links to DealerFlow's canonical Calendar. A future structured appointment composer may call the existing appointment service and post the resulting canonical appointment reference back into the conversation. Chat must never create a parallel appointment record or bypass customer, Lead, Location, or permission validation.
+The conversation workspace links to DealerFlow's canonical Calendar. Its structured appointment composer calls the existing appointment service and posts the resulting canonical appointment reference back into the conversation. Chat never creates a parallel appointment record or bypasses customer, Lead, Location, or permission validation.
 
 ## Accessibility and responsive behavior
 
