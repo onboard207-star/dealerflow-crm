@@ -1,5 +1,15 @@
 # DealerFlow AI Build Status
 
+## 2026-09-13 — Governed in-chat appointment scheduling
+
+- Added a `Schedule` action to DealerFlow Communications so an authorized participant can create and share an appointment without leaving the conversation. The workflow uses the existing canonical Calendar appointment service; Communications does not own or duplicate appointment state.
+- Appointment contexts are limited to active, location-authorized canonical Lead/Customer relationships. Conversation membership, organization scope, appointment capabilities, location access, input validation, and scheduling invariants all fail closed.
+- Scheduling is idempotent and recoverable: the appointment idempotency key is namespaced to the conversation, and an exact replay reuses the canonical appointment while repairing a missing deterministic chat reference instead of creating a duplicate appointment or message.
+- The responsive composer supports showroom, test-drive, phone, and video appointments, local start/end time, optional notes, keyboard submission, and a direct path to the full Calendar. The resulting message contains a governed internal Customer reference rather than copied business data.
+- Full validation passes: Drizzle schema check, product-portfolio and execution-system checks, ESLint with no warnings, strict TypeScript, 740 tests across 154 files, optimized production build, and whitespace validation.
+- Commit `1328da3936c0e3cc9e74b6f8a9daa5687f774cd5` is live on `dealerflow-isolated-staging` as Render deploy `dep-dajfqfgae00c739qerpg`; `/api/health` reports that exact SHA and `/api/ready` reports database/runtime ready.
+- Authenticated Manager acceptance scheduled one clearly synthetic phone appointment for the existing `P1 SMS Acceptance` fixture. The chat rendered the appointment card and governed Customer link, the form reset cleanly, and Calendar showed `P1 SMS Acceptance` at `10:00 AM` on September 15, 2026. Simulation Runs #1/#2 and production were not changed.
+
 ## 2026-09-13 — Governed mid-conversation participant additions
 
 - Added an owner-only `Add person` control to existing group and department conversations. Eligible choices come only from active canonical organization memberships and honor the conversation Location boundary; existing participants are excluded.
