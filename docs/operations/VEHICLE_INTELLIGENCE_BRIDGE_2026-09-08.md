@@ -84,3 +84,15 @@ Before a release can become accepted:
 - Quote v2 was requested by an authenticated Salesperson and approved by a distinct authenticated General Manager after Salesperson self-approval returned `403`. The customer-safe proposal passed privacy review, exact v2 acceptance succeeded, and alternate v1 acceptance returned `409`.
 - The Deal progressed through approval, contracting, required-document completion, delivery readiness, scheduled/ready/completed delivery, final delivered state, and post-delivery follow-up visibility.
 - The Customer workspace visibly reconciles the accepted Quote, completed documents, completed delivery, sold Lead, follow-up task, and chronological timeline. No P0/P1 application defect was found during this continuation.
+
+# Multi-OEM runtime consumption
+
+DealerFlow AI Vehicle & Inventory remains the canonical catalog authority. The application consumes accepted catalog releases through a source-independent `VehicleCatalogRepository`; Airtable record and field identifiers remain confined to extraction and provenance. Runtime features operate on stable DealerFlow catalog identifiers.
+
+The canonical hierarchy is OEM / Make → Model → Model Year → Trim → Trim Configuration. Reusable specifications, features, packages/options, OEM paints, exterior eligibility, OEM interiors, interior eligibility, and color rules attach to exact configurations through governed relationships. Model comparisons are catalog relationships, not physical inventory records.
+
+Physical inventory remains a separate authority: Vehicle/VIN → Inventory Unit/stock cycle → rooftop, price, media, status, and lifecycle. Catalog projection and comparison must never manufacture or mutate VINs, stock numbers, dealer ownership, availability, mileage, or selling prices.
+
+The read-side architecture provides progressive hierarchy lookup, exact configuration detail, indexed configuration search, comparison with explicit unavailable/incomplete states, and a normalized AI context builder. It batches attribute retrieval and uses the PostgreSQL indexes created with migration 0054; callers may add request-level caching without changing the domain contract.
+
+Adding Chevrolet, BMW, Hyundai, or another OEM is a governed data operation, not an application-code rewrite. A new OEM follows the existing extraction, validation, atomic projection, reconciliation, and accepted-release process. No OEM-specific trim ladder belongs in application source.
