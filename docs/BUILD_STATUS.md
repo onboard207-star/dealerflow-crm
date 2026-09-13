@@ -1,5 +1,15 @@
 # DealerFlow AI Build Status
 
+## 2026-09-13 — Communications department and governed-reference acceptance
+
+- Added an explicit `New` conversation control and query state so users can return to conversation creation after a first thread exists. This closes the authenticated staging usability blocker without changing communications authority or persistence.
+- Full local validation passes: Drizzle schema check, product-portfolio and execution-system checks, ESLint with no warnings, strict TypeScript, 736 tests across 154 files, optimized production build, and whitespace validation.
+- Commit `54880d7f2869afc3f492c0e4be85bbc344889391` is live on `dealerflow-isolated-staging` as Render deploy `dep-dajf4lbm8hqs7382a57g`. `/api/health` reports that exact SHA and `/api/ready` reports database and runtime configuration ready.
+- The authenticated synthetic Manager created department conversation `Synthetic Sales Desk` with the existing synthetic Salesperson and canonical New Car Sales Manager. DealerFlow resolved all three participants from active organization memberships; no user, role, or session was fabricated.
+- The Manager sent one clearly synthetic message with a canonical Customer reference to the existing Simulation Run #2 customer. The message persisted once, the composer reset, and the reference rendered as an internal organization-scoped DealerFlow link.
+- Direct and department conversation creation, participant resolution, message persistence, and governed Customer-reference rendering now pass authenticated Manager staging acceptance. A separate authenticated Salesperson browser remains required to prove reciprocal visibility/reply and responsive Salesperson UAT; permissions were not weakened to remove that human gate.
+- Document and image binaries remain intentionally unavailable until governed file storage is enabled. The UI states this limitation rather than presenting a nonfunctional upload facade. Production remains untouched.
+
 ## 2026-09-13 — Communications staging role-reconciliation repair
 
 - Manually deployed reviewed Communications commit `9b4a60970ddc340448161155989e38d876735449` to `dealerflow-isolated-staging` as Render deploy `dep-dajehlojo6nc73di8ur0`; the deploy reached `live`, `/api/health` and `/api/ready` returned HTTP 200, and both endpoints reported the exact deployed SHA.
