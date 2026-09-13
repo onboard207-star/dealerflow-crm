@@ -1,5 +1,15 @@
 # DealerFlow AI Build Status
 
+## 2026-09-13 — Governed Quote and document sharing in Communications
+
+- Replaced the normal raw-ID workflow for commercial records with an authorized Quote/document picker. Choices are resolved server-side from canonical Deal, Customer, Quote, and document-requirement records and limited to the actor's tenant, Location grants, and `quote.read` / `document.read` capabilities.
+- Quote choices identify the immutable version, lifecycle status, authoritative total, customer, and Deal number. Document choices identify the immutable requirement version and status. Messages retain only a governed internal reference and do not copy or mutate commercial terms or document authority.
+- The existing message service revalidates the selected record, capability, organization, Location, canonical identifier, and organization-scoped route before persistence. Message idempotency and immutable reference storage remain unchanged.
+- Full validation passes: Drizzle schema check, product-portfolio and execution-system checks, ESLint with no warnings, strict TypeScript, 742 tests across 154 files, optimized production build, and whitespace validation. The repository has no configured formatter.
+- Commit `e9166eea1d99cc5f1ccc7e5682f0170401cb63af` is live on `dealerflow-isolated-staging` as Render deploy `dep-dajg179594qs73c2l040`; `/api/health` reports that exact SHA and `/api/ready` reports database/runtime ready.
+- Authenticated Manager acceptance shared the existing synthetic accepted Quote v2 for Deal `DF-00F449F5` exactly once. The composer reset, the immutable Quote card rendered with `$41,500.00`, and its internal link opened the correct canonical Deal/Quote workspace. Simulation Runs #1/#2 and production were not changed.
+- Binary document/image uploads remain fail-closed because staging reports `media=not-configured`. DealerFlow does not present an upload facade until governed object storage, content validation, malware controls, retention, and authorization-aware download behavior are available.
+
 ## 2026-09-13 — Governed in-chat appointment scheduling
 
 - Added a `Schedule` action to DealerFlow Communications so an authorized participant can create and share an appointment without leaving the conversation. The workflow uses the existing canonical Calendar appointment service; Communications does not own or duplicate appointment state.
