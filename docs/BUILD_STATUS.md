@@ -1,5 +1,15 @@
 # DealerFlow AI Build Status
 
+## 2026-09-13 — Governed mid-conversation participant additions
+
+- Added an owner-only `Add person` control to existing group and department conversations. Eligible choices come only from active canonical organization memberships and honor the conversation Location boundary; existing participants are excluded.
+- Direct messages remain two-party conversations and cannot silently become groups. Non-owners, users without `team_chat.write`, inactive/cross-tenant members, Location-ineligible members, and additions above the 100-participant limit fail closed.
+- Migration `0063_team_conversation_participant_additions` adds immutable old/new participant evidence, idempotency, forced row-level security, and a trigger that rejects participant-authority rewrites without the exact evidence event. The application also records a visible system message and immutable audit entry.
+- Concurrency is serialized by a transaction-scoped advisory lock and guarded by an exact old-participant-set comparison. Replays reuse the existing result rather than creating duplicate membership or history.
+- Full validation passes: Drizzle schema check, product-portfolio and execution-system checks, ESLint with no warnings, strict TypeScript, 739 tests across 154 files, optimized production build, and whitespace validation.
+- Commit `9dc717e1268ce5833c6f141657bef7e84f20a5ac` is live on `dealerflow-isolated-staging` as Render deploy `dep-dajfib3m8hqs7383ri00`; `/api/health` reports that exact SHA and `/api/ready` reports database/runtime ready.
+- Authenticated Manager acceptance added the existing synthetic General Sales Manager to `Synthetic Sales Desk` mid-conversation. The participant list updated from three to four people and the immutable system message `Taylor Reed · General Sales Manager was added to the conversation.` rendered in sequence. No user, role, session, or production record was fabricated or changed.
+
 ## 2026-09-13 — Communications department and governed-reference acceptance
 
 - Added an explicit `New` conversation control and query state so users can return to conversation creation after a first thread exists. This closes the authenticated staging usability blocker without changing communications authority or persistence.
