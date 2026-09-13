@@ -1,5 +1,15 @@
 # DealerFlow AI Build Status
 
+## 2026-09-13 — Isolated-staging R2 media activation
+
+- Activated Cloudflare R2 under explicit owner approval and created private bucket `dealerflow-isolated-staging-media` in Eastern North America using the Standard storage class. The R2 subscription has usage-based overage billing; no billable usage was incurred during setup.
+- Created an account API token with Object Read & Write permission scoped only to that bucket. It cannot create, configure, list, or delete other buckets. Credentials were transferred directly into Render and were not printed, committed, or written to documentation.
+- Enabled the Cloudflare-managed public development URL for isolated staging inventory media only. It is rate-limited and is not an approved production delivery domain; production requires a governed custom domain and separate production credentials.
+- Configured exact-origin CORS for `https://dealerflow-isolated-staging.onrender.com` with only `GET`, `PUT`, and `HEAD`, the `Content-Type` request header, exposed `ETag`, and a 3,600-second preflight cache. A live non-uploading preflight returned HTTP 204 with those exact headers.
+- Installed `DEALERFLOW_MEDIA_PROVIDER` and the five required `CLOUDFLARE_R2_*` variables on the `dealerflow-isolated-staging` web service only. The PostgreSQL service and production were not changed.
+- Render deploy `dep-dajh7ebm8hqs7389iccg` is live at exact commit `872ca577acc9ce0d48a8767b998e5f1adae5261f`. `/api/health` reports that SHA and `/api/ready` reports database/runtime ready with `media=configured`.
+- This closes media-provider configuration and CORS preflight. A controlled synthetic inventory image upload/verify/render/remove acceptance remains required. Private chat-document attachments remain separate and fail closed until authorization-aware download and malware-scanning controls exist.
+
 ## 2026-09-13 — Governed team-message notifications
 
 - Added `team-message` as a canonical in-app notification kind and fan-out from successful DealerFlow Communications sends to every other active, location-eligible conversation participant. The sender is excluded, message content is not copied into notifications, and each notification links to the exact organization-scoped conversation.
