@@ -11,7 +11,8 @@
 - Deployed non-recursive RLS repair `1815752cd4de605149b167b1240b15b16fe2f8a1` as Render deploy `dep-dajersgae00c739mug9g`. Health and readiness returned HTTP 200 on the exact SHA. The authenticated synthetic Manager then created a private direct conversation with the existing synthetic Salesperson and persisted one clearly synthetic smoke-test message.
 - The successful send exposed a client-only false failure after persistence: the async submit handler read React's cleared event target while resetting the form. The handler now captures the form element before awaiting the request, so a successful send clears the composer without displaying an error.
 - Local validation passes: Drizzle schema check, product-portfolio and execution-system checks, ESLint with no warnings, strict TypeScript, 736 tests across 154 files, optimized production build, and migration-journal integrity.
-- Staging requires deployment of the client-only form-reset repair and one final send smoke. Production remains untouched.
+- Deployed the client repair at exact SHA `ea8791bc1586833a746bcc402cb3a5bdd64f480f` as Render deploy `dep-dajeudlg1s2s73agead0`. Health and readiness returned HTTP 200 on that SHA. The final authenticated Manager smoke persisted a second synthetic message, rendered both messages in order, cleared the composer, and displayed no false error.
+- DealerFlow Communications foundation acceptance is passed for the Manager-to-Salesperson direct-message path. Group/department workflow, reciprocal Salesperson visual UAT, governed record-reference UAT, and responsive role review remain the next bounded acceptance work. Production remains untouched.
 
 ## 2026-09-13 — DealerFlow Communications foundation
 
