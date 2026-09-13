@@ -1,5 +1,14 @@
 # DealerFlow AI Build Status
 
+## 2026-09-13 — P1-04 clean-room onboarding reconciliation
+
+- Reconciled the existing clean-room rehearsal against live isolated staging without resetting, reseeding, or modifying PostgreSQL. Organization `org_c27d098b6a6129f51887d130e6ad83ff` is active, classified `demo`, and named `DealerFlow RC1 Synthetic Dealership` with slug `dealerflow-rc1-clean-room`.
+- The governed provisioner established one active `America/New_York` rooftop (`main-rooftop`), one organization configuration, all 11 canonical system roles, and 272 canonical capability grants. The tenant remains clean: zero Customers, Leads, Deals, physical Inventory Units, and import batches.
+- The initial all-location Owner invitation targets the controlled RC1 plus-address identity. Its transactional email is `sent` with a provider message identifier and no retained error code. The invitation itself remains `pending`, unaccepted, and unexpired; consequently the tenant has zero memberships and no authenticated Owner authority yet.
+- Proved the opposite-tenant authorization boundary from the existing authenticated synthetic Manager session in `org_demo_first_pilot_v1`: direct navigation to the clean-room workspace returned 404, and the original Manager session remained valid afterward.
+- `PILOT-P1-04` remains open at the human invitation-acceptance gate. The Owner must accept the already-delivered invitation and complete Better Auth account setup in a separate browser context. Only then may DealerFlow verify the canonical membership, Owner role, all-location grant, onboarding smoke, governed import rehearsal, idempotent replay, conflict refusal, and reverse-direction tenant denial.
+- No application code, deployment, provider send, credential, session, production resource, or business record changed during this reconciliation.
+
 ## 2026-09-13 — P1-03 non-destructive reliability checkpoint
 
 - Isolated staging remains manually promoted (`autoDeploy=no`) from `codex/staging-deployment`, with Docker runtime, one Virginia instance, `/api/health`, and `node scripts/render-migrate.mjs` as the pre-deploy gate. Deploy `dep-dajc6bjm8hqs73fnhi6g` is live at application commit `88cc1c402933b7f6dd35e4564420c0d1a2c85b9c`.
