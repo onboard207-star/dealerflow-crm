@@ -92,7 +92,14 @@ export function validateVehicleCatalogManifest(manifest: VehicleCatalogManifest)
     ...(node.parentStableKey ? { parentStableKey: normalizeStableKey(node.parentStableKey) } : {}),
     ...(node.links ? { links: node.links.map((link) => ({ ...link, targetStableKey: normalizeStableKey(link.targetStableKey) })) } : {}),
     id: deriveVehicleCatalogId(inferKind(node.stableKey), node.stableKey),
-    contentSha256: createHash("sha256").update(stableJson(node.content)).digest("hex"),
+    contentSha256: createHash("sha256").update(stableJson({
+      name: node.name,
+      parentStableKey: node.parentStableKey ? normalizeStableKey(node.parentStableKey) : null,
+      readiness: node.readiness ?? null,
+      sourceSystem: node.sourceSystem,
+      sourceRecordId: node.sourceRecordId ?? null,
+      content: node.content,
+    })).digest("hex"),
   }));
 }
 
@@ -107,6 +114,11 @@ function inferKind(key: string): VehicleCatalogEntityKind {
   if (value.startsWith("COMPARISON-") || value.startsWith("CMP-")) return "comparison";
   return "attribute";
 }
-function stableJson(value: Readonly<Record<string, unknown>>) {
-  return JSON.stringify(Object.fromEntries(Object.entries(value).sort(([left], [right]) => left.localeCompare(right))));
+function stableJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
+  if (value && typeof value === "object") {
+    const entries = Object.entries(value).sort(([left], [right]) => left.localeCompare(right));
+    return `{${entries.map(([key, item]) => `${JSON.stringify(key)}:${stableJson(item)}`).join(",")}}`;
+  }
+  return JSON.stringify(value) ?? "null";
 }

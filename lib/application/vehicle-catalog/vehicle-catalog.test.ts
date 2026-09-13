@@ -21,6 +21,21 @@ describe("vehicle catalog projection", () => {
     expect(first[0]?.id).toMatch(/^vma_[a-f0-9]{32}$/);
   });
 
+  it("changes the governed record fingerprint when readiness changes without content changes", () => {
+    const initial = validateVehicleCatalogManifest(manifest);
+    const promoted = validateVehicleCatalogManifest({
+      ...manifest,
+      nodes: manifest.nodes.map((node) =>
+        node.stableKey === "CFG-HONDA-CRV-2026-SPORTL-HYBRID-AWD-ECVT"
+          ? { ...node, readiness: "pilot-ready" as const }
+          : node,
+      ),
+    });
+
+    expect(initial[2]?.content).toEqual(promoted[2]?.content);
+    expect(initial[2]?.contentSha256).not.toBe(promoted[2]?.contentSha256);
+  });
+
   it("rejects Airtable IDs as authority and physical inventory fields", () => {
     expect(() => validateVehicleCatalogManifest({ ...manifest, nodes: [{ stableKey: "recABCDEFGHIJKLMN", name: "Bad", sourceSystem: "airtable", content: { vin: "2HKRS6H98SH123456" } }] })).toThrow(VehicleCatalogValidationError);
   });
