@@ -463,6 +463,13 @@
       "when": 1789309800000,
       "tag": "0065_team_message_notification_fanout",
       "breakpoints": true
+    },
+    {
+      "idx": 66,
+      "version": "7",
+      "when": 1789311600000,
+      "tag": "0066_team_message_notification_rls",
+      "breakpoints": true
     }
   ]
 }
