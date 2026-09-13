@@ -8,8 +8,10 @@
 - Added migration `0061_team_communications_role_reconciliation`, which transactionally relaxes forced RLS only for `roles` and `role_capabilities`, grants only the two team-chat capabilities to existing protected system roles, and restores forced RLS before commit. Added a regression assertion covering the grant boundary and restored RLS state.
 - Deployed role-reconciliation commit `1641bb53ee2cf187bf7155d063cb77d02ae56436` as Render deploy `dep-dajemgp5efls738l6aug`. Manager access then passed, but the first synthetic conversation transaction failed closed because the original membership helper policies recurse under forced RLS; the transaction rolled back and created no conversation or message.
 - Added migration `0062_team_communications_nonrecursive_rls`. It establishes an immutable participant ID set on the conversation authority, rewrites conversation/message/reference policies to use that non-recursive authority, preserves per-participant read-state rows, and keeps forced RLS on every communications table. The service writes the complete, deterministic participant set in the same transaction as the participant rows.
+- Deployed non-recursive RLS repair `1815752cd4de605149b167b1240b15b16fe2f8a1` as Render deploy `dep-dajersgae00c739mug9g`. Health and readiness returned HTTP 200 on the exact SHA. The authenticated synthetic Manager then created a private direct conversation with the existing synthetic Salesperson and persisted one clearly synthetic smoke-test message.
+- The successful send exposed a client-only false failure after persistence: the async submit handler read React's cleared event target while resetting the form. The handler now captures the form element before awaiting the request, so a successful send clears the composer without displaying an error.
 - Local validation passes: Drizzle schema check, product-portfolio and execution-system checks, ESLint with no warnings, strict TypeScript, 736 tests across 154 files, optimized production build, and migration-journal integrity.
-- Staging requires deployment of the non-recursive RLS repair before retrying synthetic conversation creation. Production remains untouched.
+- Staging requires deployment of the client-only form-reset repair and one final send smoke. Production remains untouched.
 
 ## 2026-09-13 — DealerFlow Communications foundation
 
