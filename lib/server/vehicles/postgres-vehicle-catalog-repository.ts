@@ -1,6 +1,6 @@
 import type { Pool } from "pg";
 import type {
-  CatalogAttribute, CatalogConfiguration, CatalogMake, CatalogModel, CatalogModelYear, CatalogTrim,
+  CatalogAttribute, CatalogConfiguration, CatalogMake, CatalogModel, CatalogModelComparison, CatalogModelYear, CatalogTrim,
   VehicleCatalogRepository, VehicleCatalogSearchQuery,
 } from "@/lib/application/vehicle-catalog";
 
@@ -44,6 +44,16 @@ export class PostgresVehicleCatalogRepository implements VehicleCatalogRepositor
     clauses.push(`configuration.readiness=ANY($${values.length}::text[])`);
     return this.queryConfigurations(clauses.join(" AND "), values, Math.min(Math.max(query.limit ?? 50, 1), 250));
   }
+  async listCompetitors(modelId:string):Promise<readonly CatalogModelComparison[]> {
+    const result=await this.pool.query<ComparisonRow>(`SELECT comparison.id,comparison.stable_key,comparison.categories,comparison.relationship_status,comparison.readiness,comparison.evidence,comparison.release_id,comparison.source_system,comparison.source_record_id,
+      subject.id AS subject_id,subject.stable_key AS subject_stable_key,subject.make_id AS subject_make_id,subject.name AS subject_name,subject_make.name AS subject_make,
+      competitor.id AS competitor_id,competitor.stable_key AS competitor_stable_key,competitor.make_id AS competitor_make_id,competitor.name AS competitor_name,competitor_make.name AS competitor_make
+      FROM vehicle_catalog_model_comparisons comparison
+      JOIN vehicle_catalog_models subject ON subject.id=comparison.subject_model_id JOIN vehicle_catalog_makes subject_make ON subject_make.id=subject.make_id
+      JOIN vehicle_catalog_models competitor ON competitor.id=comparison.competitor_model_id JOIN vehicle_catalog_makes competitor_make ON competitor_make.id=competitor.make_id
+      WHERE comparison.subject_model_id=$1 AND comparison.relationship_status='active' AND comparison.readiness NOT IN ('blocked','not-applicable') ORDER BY competitor_make.name,competitor.name,comparison.id`,[modelId]);
+    return result.rows.map(row=>({id:row.id,stableKey:row.stable_key,subjectModel:{id:row.subject_id,stableKey:row.subject_stable_key,makeId:row.subject_make_id,make:row.subject_make,model:row.subject_name},competitorModel:{id:row.competitor_id,stableKey:row.competitor_stable_key,makeId:row.competitor_make_id,make:row.competitor_make,model:row.competitor_name},categories:row.categories,relationship:row.relationship_status,evidence:row.evidence,...source(row,row.readiness)}));
+  }
 
   private async queryConfigurations(where: string, values: readonly unknown[], limit: number) {
     const result = await this.pool.query<ConfigurationRow>(`${configurationSelect} WHERE ${where} ORDER BY make.name,model.name,model_year.year DESC,trim.name,configuration.name LIMIT ${limit}`, [...values]);
@@ -80,6 +90,7 @@ interface ModelYearRow extends ProvenanceRow { model_id:string;year:number;gener
 interface TrimRow extends ProvenanceRow { model_year_id:string;name:string;badge:string|null;readiness:Readiness }
 interface ConfigurationRow extends ProvenanceRow { trim_id:string;name:string;drivetrain:string|null;powertrain:string|null;engine:string|null;transmission:string|null;body_style:string|null;seat_count:number|null;readiness:Readiness;model_year_id:string;trim_stable_key:string;trim_name:string;badge:string|null;trim_readiness:Readiness;model_id:string;model_year_stable_key:string;year:number;generation:string|null;model_year_readiness:Readiness;make_id:string;model_stable_key:string;model_name:string;vehicle_class:string|null;make_stable_key:string;make_name:string }
 interface AttributeRow extends ProvenanceRow { configuration_id:string;kind:CatalogAttribute["kind"];name:string;value:string|null;unit:string|null;metadata:Record<string,unknown>;relationship:CatalogAttribute["relationship"];conditions:Record<string,unknown> }
+interface ComparisonRow extends ProvenanceRow { categories:string[];relationship_status:string;readiness:Readiness;evidence:Record<string,unknown>;subject_id:string;subject_stable_key:string;subject_make_id:string;subject_name:string;subject_make:string;competitor_id:string;competitor_stable_key:string;competitor_make_id:string;competitor_name:string;competitor_make:string }
 const source = (row: ProvenanceRow, readiness: Readiness) => ({ sourceSystem:row.source_system,...(row.source_record_id?{sourceRecordId:row.source_record_id}:{}),releaseId:row.release_id,readiness });
 const make = (row: MakeRow): CatalogMake => ({id:row.id,stableKey:row.stable_key,name:row.name,...source(row,"verified")});
 const model = (row: ModelRow): CatalogModel => ({id:row.id,makeId:row.make_id,stableKey:row.stable_key,name:row.name,...(row.vehicle_class?{vehicleClass:row.vehicle_class}:{}),...source(row,"verified")});

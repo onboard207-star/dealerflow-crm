@@ -23,7 +23,7 @@ export default async function InventoryPage({ params, searchParams }: PageProps)
     breadcrumbs={[{ label: context.organization.name }, { label: "Inventory" }]}
     user={{ name: context.session.user.name, email: context.session.user.email, ...(context.session.user.image ? { image: context.session.user.image } : {}) }}>
     <section className="mx-auto max-w-7xl" aria-labelledby="inventory-heading">
-      <div><h1 id="inventory-heading" className="text-2xl font-semibold tracking-tight">Inventory</h1><p className="mt-1 text-sm text-muted-foreground">Canonical vehicles currently visible to your assigned locations.</p></div>
+      <div className="flex flex-wrap items-end justify-between gap-3"><div><h1 id="inventory-heading" className="text-2xl font-semibold tracking-tight">Inventory</h1><p className="mt-1 text-sm text-muted-foreground">Canonical vehicles currently visible to your assigned locations.</p></div><div className="flex flex-wrap gap-2"><Link href={`${base}/catalog-health`} className="focus-ring inline-flex min-h-11 items-center rounded-lg border bg-background px-4 text-sm font-medium hover:bg-muted">Catalog health</Link><Link href={`${base}/compare`} className="focus-ring inline-flex min-h-11 items-center rounded-lg border bg-background px-4 text-sm font-medium hover:bg-muted">Compare catalog vehicles</Link></div></div>
       {canCreate ? <InventoryRegistrationForm locations={locations} organizationId={organizationId} /> : null}
       <details className="group mt-5 rounded-xl border bg-card" open={Boolean(filters.q || filters.status)}>
         <summary className="focus-ring flex min-h-11 cursor-pointer list-none items-center justify-between rounded-xl px-4 text-sm font-medium sm:hidden">

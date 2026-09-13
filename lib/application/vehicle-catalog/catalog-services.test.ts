@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildAIVehicleContext } from "./build-ai-vehicle-context";
-import type { CatalogConfiguration, CatalogMake, CatalogModel, CatalogModelYear, CatalogTrim, VehicleCatalogRepository, VehicleCatalogSearchQuery } from "./catalog-domain";
+import type { CatalogConfiguration, CatalogMake, CatalogModel, CatalogModelComparison, CatalogModelYear, CatalogTrim, VehicleCatalogRepository, VehicleCatalogSearchQuery } from "./catalog-domain";
 import { VehicleConfigurationComparisonService } from "./compare-configurations";
 import { CachedVehicleCatalogRepository } from "./cached-vehicle-catalog-repository";
 
@@ -10,10 +10,12 @@ const models:CatalogModel[]=[{...identity("vmo_crv","MODEL-HONDA-CRV","CR-V"),ma
 const years:CatalogModelYear[]=[{...identity("vmy_crv","MY-HONDA-CRV-2026","2026"),modelId:"vmo_crv",year:2026},{...identity("vmy_rav4","MY-TOYOTA-RAV4-2026","2026"),modelId:"vmo_rav4",year:2026}];
 const trims:CatalogTrim[]=[{...identity("vtr_crv","TRIM-HONDA-CRV-SPORTL","Sport-L Hybrid"),modelYearId:"vmy_crv"},{...identity("vtr_rav4","TRIM-TOYOTA-RAV4-XLE","XLE"),modelYearId:"vmy_rav4"}];
 const configurations:CatalogConfiguration[]=[configuration("vcf_crv",0,"AWD","204","Honda Sensing"),configuration("vcf_rav4",1,"AWD",undefined,"Toyota Safety Sense")];
+const comparisons:CatalogModelComparison[]=[{id:"vcp_crv_rav4",stableKey:"COMPARISON-CRV-RAV4",subjectModel:{id:"vmo_crv",stableKey:"MODEL-HONDA-CRV",makeId:"vma_honda",make:"Honda",model:"CR-V"},competitorModel:{id:"vmo_rav4",stableKey:"MODEL-TOYOTA-RAV4",makeId:"vma_toyota",make:"Toyota",model:"RAV4"},categories:["Compact SUV","Hybrid"],relationship:"active",evidence:{},...source}];
 
 class FixtureRepository implements VehicleCatalogRepository{
   listMakes=async()=>makes;listModels=async(id:string)=>models.filter(item=>item.makeId===id);listModelYears=async(id:string)=>years.filter(item=>item.modelId===id);listTrims=async(id:string)=>trims.filter(item=>item.modelYearId===id);listConfigurations=async(id:string)=>configurations.filter(item=>item.trimId===id);getConfiguration=async(id:string)=>configurations.find(item=>item.id===id);
   searchConfigurations=async(query:VehicleCatalogSearchQuery)=>configurations.filter(item=>(!query.make||item.make.name.includes(query.make))&&(!query.model||item.model.name.includes(query.model))&&(!query.year||item.modelYear.year===query.year)&&(!query.trim||item.trim.name.includes(query.trim))&&(!query.configuration||item.name.includes(query.configuration)));
+  listCompetitors=async(modelId:string)=>comparisons.filter(item=>item.subjectModel.id===modelId);
 }
 
 describe("vehicle catalog domain services",()=>{
@@ -35,9 +37,9 @@ describe("vehicle catalog domain services",()=>{
     expect(horsepower?.values).toEqual([expect.objectContaining({value:"Horsepower: 204 hp",state:"verified"}),expect.objectContaining({state:"unavailable"})]);
   });
   it("builds normalized AI context without raw source payloads",()=>{
-    const context=buildAIVehicleContext(configurations[0]);
+    const context=buildAIVehicleContext(configurations[0],comparisons);
     expect(context.identity).toMatchObject({make:"Honda",model:"CR-V",year:2026,trim:"Sport-L Hybrid"});
-    expect(context.features).toEqual(["Honda Sensing"]);expect(context).not.toHaveProperty("sourceRecordId");
+    expect(context.features).toEqual(["Honda Sensing"]);expect(context.competitors).toEqual([{modelId:"vmo_rav4",make:"Toyota",model:"RAV4",categories:["Compact SUV","Hybrid"],readiness:"pilot-ready"}]);expect(context).not.toHaveProperty("sourceRecordId");
   });
   it("requires two or three distinct configurations",async()=>{
     await expect(new VehicleConfigurationComparisonService(repository).compare(["vcf_crv"])).rejects.toThrow("two or three");

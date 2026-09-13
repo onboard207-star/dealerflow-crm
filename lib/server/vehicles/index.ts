@@ -7,5 +7,6 @@ export * from "./inventory-media-manager";
 export * from "./r2-media-storage";
 export * from "./postgres-vehicle-catalog-projector";
 export * from "./postgres-vehicle-catalog-repository";
+export * from "./vehicle-catalog-readiness-reader";
 export * from "./postgres-inventory-cost-provider";
 export * from "./postgres-vehicle-configuration-match-provider";

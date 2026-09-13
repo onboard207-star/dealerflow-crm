@@ -29,6 +29,8 @@ export function extractAirtableVehicleCatalog(snapshot:AirtableCatalogSnapshot):
   for(const[table,rule]of Object.entries(attributes))for(const record of records(snapshot,table))register(record,table,rule.stableKey,undefined,recordKeys,issues);
   const colorRules=records(snapshot,"Color Rules");
   for(const record of colorRules)register(record,"Color Rules",["Color Rule ID"],undefined,recordKeys,issues);
+  const comparisons=records(snapshot,"Model Comparisons");
+  for(const record of comparisons)register(record,"Model Comparisons",["Comparison ID"],"COMPARISON",recordKeys,issues);
 
   for(const[table,rule]of Object.entries(hierarchy))for(const record of records(snapshot,table)){
     const stableKey=stringField(record,rule.stableKey);if(!stableKey)continue;
@@ -45,6 +47,13 @@ export function extractAirtableVehicleCatalog(snapshot:AirtableCatalogSnapshot):
       references[field]=cardinality==="one"?resolved[0]:resolved;
     }
     nodes.push({stableKey,name,readiness:readiness(record.fields[rule.readiness??"Catalog Readiness"]),sourceSystem:"airtable",sourceRecordId:record.id,content:{kind:rule.kind,...pickContent(record,rule.content),...references}});
+  }
+  for(const record of comparisons){
+    const stableKey=recordKeys.get(record.id);if(!stableKey)continue;
+    const subject=resolveOne(record,"Subject Model",recordKeys,`Model Comparisons/${record.id}`,issues);
+    const competitor=resolveOne(record,"Competitor Model",recordKeys,`Model Comparisons/${record.id}`,issues);
+    if(subject===competitor)issues.push(`Model Comparisons/${record.id}: subject and competitor must differ.`);
+    nodes.push({stableKey,name:stringField(record,"Comparison Key")??stableKey,readiness:readiness(record.fields["Catalog Readiness"]),sourceSystem:"airtable",sourceRecordId:record.id,content:{subjectModelStableKey:subject,competitorModelStableKey:competitor,categories:plainValue(record.fields["Comparison Categories"]??[]),relationshipStatus:fieldText(record.fields["Relationship Status"])??"Active",sourceSystem:fieldText(record.fields["Source System"])??"airtable",sourceRecordId:fieldText(record.fields["Source Record ID"]),sourceCompetitorText:fieldText(record.fields["Source Competitor Text"]),notes:fieldText(record.fields.Notes)}});
   }
   if(issues.length)throw new AirtableCatalogExtractionError(issues);
   return{sourceSystem:"airtable",sourceDataset:snapshot.baseId,sourceRevision:snapshot.revision,nodes};
@@ -81,4 +90,4 @@ function records(snapshot:AirtableCatalogSnapshot,name:string){return Object.ent
 function fieldText(value:unknown){if(typeof value==="string")return value.trim()||undefined;if(value&&typeof value==="object"&&"name"in value&&typeof value.name==="string")return value.name.trim()||undefined;return undefined;}
 function stringField(record:AirtableCatalogRecord,field:string){return fieldText(record.fields[field]);}
 function firstString(record:AirtableCatalogRecord,fields:readonly string[]){for(const field of fields){const value=stringField(record,field);if(value)return value;}return undefined;}
-function readiness(value:unknown):VehicleCatalogReadiness{const normalized=(fieldText(value)??"needs-review").toLowerCase().replaceAll(" ","-");return ["needs-review","in-progress","verified","pilot-ready","not-applicable"].includes(normalized)?normalized as VehicleCatalogReadiness:"needs-review";}
+function readiness(value:unknown):VehicleCatalogReadiness{const normalized=(fieldText(value)??"needs-review").toLowerCase().replaceAll(" ","-");return ["needs-review","in-progress","verified","pilot-ready","blocked","not-applicable"].includes(normalized)?normalized as VehicleCatalogReadiness:"needs-review";}

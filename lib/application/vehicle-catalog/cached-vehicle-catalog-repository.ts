@@ -10,6 +10,7 @@ export class CachedVehicleCatalogRepository implements VehicleCatalogRepository 
   listConfigurations = (trimId:string) => this.cached(`configurations:${trimId}`, () => this.repository.listConfigurations(trimId));
   getConfiguration = (configurationId:string) => this.cached(`configuration:${configurationId}`, () => this.repository.getConfiguration(configurationId));
   searchConfigurations = (query:VehicleCatalogSearchQuery) => this.cached(`search:${stable(query)}`, () => this.repository.searchConfigurations(query));
+  listCompetitors = (modelId:string) => this.cached(`competitors:${modelId}`, () => this.repository.listCompetitors(modelId));
   clear() { this.entries.clear(); }
   private cached<T>(key:string, load:()=>Promise<T>):Promise<T> { const current=this.entries.get(key);if(current&&current.expiresAt>this.now())return current.value as Promise<T>;const value=load().catch((error:unknown)=>{this.entries.delete(key);throw error;});this.entries.set(key,{expiresAt:this.now()+this.ttlMs,value});return value; }
 }

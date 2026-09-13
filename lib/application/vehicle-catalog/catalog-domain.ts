@@ -35,7 +35,8 @@ export type CatalogOEMInterior = CatalogAttribute & { kind: "interior-color" };
 export interface CatalogExteriorPaintEligibility { configurationId: string; paint: CatalogOEMPaint; relationship: CatalogAttributeRelationship; conditions: Readonly<Record<string, unknown>> }
 export interface CatalogInteriorEligibility { configurationId: string; interior: CatalogOEMInterior; relationship: CatalogAttributeRelationship; conditions: Readonly<Record<string, unknown>> }
 export interface CatalogColorRule { stableKey: string; exteriorPaintId: string; interiorIds: readonly string[]; availability: "available" | "excluded"; conditions: Readonly<Record<string, unknown>> }
-export interface CatalogModelComparison extends CatalogProvenance { id: string; stableKey: string; subjectModelId: string; competitorModelId: string; categories: readonly string[]; relationship: string; evidence: Readonly<Record<string, unknown>> }
+export interface CatalogComparisonModel { id: string; stableKey: string; makeId: string; make: string; model: string }
+export interface CatalogModelComparison extends CatalogProvenance { id: string; stableKey: string; subjectModel: CatalogComparisonModel; competitorModel: CatalogComparisonModel; categories: readonly string[]; relationship: string; evidence: Readonly<Record<string, unknown>> }
 
 export interface CatalogConfiguration extends CatalogIdentity {
   trimId: string;
@@ -70,4 +71,5 @@ export interface VehicleCatalogRepository {
   listConfigurations(trimId: string): Promise<readonly CatalogConfiguration[]>;
   getConfiguration(configurationId: string): Promise<CatalogConfiguration | undefined>;
   searchConfigurations(query: VehicleCatalogSearchQuery): Promise<readonly CatalogConfiguration[]>;
+  listCompetitors(modelId: string): Promise<readonly CatalogModelComparison[]>;
 }

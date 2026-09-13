@@ -1,11 +1,11 @@
 import { createHash } from "node:crypto";
 
-export type VehicleCatalogEntityKind = "make" | "model" | "model-year" | "trim" | "configuration" | "attribute";
-export type VehicleCatalogReadiness = "needs-review" | "in-progress" | "verified" | "pilot-ready" | "not-applicable";
+export type VehicleCatalogEntityKind = "make" | "model" | "model-year" | "trim" | "configuration" | "attribute" | "comparison";
+export type VehicleCatalogReadiness = "needs-review" | "in-progress" | "verified" | "pilot-ready" | "blocked" | "not-applicable";
 export type VehicleCatalogAttributeKind = "exterior-color" | "interior-color" | "feature" | "package" | "specification";
 
 const prefixes: Readonly<Record<VehicleCatalogEntityKind, string>> = {
-  make: "vma", model: "vmo", "model-year": "vmy", trim: "vtr", configuration: "vcf", attribute: "vca",
+  make: "vma", model: "vmo", "model-year": "vmy", trim: "vtr", configuration: "vcf", attribute: "vca", comparison: "vcp",
 };
 
 export interface VehicleCatalogSourceRef {
@@ -104,6 +104,7 @@ function inferKind(key: string): VehicleCatalogEntityKind {
   if (value.startsWith("MY-") || value.startsWith("MODEL-YEAR-")) return "model-year";
   if (value.startsWith("TRIM-")) return "trim";
   if (value.startsWith("CFG-")) return "configuration";
+  if (value.startsWith("COMPARISON-") || value.startsWith("CMP-")) return "comparison";
   return "attribute";
 }
 function stableJson(value: Readonly<Record<string, unknown>>) {

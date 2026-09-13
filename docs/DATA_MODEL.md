@@ -109,6 +109,8 @@ Forced RLS permits reads and read-state updates only when the current authentica
 
 The global Vehicle Intelligence catalog models Make, Model, Model Year, Trim, Configuration, and typed colors, packages, features, and specifications independently of tenant-owned physical inventory. Catalog releases retain source revision, manifest and record hashes, readiness, and provenance. Stable DealerFlow catalog IDs are deterministic from entity kind and declared stable source keys; provider record IDs remain optional provenance only.
 
+Governed model-to-model competitive relationships are projected in the same atomic catalog release. Each relationship resolves a canonical subject and competitor Model, preserves categories, readiness, status, and provenance, and cannot create or infer a Model. Runtime consumers query these relationships through the Vehicle Catalog repository; AI receives only a compact governed competitor summary.
+
 `vehicles` continues to own tenant-scoped VIN identity. `inventory_units` continues to own stock cycle, Location, price, media, and availability. `vehicle_catalog_matches` records an explicit tenant-scoped, evidenced Vehicle-to-Configuration match and permits at most one verified match per Vehicle. Catalog data cannot create or infer a VIN, stock number, physical availability, dealership price, Organization, or Location.
 
 ## Audit history

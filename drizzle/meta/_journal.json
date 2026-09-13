@@ -414,6 +414,13 @@
       "when": 1789124400000,
       "tag": "0058_commercial_demo_requests",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1789210800000,
+      "tag": "0059_vehicle_model_comparisons",
+      "breakpoints": true
     }
   ]
 }

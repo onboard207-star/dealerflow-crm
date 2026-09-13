@@ -1,5 +1,14 @@
 # DealerFlow AI Build Status
 
+## 2026-09-12 — Vehicle Intelligence operational integration (local candidate)
+
+- Added migration `0059_vehicle_model_comparisons` for stable, release-bound subject/competitor Model relationships with readiness, categories, provenance, indexes, and importer-only writes under forced RLS.
+- Extended the existing Airtable extractor and atomic PostgreSQL projector; unresolved Model links, duplicate stable identities, and catalog/physical-inventory contamination continue to fail closed.
+- Added repository competitor queries and compact deterministic AI competitor context without exposing Airtable structures or full catalog payloads.
+- Mounted the existing cascading catalog selector and comparison result component in the authorized Inventory comparison workflow, and added a read-only catalog readiness view.
+- Added explicit validation-only and staging projection commands. Both require an approved staging HTTPS target, a job secret from the environment, and an operator-supplied snapshot path; neither defaults to production.
+- No deployment or production operation is part of this local candidate.
+
 ## P1-03 / P1-04 PILOT READINESS — ACTIVE
 
 - P1-02 Vehicle Intelligence and Simulation Runs #1/#2 are protected accepted baselines. No new P0/P1 regression has reopened them.
