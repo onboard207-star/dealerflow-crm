@@ -442,6 +442,13 @@
       "when": 1789304400000,
       "tag": "0062_team_communications_nonrecursive_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "7",
+      "when": 1789306200000,
+      "tag": "0063_team_conversation_participant_additions",
+      "breakpoints": true
     }
   ]
 }

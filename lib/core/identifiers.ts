@@ -52,6 +52,7 @@ export type EntityIdPrefix =
   | "rol"
   | "snd"
   | "tsk"
+  | "tpe"
   | "tse"
   | "tap"
   | "tas"
