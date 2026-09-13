@@ -8,4 +8,5 @@ describe("organization navigation", () => {
     expect(allowed).toContainEqual(expect.objectContaining({ label: "Calendar", href: "/organizations/org_dealerflow/calendar" }));
     expect(denied.some((item) => item.label === "Calendar")).toBe(false);
   });
+  it("shows Communications only with team chat access",()=>{const allowed=createOrganizationNavigation("org_dealerflow",["team_chat.read"])[0]!.items;const denied=createOrganizationNavigation("org_dealerflow",["communication.read"])[0]!.items;expect(allowed).toContainEqual(expect.objectContaining({label:"Communications",href:"/organizations/org_dealerflow/communications"}));expect(denied.some(item=>item.label==="Communications")).toBe(false);});
 });

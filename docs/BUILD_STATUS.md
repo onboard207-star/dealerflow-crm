@@ -1,5 +1,14 @@
 # DealerFlow AI Build Status
 
+## 2026-09-13 — DealerFlow Communications foundation
+
+- Added a native internal communication boundary for direct, group, department, and record-linked conversations. DealerFlow—not Slack—remains the operating and authorization authority.
+- Added tenant-owned conversations, explicit participants, immutable messages, governed record references, recipient-specific read positions, idempotent creation/sending, active-membership validation, Location checks, and forced PostgreSQL row-level security.
+- Added `team_chat.read` and `team_chat.write` to the canonical capability model and existing system-role profiles. The CRM feature entitlement controls availability, and migration `0060_team_communications` reconciles existing system roles without changing unrelated permissions.
+- Added private no-store APIs and a responsive Communications workspace with direct/group/department creation, conversation history, unread counts, accessible message composition, secure DealerFlow record cards, and a path into the canonical Calendar.
+- Binary document and image upload remains intentionally disabled until governed storage provides malware scanning, file validation, retention, audit, and safe download controls. Quotes, appointments, and documents remain authoritative in their existing domains and may be shared by secure reference.
+- Complete local validation passes: Drizzle schema check, product-portfolio and execution-system checks, ESLint with no warnings, strict TypeScript, 734 tests across 154 files, optimized production build, and whitespace integrity. Migration `0060` has not been applied and no staging or production data changed.
+
 ## 2026-09-13 — P1-04 clean-room onboarding reconciliation
 
 - Reconciled the existing clean-room rehearsal against live isolated staging without resetting, reseeding, or modifying PostgreSQL. Organization `org_c27d098b6a6129f51887d130e6ad83ff` is active, classified `demo`, and named `DealerFlow RC1 Synthetic Dealership` with slug `dealerflow-rc1-clean-room`.

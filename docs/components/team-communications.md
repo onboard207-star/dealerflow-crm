@@ -1,0 +1,48 @@
+# DealerFlow Communications
+
+## Purpose
+
+DealerFlow Communications is the dealership's internal coordination surface. It supports direct, group, department, and record-linked conversations without moving authoritative customer, vehicle, Deal, Quote, appointment, or document data into a separate chat system.
+
+## Initial production boundary
+
+- Tenant-scoped conversations and immutable messages.
+- Explicit participants drawn from active organization memberships.
+- Optional Location scope enforced for every participant.
+- Direct, group, department, and record-oriented conversation types.
+- Per-user read position and unread counts.
+- Governed DealerFlow record references using canonical IDs and internal routes.
+- Responsive, keyboard-accessible conversation navigation and composition.
+
+The initial release uses request/refresh delivery. Real-time sockets, presence, typing indicators, reactions, edits, message deletion, and mobile push are future capabilities.
+
+## Authority and privacy
+
+DealerFlow remains authoritative. A message may reference a record but cannot copy or mutate its protected business facts. Opening a reference re-enters the canonical workspace, where normal capability, tenant, and Location authorization applies.
+
+Only active conversation participants may read messages. Only active participants with `team_chat.write` may send. Messages and record references are immutable in the first release. Cross-tenant participants and external URLs are rejected.
+
+## Files, images, and documents
+
+Binary attachments are not enabled until the governed storage boundary supports malware scanning, content-type and size validation, tenant/Location authorization, retention, audit evidence, and safe download headers. The interface states this limitation rather than presenting a nonfunctional upload control.
+
+Quotes and documents should be shared as secure references to immutable DealerFlow versions. Future binary attachment support must not replace the canonical Deal document authority.
+
+## Appointments and workflow actions
+
+The conversation workspace links to DealerFlow's canonical Calendar. A future structured appointment composer may call the existing appointment service and post the resulting canonical appointment reference back into the conversation. Chat must never create a parallel appointment record or bypass customer, Lead, Location, or permission validation.
+
+## Accessibility and responsive behavior
+
+Conversation navigation precedes messages in semantic and keyboard order. Desktop uses a split view; narrower layouts retain the same reading order. Messages identify the sender and time without relying on color. Status feedback uses live regions, controls retain visible focus, and touch targets meet the design-system minimum.
+
+## Acceptance criteria
+
+- Authorized staff can create direct and group conversations with active colleagues.
+- Non-participants and wrong-tenant users cannot discover or read a conversation.
+- Send and create operations are idempotent.
+- Messages and record references remain immutable.
+- Unread state is recipient-specific.
+- Internal record links cannot escape the current organization.
+- Empty, read-only, loading, and failure states are understandable.
+- Desktop, tablet, mobile, keyboard, and 200% zoom remain usable.

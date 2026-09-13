@@ -21,6 +21,7 @@ The dealership transaction experience is intentionally composed from existing au
 | User concern | Current application surface | Canonical authority |
 | --- | --- | --- |
 | Customer, Lead, current vehicle, tasks, appointments, communications, trade, Deal, documents, delivery, and timeline | Customer Workspace | CRM runtime read models over the underlying records |
+| Internal direct, group, department, and record-linked messages | DealerFlow Communications | Participant-isolated conversation and immutable message records; referenced work remains authoritative in its source workspace |
 | Immutable commercial versions, trade/down-payment/finance terms, approval request, proposal status, and profitability prerequisites | Deal Quote workspace | `deal_quotes`, Quote line/term records, and approval records |
 | Manager review, return/decline reason, approval decision, responsible staff, timestamps, and recent decisions | Deal Desking | The same Quote approval records; no separate desk transaction |
 | Customer-presentable figures and dealership branding | Version-specific printable proposal | One immutable Quote version and tenant configuration |

@@ -10,7 +10,7 @@ export interface FeatureEntitlementDefinition {
 }
 
 export const featureEntitlementRegistry: readonly FeatureEntitlementDefinition[] = [
-  { key: "crm", label: "CRM", description: "Customer, Lead, task, appointment, and communication workflows.", capabilities: ["customer.read", "customer.create", "customer.update", "lead.read", "lead.create", "lead.assign", "lead.update", "task.read", "task.create", "task.update", "communication.read", "communication.create", "communication.consent.manage", "communication.send", "appointment.read", "appointment.create", "appointment.update"] },
+  { key: "crm", label: "CRM", description: "Customer, Lead, task, appointment, and communication workflows.", capabilities: ["customer.read", "customer.create", "customer.update", "lead.read", "lead.create", "lead.assign", "lead.update", "task.read", "task.create", "task.update", "communication.read", "communication.create", "communication.consent.manage", "communication.send", "appointment.read", "appointment.create", "appointment.update", "team_chat.read", "team_chat.write"] },
   { key: "inventory", label: "Inventory", description: "Vehicle inventory, media, and authoritative cost operations.", capabilities: ["inventory.read", "inventory.create", "inventory.update", "inventory.cost.read", "inventory.cost.manage"] },
   { key: "finance", label: "Finance", description: "Deal, approval, desking, quote, document, trade, delivery, and pack workflows.", capabilities: ["deal.read", "deal.create", "deal.update", "deal.approve", "document.read", "document.manage", "document.complete", "document.waive", "quote.pack.read", "quote.pack.configure"] },
   { key: "service", label: "Service", description: "Reserved for future authoritative service workflows.", capabilities: [] },

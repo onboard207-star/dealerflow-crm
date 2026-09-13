@@ -43,6 +43,8 @@ export const capabilities = [
   "quote.pack.read",
   "quote.pack.configure",
   "reports.view",
+  "team_chat.read",
+  "team_chat.write",
 ] as const;
 
 export type Capability = (typeof capabilities)[number];
