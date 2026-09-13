@@ -1,5 +1,15 @@
 # DealerFlow AI Build Status
 
+## 2026-09-13 — P1-03 non-destructive reliability checkpoint
+
+- Isolated staging remains manually promoted (`autoDeploy=no`) from `codex/staging-deployment`, with Docker runtime, one Virginia instance, `/api/health`, and `node scripts/render-migrate.mjs` as the pre-deploy gate. Deploy `dep-dajc6bjm8hqs73fnhi6g` is live at application commit `88cc1c402933b7f6dd35e4564420c0d1a2c85b9c`.
+- The non-mutating deployment smoke passed liveness, readiness, login, security-header enforcement, transactional-email anonymous denial, and outbound-worker anonymous denial. The authenticated email worker was deliberately not invoked, avoiding an unintended provider send or queue mutation.
+- No error-level application logs and no HTTP 500/502/503 request logs occurred from the current deployment's promotion at `2026-09-13T15:39:38Z` through the observation window. Historical errors remain retained and were not misclassified as current-release failures.
+- The application held one instance throughout the sampled hour. Peak sampled application CPU was below 1% of its 0.5 CPU limit and peak memory was approximately 132 MB of 512 MB. The isolated PostgreSQL 18 primary remained available; peak sampled database CPU was below 9% of its 0.1 CPU limit and memory was approximately 69 MB of 256 MB.
+- `/api/ready` reports database and required runtime configuration ready. Optional capabilities truthfully remain `ai=not-configured`, `media=not-configured`, and `alerting=not-configured`.
+- P1-03 is not closed. External alert acceptance requires an approved HTTPS receiver plus named acknowledgement/escalation ownership. The restore drill requires separate approval to create a disposable billable database from a selected backup; active staging and production remain prohibited restore targets.
+- No worker was run, no email/SMS/provider transaction occurred, no database or application state was changed, and production was untouched.
+
 ## 2026-09-13 — Vehicle Intelligence multi-OEM staging acceptance
 
 - Exported a completely fresh governed Airtable revision, `airtable-export-2026-09-13T15:41:12.103Z`: 2,370 total source rows, including 2,351 catalog-source rows and 19 separately governed physical Inventory Units. The production extractor and manifest validator accepted 2,146 canonical nodes with no duplicate stable IDs, unresolved relationships, Airtable IDs used as authority, or forbidden physical-inventory fields.
