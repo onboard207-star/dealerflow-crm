@@ -1,5 +1,14 @@
 # DealerFlow AI Build Status
 
+## 2026-09-13 — Communications staging role-reconciliation repair
+
+- Manually deployed reviewed Communications commit `9b4a60970ddc340448161155989e38d876735449` to `dealerflow-isolated-staging` as Render deploy `dep-dajehlojo6nc73di8ur0`; the deploy reached `live`, `/api/health` and `/api/ready` returned HTTP 200, and both endpoints reported the exact deployed SHA.
+- Confirmed migration `0060_team_communications` created all four team-communications tables. The first authenticated Manager smoke test then failed closed with a 404 because existing system roles did not receive `team_chat.read` or `team_chat.write`.
+- Root cause: the cross-tenant capability backfill in migration `0060` ran after forced tenant RLS was already enabled, so its unscoped `INSERT ... SELECT` safely selected zero role rows. No unauthorized access or message mutation occurred.
+- Added migration `0061_team_communications_role_reconciliation`, which transactionally relaxes forced RLS only for `roles` and `role_capabilities`, grants only the two team-chat capabilities to existing protected system roles, and restores forced RLS before commit. Added a regression assertion covering the grant boundary and restored RLS state.
+- Local validation passes: Drizzle schema check, product-portfolio and execution-system checks, ESLint with no warnings, strict TypeScript, 735 tests across 154 files, optimized production build, and migration-journal integrity.
+- Staging requires deployment of the repair commit before authenticated message creation is permitted. Production remains untouched.
+
 ## 2026-09-13 — DealerFlow Communications foundation
 
 - Added a native internal communication boundary for direct, group, department, and record-linked conversations. DealerFlow—not Slack—remains the operating and authorization authority.
