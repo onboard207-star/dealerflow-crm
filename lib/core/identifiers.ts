@@ -35,6 +35,7 @@ export type EntityIdPrefix =
   | "mem"
   | "mrf"
   | "msg"
+  | "ntf"
   | "org"
   | "oin"
   | "ocv"
