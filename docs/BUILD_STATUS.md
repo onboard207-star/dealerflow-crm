@@ -6,8 +6,10 @@
 - Confirmed migration `0060_team_communications` created all four team-communications tables. The first authenticated Manager smoke test then failed closed with a 404 because existing system roles did not receive `team_chat.read` or `team_chat.write`.
 - Root cause: the cross-tenant capability backfill in migration `0060` ran after forced tenant RLS was already enabled, so its unscoped `INSERT ... SELECT` safely selected zero role rows. No unauthorized access or message mutation occurred.
 - Added migration `0061_team_communications_role_reconciliation`, which transactionally relaxes forced RLS only for `roles` and `role_capabilities`, grants only the two team-chat capabilities to existing protected system roles, and restores forced RLS before commit. Added a regression assertion covering the grant boundary and restored RLS state.
-- Local validation passes: Drizzle schema check, product-portfolio and execution-system checks, ESLint with no warnings, strict TypeScript, 735 tests across 154 files, optimized production build, and migration-journal integrity.
-- Staging requires deployment of the repair commit before authenticated message creation is permitted. Production remains untouched.
+- Deployed role-reconciliation commit `1641bb53ee2cf187bf7155d063cb77d02ae56436` as Render deploy `dep-dajemgp5efls738l6aug`. Manager access then passed, but the first synthetic conversation transaction failed closed because the original membership helper policies recurse under forced RLS; the transaction rolled back and created no conversation or message.
+- Added migration `0062_team_communications_nonrecursive_rls`. It establishes an immutable participant ID set on the conversation authority, rewrites conversation/message/reference policies to use that non-recursive authority, preserves per-participant read-state rows, and keeps forced RLS on every communications table. The service writes the complete, deterministic participant set in the same transaction as the participant rows.
+- Local validation passes: Drizzle schema check, product-portfolio and execution-system checks, ESLint with no warnings, strict TypeScript, 736 tests across 154 files, optimized production build, and migration-journal integrity.
+- Staging requires deployment of the non-recursive RLS repair before retrying synthetic conversation creation. Production remains untouched.
 
 ## 2026-09-13 — DealerFlow Communications foundation
 
