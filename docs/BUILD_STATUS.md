@@ -1,5 +1,12 @@
 # DealerFlow AI Build Status
 
+## 2026-09-13 — Slack-compatible external operational alerts
+
+- Live acceptance setup confirmed that the existing HMAC-signed DealerFlow alert envelope was not directly compatible with Slack incoming webhooks because Slack requires a top-level message field. No incompatible webhook was installed in Render and no alert was sent.
+- Added a minimal privacy-safe top-level summary containing only severity, canonical event code, and correlation ID. The signed versioned event envelope and sanitized structured attributes remain unchanged, preserving generic receiver compatibility and existing integrity evidence.
+- Reused the existing `DealerFlow AI` Slack application and authorized a staging support-channel webhook rather than creating another Slack app. The webhook credential remains outside source and documentation; Render activation and receipt proof remain separate deployment acceptance steps.
+- Targeted observability validation passes: 5 tests across the signed webhook and operational reporter suites. Full validation passes: Drizzle schema check, portfolio and execution checks, ESLint, strict TypeScript, 746 tests across 154 files, and the optimized production build.
+
 ## 2026-09-13 — Isolated-staging R2 media activation
 
 - Activated Cloudflare R2 under explicit owner approval and created private bucket `dealerflow-isolated-staging-media` in Eastern North America using the Standard storage class. The R2 subscription has usage-based overage billing; no billable usage was incurred during setup.
