@@ -21,7 +21,7 @@
       "softDependencies": ["CAP-COM-001", "CAP-AI-001"],
       "providerDependencies": [],
       "blockers": ["Pilot-wide recovery, monitoring, support, and import gates remain open."],
-      "lastVerified": "2026-08-30"
+      "lastVerified": "2026-09-13"
     },
     {
       "id": "CAP-CRM-002",
@@ -96,7 +96,7 @@
       "hardDependencies": ["CAP-INV-001", "CAP-PLT-001"],
       "softDependencies": [],
       "providerDependencies": ["Cloudflare R2"],
-      "blockers": ["Staging R2 credentials, read domain, CORS, and real upload acceptance are incomplete."],
+      "blockers": ["Isolated-staging R2 credentials, read URL, and exact-origin CORS are configured; real upload, verification, rendering, ordering, removal, and failure-path acceptance remain incomplete."],
       "lastVerified": "2026-08-30"
     },
     {
