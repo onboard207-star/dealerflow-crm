@@ -1,5 +1,15 @@
 # DealerFlow AI Build Status
 
+## 2026-09-14 — Vehicle comparison complete-catalog acceptance
+
+- Authenticated Manager acceptance against accepted release `vcr_314c955459944a51a08b44cdf75fe113` exposed one P1 runtime defect: the comparison selector requested only the first 250 eligible configurations, so deterministic alphabetical ordering omitted late-alphabet makes even though their accepted catalog records were present.
+- Replaced that bounded, fully hydrated search with a lightweight selectable-configuration query covering every `verified` or `pilot-ready` configuration. The authoritative catalog readiness rules, tenant authorization, comparison behavior, and physical Inventory boundary are unchanged.
+- Added a regression test proving the selector query applies the eligibility filter without an arbitrary `LIMIT`. Full validation passes: Drizzle schema, portfolio and execution checks, ESLint, strict TypeScript, 749 tests across 154 files, optimized production build, and whitespace validation.
+- Commit `99ca147e739a729a5756b5277c9eb01ece31db6b` is pushed and live on `dealerflow-isolated-staging` as Render deploy `dep-daka8bfqj5pc73aduir0`. Pre-deploy migrations completed, the service reached Live, and `/api/health` reports `status=ok`, `environment=staging`, and that exact commit.
+- The refreshed selector exposes the complete eligible make set through Volvo, including Toyota. Live hierarchy traversal passed for 2026 Toyota RAV4 LE with both governed Hybrid AWD and Hybrid FWD configurations, 2026 GMC Canyon AT4, and 2026 Mazda CX-90 3.3 Turbo Select.
+- A live three-vehicle comparison passed for `2026 Toyota RAV4 LE Hybrid AWD`, `2026 GMC Canyon AT4 4WD Crew Cab Short Box`, and `2026 Mazda CX-90 3.3 Turbo Select AWD`. Canonical engine, powertrain, drivetrain, transmission, and seating facts render where available; absent MSRP and other facts remain explicitly `Unavailable` rather than zero or inferred.
+- Honda CR-V and Ford Mustang Mach-E remain intentionally absent from selectable configurations because the current accepted source classifies their relevant configurations below the verified/pilot-ready eligibility gate. No readiness was promoted or inferred to make UI acceptance pass. Production and physical Inventory records were untouched.
+
 ## 2026-09-14 — Away-mode Vehicle Intelligence reconciliation
 
 - Today’s connected ChatGPT work materially expanded the canonical `DealerFlow AI Vehicle & Inventory` Airtable base across mainstream trucks, luxury SUVs, EV specialists, and additional current-market makes. Verified examples include BMW X1/X3/X5; Mercedes-Benz GLA/GLC/GLE; Audi Q3/Q5/Q7; Genesis GV70/GV80; Volvo XC40/XC60/XC90; Cadillac XT5; Lincoln Nautilus/Aviator; Jeep; Ram 1500; Tesla; Rivian; Lucid; Polestar; Mitsubishi; MINI; Porsche; Infiniti; Buick; Chrysler; Dodge; and Land Rover families. Existing Honda, Toyota, Ford, Chevrolet, GMC, Mazda, Hyundai, Kia, Subaru, Volkswagen, Lexus, and Acura work was preserved rather than recreated.
