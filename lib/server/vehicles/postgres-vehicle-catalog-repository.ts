@@ -44,6 +44,12 @@ export class PostgresVehicleCatalogRepository implements VehicleCatalogRepositor
     clauses.push(`configuration.readiness=ANY($${values.length}::text[])`);
     return this.queryConfigurations(clauses.join(" AND "), values, Math.min(Math.max(query.limit ?? 50, 1), 250));
   }
+  async listSelectableConfigurations(readiness: readonly Readiness[] = eligibleReadiness): Promise<readonly CatalogConfiguration[]> {
+    const result = await this.pool.query<ConfigurationRow>(`${configurationSelect}
+      WHERE configuration.readiness=ANY($1::text[])
+      ORDER BY make.name,model.name,model_year.year DESC,trim.name,configuration.name`, [readiness]);
+    return result.rows.map(configuration);
+  }
   async listCompetitors(modelId:string):Promise<readonly CatalogModelComparison[]> {
     const result=await this.pool.query<ComparisonRow>(`SELECT comparison.id,comparison.stable_key,comparison.categories,comparison.relationship_status,comparison.readiness,comparison.evidence,comparison.release_id,comparison.source_system,comparison.source_record_id,
       subject.id AS subject_id,subject.stable_key AS subject_stable_key,subject.make_id AS subject_make_id,subject.name AS subject_name,subject_make.name AS subject_make,

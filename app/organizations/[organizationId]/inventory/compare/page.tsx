@@ -8,7 +8,7 @@ import { loadDirectoryContext } from "../../_lib/load-directory-context";
 export const dynamic="force-dynamic";
 export default async function VehicleComparePage({params,searchParams}:{params:Promise<{organizationId:string}>;searchParams:Promise<{configuration?:string|string[]}>}) {
   const {organizationId}=await params; const query=await searchParams; const context=await loadDirectoryContext(organizationId,"inventory.read");
-  const repository=new PostgresVehicleCatalogRepository(context.pool); const configurations=await repository.searchConfigurations({readiness:["verified","pilot-ready"],limit:250});
+  const repository=new PostgresVehicleCatalogRepository(context.pool); const configurations=await repository.listSelectableConfigurations();
   const options=configurations.map(item=>({configurationId:item.id,makeId:item.make.id,make:item.make.name,modelId:item.model.id,model:item.model.name,modelYearId:item.modelYear.id,year:item.modelYear.year,trimId:item.trim.id,trim:item.trim.name,configuration:item.name,readiness:item.readiness}));
   const selected=(Array.isArray(query.configuration)?query.configuration:query.configuration?[query.configuration]:[]).slice(0,3); let comparison;
   try { if(selected.length>=2) comparison=await new VehicleConfigurationComparisonService(repository).compare(selected); } catch { comparison=undefined; }

@@ -8,4 +8,11 @@ describe("PostgresVehicleCatalogRepository competitors",()=>{
     const repository=new PostgresVehicleCatalogRepository({query} as unknown as Pool);const result=await repository.listCompetitors("vmo_crv");
     expect(query).toHaveBeenCalledWith(expect.stringContaining("comparison.subject_model_id=$1"),["vmo_crv"]);expect(result[0]).toMatchObject({stableKey:"COMPARISON-CRV-RAV4",subjectModel:{make:"Honda",model:"CR-V"},competitorModel:{make:"Toyota",model:"RAV4"},categories:["Compact SUV"],readiness:"pilot-ready"});expect(result[0]).not.toHaveProperty("subject_model_id");
   });
+  it("loads every eligible comparison option without truncating later makes",async()=>{
+    const query=vi.fn(async()=>({rows:[]}));
+    const repository=new PostgresVehicleCatalogRepository({query} as unknown as Pool);
+    await repository.listSelectableConfigurations();
+    expect(query).toHaveBeenCalledWith(expect.not.stringContaining("LIMIT"),[["verified","pilot-ready"]]);
+    expect(query).toHaveBeenCalledWith(expect.stringContaining("configuration.readiness=ANY($1::text[])"),expect.anything());
+  });
 });
