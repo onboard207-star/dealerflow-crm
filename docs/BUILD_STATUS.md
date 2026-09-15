@@ -1,5 +1,12 @@
 # DealerFlow AI Build Status
 
+## 2026-09-14 — Away-mode Vehicle Intelligence reconciliation
+
+- Today’s connected ChatGPT work materially expanded the canonical `DealerFlow AI Vehicle & Inventory` Airtable base across mainstream trucks, luxury SUVs, EV specialists, and additional current-market makes. Verified examples include BMW X1/X3/X5; Mercedes-Benz GLA/GLC/GLE; Audi Q3/Q5/Q7; Genesis GV70/GV80; Volvo XC40/XC60/XC90; Cadillac XT5; Lincoln Nautilus/Aviator; Jeep; Ram 1500; Tesla; Rivian; Lucid; Polestar; Mitsubishi; MINI; Porsche; Infiniti; Buick; Chrysler; Dodge; and Land Rover families. Existing Honda, Toyota, Ford, Chevrolet, GMC, Mazda, Hyundai, Kia, Subaru, Volkswagen, Lexus, and Acura work was preserved rather than recreated.
+- A fresh read-only export was captured as source revision `airtable-export-2026-09-15T00:43:18.041Z` (UTC): 55 makes, 243 models, 175 model years, 617 trims, 671 configurations, 122 exterior eligibilities, 68 interior eligibilities, 205 color rules, 530 features, 36 packages/options, 560 specifications, 68 model comparisons, 57 OEM paints, 30 OEM interior materials, and 19 separately governed physical Inventory Units.
+- The repository’s actual extractor completed, but validation failed closed on 24 duplicate stable identities: 18 OEM IDs and six Model IDs. No staging projection or database write occurred. The duplicate OEM set is Mitsubishi, Volvo, Porsche, Jeep, MINI, Genesis, Buick, Land Rover, Tesla, Rivian, Chrysler, Lincoln, Polestar, Lucid, Cadillac, Dodge, Infiniti, and Ram. The duplicate Model set is Jeep Gladiator, Wrangler, Compass, and Grand Cherokee plus Tesla Model 3 and Cybertruck.
+- Source inspection shows most collisions pair an empty placeholder OEM with a populated current root. Jeep and Tesla contain split child graphs, and their duplicate Model records retain different historical/current relationships. The governed repair must reparent children to one canonical identity, preserve distinct historical model years, and remove only confirmed redundant roots. Validation must pass on a second fresh export before any projection. Production and PostgreSQL were untouched.
+
 ## 2026-09-13 — Slack-compatible external operational alerts
 
 - Live acceptance setup confirmed that the existing HMAC-signed DealerFlow alert envelope was not directly compatible with Slack incoming webhooks because Slack requires a top-level message field. The incompatible configuration was not retained and no alert was sent before the repair.
