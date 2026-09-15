@@ -16,6 +16,7 @@ describe("inventory image verification", () => {
 
     expect(url.searchParams.has("x-amz-checksum-crc32")).toBe(false);
     expect(url.searchParams.has("x-amz-sdk-checksum-algorithm")).toBe(false);
+    expect(url.searchParams.get("X-Amz-SignedHeaders")?.split(";")).not.toContain("content-length");
   });
 
   it("reads authoritative PNG dimensions", () => {
