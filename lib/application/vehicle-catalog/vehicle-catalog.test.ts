@@ -43,4 +43,20 @@ describe("vehicle catalog projection", () => {
   it("rejects broken and duplicate relationships", () => {
     expect(() => validateVehicleCatalogManifest({ ...manifest, nodes: [manifest.nodes[0]!, { ...manifest.nodes[0]!, parentStableKey: "MODEL-MISSING" }] })).toThrow(VehicleCatalogValidationError);
   });
+
+  it("rejects multiple stable identities for the same canonical Model Year", () => {
+    const nodes = [
+      manifest.nodes[0]!,
+      { stableKey: "MODEL-HYUNDAI-TUCSON", parentStableKey: "OEM-HONDA", name: "Tucson", sourceSystem: "airtable", content: {} },
+      { stableKey: "MY-HYUNDAI-TUCSON-2026", parentStableKey: "MODEL-HYUNDAI-TUCSON", name: "2026 Tucson", sourceSystem: "airtable", content: { Year: 2026 } },
+      { stableKey: "MY-HYUNDAI-TUCSON-HYBRID-2026", parentStableKey: "MODEL-HYUNDAI-TUCSON", name: "2026 Tucson Hybrid", sourceSystem: "airtable", content: { Year: 2026 } },
+    ];
+    expect(() => validateVehicleCatalogManifest({ ...manifest, nodes })).toThrow(VehicleCatalogValidationError);
+    try {
+      validateVehicleCatalogManifest({ ...manifest, nodes });
+    } catch (error) {
+      expect(error).toBeInstanceOf(VehicleCatalogValidationError);
+      expect((error as VehicleCatalogValidationError).issues).toContainEqual(expect.stringMatching(/duplicates canonical Model Year/));
+    }
+  });
 });

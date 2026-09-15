@@ -56,6 +56,7 @@ export function deriveVehicleCatalogId(kind: VehicleCatalogEntityKind, stableKey
 export function validateVehicleCatalogManifest(manifest: VehicleCatalogManifest): readonly ValidatedVehicleCatalogNode[] {
   const issues: string[] = [];
   const keys = new Set<string>();
+  const modelYears = new Map<string, string>();
   if (!manifest.sourceSystem.trim()) issues.push("sourceSystem is required.");
   if (!manifest.sourceDataset.trim()) issues.push("sourceDataset is required.");
   if (!manifest.sourceRevision.trim()) issues.push("sourceRevision is required.");
@@ -69,6 +70,12 @@ export function validateVehicleCatalogManifest(manifest: VehicleCatalogManifest)
     keys.add(stableKey);
     if (!node.name.trim()) issues.push(`${label}.name is required.`);
     if (node.sourceSystem !== manifest.sourceSystem) issues.push(`${label}.sourceSystem must match the manifest.`);
+    if (inferKind(node.stableKey) === "model-year" && node.parentStableKey && Number.isInteger(node.content.Year)) {
+      const identity = `${normalizeStableKey(node.parentStableKey)}:${String(node.content.Year)}`;
+      const existing = modelYears.get(identity);
+      if (existing) issues.push(`${label} duplicates canonical Model Year ${identity} already declared by ${existing}.`);
+      else modelYears.set(identity, normalizeStableKey(node.stableKey));
+    }
     for (const forbidden of ["vin", "stockNumber", "price", "listPrice", "organizationId", "locationId"])
       if (Object.hasOwn(node.content, forbidden)) issues.push(`${label}.content must not contain physical inventory field ${forbidden}.`);
   }

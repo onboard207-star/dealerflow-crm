@@ -25,14 +25,14 @@ export class AirtableCatalogExtractionError extends Error{constructor(readonly i
 
 export function extractAirtableVehicleCatalog(snapshot:AirtableCatalogSnapshot):VehicleCatalogManifest{
   const issues:string[]=[],recordKeys=new Map<string,string>(),nodes:VehicleCatalogNode[]=[];
-  for(const[table,rule]of Object.entries(hierarchy))for(const record of records(snapshot,table))register(record,table,rule.stableKey,undefined,recordKeys,issues);
+  for(const[table,rule]of Object.entries(hierarchy))for(const record of hierarchyRecords(snapshot,table))register(record,table,rule.stableKey,undefined,recordKeys,issues);
   for(const[table,rule]of Object.entries(attributes))for(const record of records(snapshot,table))register(record,table,rule.stableKey,undefined,recordKeys,issues);
   const colorRules=records(snapshot,"Color Rules");
   for(const record of colorRules)register(record,"Color Rules",["Color Rule ID"],undefined,recordKeys,issues);
   const comparisons=records(snapshot,"Model Comparisons");
   for(const record of comparisons)register(record,"Model Comparisons",["Comparison ID"],"COMPARISON",recordKeys,issues);
 
-  for(const[table,rule]of Object.entries(hierarchy))for(const record of records(snapshot,table)){
+  for(const[table,rule]of Object.entries(hierarchy))for(const record of hierarchyRecords(snapshot,table)){
     const stableKey=stringField(record,rule.stableKey);if(!stableKey)continue;
     const parentStableKey=rule.parent?resolveOne(record,rule.parent,recordKeys,`${table}/${record.id}`,issues):undefined;
     const links=table==="Trim Configurations"?configurationLinks(record,colorRules,recordKeys,issues):undefined;
@@ -87,6 +87,8 @@ function pickContent(record:AirtableCatalogRecord,fields:readonly string[]){retu
 function plainValue(value:unknown):unknown{if(Array.isArray(value))return value.map(plainValue);if(value&&typeof value==="object"){if("name"in value&&typeof value.name==="string")return value.name;return Object.fromEntries(Object.entries(value).filter(([key])=>key!=="id").map(([key,item])=>[key,plainValue(item)]));}return value;}
 function linkedIds(value:unknown){if(!Array.isArray(value))return[];return value.flatMap(item=>typeof item==="string"?[item]:item&&typeof item==="object"&&"id"in item&&typeof item.id==="string"?[item.id]:[]);}
 function records(snapshot:AirtableCatalogSnapshot,name:string){return Object.entries(snapshot.tables).find(([table])=>table.replace(/^[^A-Za-z0-9]+\s*/,"")===name)?.[1]??[];}
+function hierarchyRecords(snapshot:AirtableCatalogSnapshot,name:string){const values=records(snapshot,name);return name==="Model Years"?values.filter(record=>!isRetiredModelYear(record)):values;}
+function isRetiredModelYear(record:AirtableCatalogRecord){return fieldText(record.fields["Lifecycle Status"])?.toLowerCase()==="retired"&&readiness(record.fields["Catalog Readiness"])==="not-applicable";}
 function fieldText(value:unknown){if(typeof value==="string")return value.trim()||undefined;if(value&&typeof value==="object"&&"name"in value&&typeof value.name==="string")return value.name.trim()||undefined;return undefined;}
 function stringField(record:AirtableCatalogRecord,field:string){return fieldText(record.fields[field]);}
 function firstString(record:AirtableCatalogRecord,fields:readonly string[]){for(const field of fields){const value=stringField(record,field);if(value)return value;}return undefined;}
