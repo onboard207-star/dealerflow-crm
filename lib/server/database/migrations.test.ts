@@ -45,6 +45,24 @@ describe("tenant database migrations", () => {
   it("projects model comparisons under the governed catalog release boundary",()=>{const migration=readFileSync(join(migrationDirectory,"0059_vehicle_model_comparisons.sql"),"utf8");expect(migration).toContain('CREATE TABLE "vehicle_catalog_model_comparisons"');expect(migration).toContain('REFERENCES "vehicle_catalog_models"');expect(migration).toContain("app.vehicle_catalog_import");expect(migration).toContain('FORCE ROW LEVEL SECURITY');expect(migration).not.toMatch(/vin|stock_number|inventory_unit/);});
   it("adds participant-isolated internal team communications",()=>{const migration=readFileSync(join(migrationDirectory,"0060_team_communications.sql"),"utf8");for(const table of["team_conversations","team_conversation_participants","team_messages","team_message_references"])expect(migration).toContain(`ALTER TABLE "${table}" FORCE ROW LEVEL SECURITY;`);expect(migration).toContain("team_conversation_member");expect(migration).toContain("team_messages_idempotency_unique");expect(migration).toContain("team_messages_immutable");expect(migration).not.toMatch(/CREATE POLICY "team_messages.*FOR (UPDATE|DELETE)/);});
   it("reconciles existing system roles without leaving tenant RLS relaxed",()=>{const migration=readFileSync(join(migrationDirectory,"0061_team_communications_role_reconciliation.sql"),"utf8");expect(migration).toContain('ALTER TABLE "roles" NO FORCE ROW LEVEL SECURITY;');expect(migration).toContain('ALTER TABLE "role_capabilities" NO FORCE ROW LEVEL SECURITY;');expect(migration).toContain("WHERE role.system = true");expect(migration).toContain("'team_chat.read'");expect(migration).toContain("'team_chat.write'");expect(migration).toContain('ALTER TABLE "role_capabilities" FORCE ROW LEVEL SECURITY;');expect(migration).toContain('ALTER TABLE "roles" FORCE ROW LEVEL SECURITY;');});
+
+  it("reconciles inventory writes only to their canonical system roles and restores forced RLS", () => {
+    const migration = readFileSync(
+      join(migrationDirectory, "0067_inventory_capability_role_reconciliation.sql"),
+      "utf8",
+    );
+
+    expect(migration).toContain('ALTER TABLE "roles" NO FORCE ROW LEVEL SECURITY;');
+    expect(migration).toContain('ALTER TABLE "role_capabilities" NO FORCE ROW LEVEL SECURITY;');
+    expect(migration).toContain("WHERE role.system = true");
+    expect(migration).toContain("role.key IN ('owner', 'general-manager', 'inventory-manager')");
+    expect(migration).toContain("'inventory.create'");
+    expect(migration).toContain("'inventory.update'");
+    expect(migration).not.toContain("'sales-manager'");
+    expect(migration).not.toContain("'salesperson'");
+    expect(migration).toContain('ALTER TABLE "role_capabilities" FORCE ROW LEVEL SECURITY;');
+    expect(migration).toContain('ALTER TABLE "roles" FORCE ROW LEVEL SECURITY;');
+  });
   it("replaces recursive team-message policies with immutable participant authority",()=>{const migration=readFileSync(join(migrationDirectory,"0062_team_communications_nonrecursive_rls.sql"),"utf8");expect(migration).toContain('ADD COLUMN "participant_user_ids" text[]');expect(migration).toContain('nullif(current_setting(\'app.user_id\', true), \'\') = ANY("participant_user_ids")');expect(migration).toContain("team_conversation_participants_immutable");expect(migration).toContain('ALTER TABLE "team_conversation_participants" FORCE ROW LEVEL SECURITY;');expect(migration).toContain('ALTER TABLE "team_conversations" FORCE ROW LEVEL SECURITY;');expect(migration).not.toContain("CREATE FUNCTION team_conversation_member");});
   it("adds governed immutable evidence for mid-conversation participant additions",()=>{const migration=readFileSync(join(migrationDirectory,"0063_team_conversation_participant_additions.sql"),"utf8");expect(migration).toContain('CREATE TABLE "team_conversation_participant_events"');expect(migration).toContain("team_participant_events_idempotency_unique");expect(migration).toContain("conversation participant change requires immutable evidence");expect(migration).toContain('ALTER TABLE "team_conversation_participant_events" FORCE ROW LEVEL SECURITY;');expect(migration).toContain("team_participant_events_immutable");expect(migration).not.toMatch(/team_participant_events.*FOR (UPDATE|DELETE)/);});
   it("extends canonical notifications for team messages without changing recipient isolation",()=>{const migration=readFileSync(join(migrationDirectory,"0064_team_message_notifications.sql"),"utf8");expect(migration).toContain("'team-message'");expect(migration).toContain('ALTER TABLE "notifications" DROP CONSTRAINT "notifications_kind"');expect(migration).toContain('ALTER TABLE "notifications" ADD CONSTRAINT "notifications_kind"');expect(migration).not.toMatch(/DISABLE ROW LEVEL SECURITY|NO FORCE ROW LEVEL SECURITY/);});
