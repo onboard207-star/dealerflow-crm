@@ -19,7 +19,12 @@ export class InventoryMediaStorageError extends Error {
 export class R2InventoryMediaStorage {
   private readonly client: S3Client;
   constructor(private readonly configuration: { accountId: string; accessKeyId: string; secretAccessKey: string; bucket: string; publicBaseUrl: string }) {
-    this.client = new S3Client({ region: "auto", endpoint: `https://${configuration.accountId}.r2.cloudflarestorage.com`, credentials: { accessKeyId: configuration.accessKeyId, secretAccessKey: configuration.secretAccessKey } });
+    this.client = new S3Client({
+      region: "auto",
+      endpoint: `https://${configuration.accountId}.r2.cloudflarestorage.com`,
+      credentials: { accessKeyId: configuration.accessKeyId, secretAccessKey: configuration.secretAccessKey },
+      requestChecksumCalculation: "WHEN_REQUIRED",
+    });
   }
   async createUploadUrl(input: { objectKey: string; contentType: InventoryImageContentType; byteSize: number }) {
     const command = new PutObjectCommand({ Bucket: this.configuration.bucket, Key: input.objectKey, ContentType: input.contentType, ContentLength: input.byteSize, CacheControl: "public, max-age=31536000, immutable" });
