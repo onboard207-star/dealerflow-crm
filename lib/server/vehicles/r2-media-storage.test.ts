@@ -16,7 +16,10 @@ describe("inventory image verification", () => {
 
     expect(url.searchParams.has("x-amz-checksum-crc32")).toBe(false);
     expect(url.searchParams.has("x-amz-sdk-checksum-algorithm")).toBe(false);
-    expect(url.searchParams.get("X-Amz-SignedHeaders")?.split(";")).not.toContain("content-length");
+    const signedHeaders = url.searchParams.get("X-Amz-SignedHeaders")?.split(";") ?? [];
+    expect(signedHeaders).not.toContain("content-length");
+    expect(signedHeaders).not.toContain("cache-control");
+    expect(upload.headers).toEqual({ "content-type": "image/png" });
   });
 
   it("reads authoritative PNG dimensions", () => {

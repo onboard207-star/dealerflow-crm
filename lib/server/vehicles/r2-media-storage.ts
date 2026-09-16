@@ -27,7 +27,7 @@ export class R2InventoryMediaStorage {
     });
   }
   async createUploadUrl(input: { objectKey: string; contentType: InventoryImageContentType; byteSize: number }) {
-    const command = new PutObjectCommand({ Bucket: this.configuration.bucket, Key: input.objectKey, ContentType: input.contentType, CacheControl: "public, max-age=31536000, immutable" });
+    const command = new PutObjectCommand({ Bucket: this.configuration.bucket, Key: input.objectKey, ContentType: input.contentType });
     return { method: "PUT" as const, url: await getSignedUrl(this.client, command, { expiresIn: 300 }), expiresInSeconds: 300, headers: { "content-type": input.contentType } };
   }
   async verify(input: { objectKey: string; contentType: InventoryImageContentType; byteSize: number }): Promise<VerifiedStoredImage> {
