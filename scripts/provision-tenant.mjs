@@ -69,10 +69,20 @@ export async function provisionTenant(pool, plan) {
     const expiresAt = new Date(Date.now() + 7 * 86_400_000).toISOString();
     const inserted = await client.query("INSERT INTO organization_invitations(id,organization_id,email,token_hash,idempotency_key,all_locations,expires_at,invited_by) VALUES($1,$2,$3,$4,$5,true,$6,NULL) ON CONFLICT(organization_id,idempotency_key) DO NOTHING RETURNING id", [plan.invitationId, plan.organizationId, plan.ownerEmail, tokenHash, `operator-provision:${plan.organizationId}:owner`, expiresAt]);
     const created = Boolean(inserted.rows[0]);
-    if (!created) await requireExact(client, "SELECT id FROM organization_invitations WHERE organization_id=$1 AND id=$2 AND lower(email)=lower($3) AND status='pending' AND expires_at>now() AND invited_by IS NULL", [plan.organizationId, plan.invitationId, plan.ownerEmail], "Initial Owner invitation conflicts with an existing or expired invitation.");
     if (created) {
       await client.query("INSERT INTO organization_invitation_roles(invitation_id,organization_id,role_id) VALUES($1,$2,$3)", [plan.invitationId, plan.organizationId, ownerRole.id]);
       await queueInvitation(client, plan, token);
+    } else {
+      const existing = await client.query("SELECT id,status,expires_at,resend_count FROM organization_invitations WHERE organization_id=$1 AND id=$2 AND lower(email)=lower($3) AND all_locations=true AND invited_by IS NULL FOR UPDATE", [plan.organizationId, plan.invitationId, plan.ownerEmail]);
+      const invitation = existing.rows[0];
+      if (!invitation || invitation.status !== "pending") throw new Error("Initial Owner invitation conflicts with an existing invitation.");
+      await requireExact(client, "SELECT invitation_id FROM organization_invitation_roles WHERE organization_id=$1 AND invitation_id=$2 AND role_id=$3", [plan.organizationId, plan.invitationId, ownerRole.id], "Initial Owner invitation role conflicts with this release.");
+      if (new Date(invitation.expires_at).getTime() <= Date.now()) {
+        const rotated = await client.query("UPDATE organization_invitations SET token_hash=$3,expires_at=$4,resend_count=resend_count+1,last_sent_at=now(),updated_at=now() WHERE organization_id=$1 AND id=$2 AND status='pending' AND expires_at<=now() AND resend_count<10 RETURNING resend_count", [plan.organizationId, plan.invitationId, tokenHash, expiresAt]);
+        if (!rotated.rows[0]) throw new Error("Initial Owner invitation has reached its resend limit.");
+        await queueInvitation(client, plan, token, `resend:${rotated.rows[0].resend_count}`);
+        await client.query("INSERT INTO audit_logs(id,organization_id,actor_id,action,entity_type,entity_id,source,correlation_id,new_values) VALUES($1,$2,NULL,'organization.owner_invitation_rotated','organization_invitation',$3,'operator',$4,$5::jsonb)", [`aud_${randomUUID().replaceAll("-", "")}`, plan.organizationId, plan.invitationId, `provision:${randomUUID()}`, JSON.stringify({ ownerEmail: plan.ownerEmail, resendCount: rotated.rows[0].resend_count })]);
+      }
     }
     await client.query("INSERT INTO audit_logs(id,organization_id,actor_id,action,entity_type,entity_id,source,correlation_id,new_values) VALUES($1,$2,NULL,'organization.provisioned','organization',$2,'operator',$3,$4::jsonb)", [`aud_${randomUUID().replaceAll("-", "")}`, plan.organizationId, `provision:${randomUUID()}`, JSON.stringify({ organizationSlug: plan.organizationSlug, locationId: plan.locationId, ownerInvitationId: plan.invitationId, dataClass: plan.dataClass })]);
     await client.query("COMMIT");
@@ -88,11 +98,11 @@ async function establishRole(client, organizationId, role) {
   if (grants.rows.map(row => row.capability).join("\n") !== [...role.capabilities].sort().join("\n")) throw new Error(`System role ${role.key} capability profile does not match this release.`);
 }
 
-async function queueInvitation(client, plan, token) {
+async function queueInvitation(client, plan, token, suffix) {
   const url = new URL("/accept-invitation", plan.applicationUrl); url.searchParams.set("token", token);
   const text = `You have been invited to join ${plan.organizationName} in DealerFlow.\n\nAccept invitation: ${url}\n\nThis invitation expires in 7 days.`;
   const html = `<p>You have been invited to join <strong>${escapeHtml(plan.organizationName)}</strong> in DealerFlow.</p><p><a href="${escapeHtml(url.toString())}">Accept invitation</a></p><p>This invitation expires in 7 days.</p>`;
-  await client.query("INSERT INTO transactional_email_messages(id,organization_id,invitation_id,kind,recipient_email,subject,text_body,html_body,idempotency_key) VALUES($1,$2,$3,'organization-invitation',$4,$5,$6,$7,$8)", [`tem_${randomUUID().replaceAll("-", "")}`, plan.organizationId, plan.invitationId, plan.ownerEmail, `Join ${plan.organizationName} in DealerFlow`, text, html, `organization-invitation:${plan.invitationId}`]);
+  await client.query("INSERT INTO transactional_email_messages(id,organization_id,invitation_id,kind,recipient_email,subject,text_body,html_body,idempotency_key) VALUES($1,$2,$3,'organization-invitation',$4,$5,$6,$7,$8)", [`tem_${randomUUID().replaceAll("-", "")}`, plan.organizationId, plan.invitationId, plan.ownerEmail, `Join ${plan.organizationName} in DealerFlow`, text, html, `organization-invitation:${plan.invitationId}${suffix ? `:${suffix}` : ""}`]);
 }
 
 async function requireExact(client, query, values, message) { if (!(await client.query(query, values)).rows[0]) throw new Error(message); }
