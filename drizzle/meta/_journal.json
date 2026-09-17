@@ -477,6 +477,13 @@
       "when": 1789484400000,
       "tag": "0067_inventory_capability_role_reconciliation",
       "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "7",
+      "when": 1789570800000,
+      "tag": "0068_vehicle_catalog_attribute_readiness",
+      "breakpoints": true
     }
   ]
 }

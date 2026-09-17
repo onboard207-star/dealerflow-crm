@@ -15,8 +15,9 @@ const coreFacts = [
   ["msrp", "MSRP"], ["engine", "Engine"], ["powertrain", "Powertrain"], ["transmission", "Transmission"],
   ["drivetrain", "Drivetrain"], ["horsepower", "Horsepower"], ["torque", "Torque"], ["mpg", "Fuel economy"],
   ["mpge", "MPGe"], ["ev-range", "EV range"], ["battery", "Battery"], ["charging", "Charging"],
+  ["connector", "Charging connector"], ["acceleration", "Acceleration"],
   ["towing", "Towing"], ["payload", "Payload"], ["seating", "Seating"], ["cargo", "Cargo"],
-  ["dimensions", "Dimensions"], ["ground-clearance", "Ground clearance"], ["features", "Features"],
+  ["passenger-volume", "Passenger volume"], ["dimensions", "Dimensions"], ["ground-clearance", "Ground clearance"], ["features", "Features"],
   ["packages", "Packages / options"], ["warranty", "Warranty"],
 ] as const;
 
@@ -37,8 +38,10 @@ function fact(key: string, label: string, configurations: readonly CatalogConfig
   return {
     key, label,
     values: configurations.map((configuration) => {
-      const value = coreValue(configuration, key) ?? attributeValue(configuration.attributes, key);
-      return { configurationId: configuration.id, ...(value ? { value } : {}), state: value ? state(configuration) : "unavailable" };
+      const core = coreValue(configuration, key);
+      const attribute = core ? undefined : attributeValue(configuration.attributes, key);
+      const value = core ?? attribute?.value;
+      return { configurationId: configuration.id, ...(value ? { value } : {}), state: core ? state(configuration) : attribute?.state ?? "unavailable" };
     }),
   };
 }
@@ -55,14 +58,22 @@ function coreValue(configuration: CatalogConfiguration, key: string): string | u
 function attributeValue(attributes: readonly CatalogAttribute[], key: string) {
   const matching = attributes.filter((attribute) => matches(attribute, key) && attribute.relationship !== "excluded" && (attribute.kind !== "specification" || Boolean(attribute.value)));
   if (!matching.length) return undefined;
-  return matching.map((attribute) => attribute.value ? `${attribute.name}: ${attribute.value}${attribute.unit ? ` ${attribute.unit}` : ""}` : attribute.name).join(", ");
+  return {
+    value: matching.map((attribute) => attribute.value ? `${attribute.name}: ${attribute.value}${attribute.unit ? ` ${attribute.unit}` : ""}` : attribute.name).join(", "),
+    state: matching.every((attribute) => attribute.readiness === "verified" || attribute.readiness === "pilot-ready") ? "verified" as const : "incomplete" as const,
+  };
 }
 
-function matches(attribute: CatalogAttribute, key: string) {
+function matches(attribute: CatalogAttribute, key: string): boolean {
   const name = `${attribute.stableKey} ${attribute.name}`.toLowerCase().replace(/[^a-z0-9]+/g, "-");
   if (key === "features") return attribute.kind === "feature";
   if (key === "packages") return attribute.kind === "package";
   if (key === "msrp") return /msrp|price/.test(name);
+  if (key === "mpg") return !name.includes("mpge") && /(^|-)mpg($|-)|fuel-economy/.test(name);
+  if (key === "mpge") return name.includes("mpge");
+  if (key === "ev-range") return /ev-range|electric-range|epa-range/.test(name);
+  if (key === "connector") return /connector|nacs|j1772|ccs/.test(name);
+  if (key === "charging") return /charging|charge-time|charge-rate|onboard-ac|dc-fast/.test(name) && !matches(attribute, "connector");
   return name.includes(key);
 }
 

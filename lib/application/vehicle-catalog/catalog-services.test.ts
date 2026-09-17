@@ -36,6 +36,22 @@ describe("vehicle catalog domain services",()=>{
     const horsepower=result.facts.find(item=>item.key==="horsepower");
     expect(horsepower?.values).toEqual([expect.objectContaining({value:"Horsepower: 204 hp",state:"verified"}),expect.objectContaining({state:"unavailable"})]);
   });
+  it("separates electric range, charging, connector, MPG, and MPGe while preserving attribute readiness",async()=>{
+    const electric={...configurations[0],powertrain:"Battery Electric",attributes:[
+      specification("vca_range","SPEC-EPA-ALL-ELECTRIC-RANGE","EPA All-Electric Range","308","mi","pilot-ready",{"Specification Category":"Battery / Charging"}),
+      specification("vca_charge","SPEC-DC-FAST-CHARGING","DC Fast Charging","20–80% in 35","min","verified",{"Specification Category":"Battery / Charging"}),
+      specification("vca_connector","SPEC-CHARGING-CONNECTOR","Charging Connector","NACS",undefined,"verified",{"Specification Category":"Battery / Charging"}),
+      specification("vca_mpge","SPEC-COMBINED-MPGE","Combined MPGe","99","MPGe","needs-review",{"Specification Category":"Fuel Economy"}),
+    ]};
+    const repository=new FixtureRepository();
+    repository.getConfiguration=async(id:string)=>id==="vcf_ev"?electric:configurations[1];
+    const result=await new VehicleConfigurationComparisonService(repository).compare(["vcf_ev","vcf_rav4"]);
+    expect(result.facts.find(item=>item.key==="ev-range")?.values[0]).toMatchObject({value:"EPA All-Electric Range: 308 mi",state:"verified"});
+    expect(result.facts.find(item=>item.key==="charging")?.values[0]).toMatchObject({value:"DC Fast Charging: 20–80% in 35 min",state:"verified"});
+    expect(result.facts.find(item=>item.key==="connector")?.values[0]).toMatchObject({value:"Charging Connector: NACS",state:"verified"});
+    expect(result.facts.find(item=>item.key==="mpge")?.values[0]).toMatchObject({value:"Combined MPGe: 99 MPGe",state:"incomplete"});
+    expect(result.facts.find(item=>item.key==="mpg")?.values[0]).toMatchObject({state:"unavailable"});
+  });
   it("builds normalized AI context without raw source payloads",()=>{
     const context=buildAIVehicleContext(configurations[0],comparisons);
     expect(context.identity).toMatchObject({make:"Honda",model:"CR-V",year:2026,trim:"Sport-L Hybrid"});
@@ -54,3 +70,4 @@ describe("vehicle catalog domain services",()=>{
 
 function identity(id:string,stableKey:string,name:string){return{id,stableKey,name,...source};}
 function configuration(id:string,index:number,drivetrain:string,horsepower:string|undefined,feature:string):CatalogConfiguration{const make=makes[index],model=models[index],modelYear=years[index],trim=trims[index];return{...identity(id,`CFG-${make.name}-${model.name}-2026`,`2026 ${make.name} ${model.name} ${trim.name} ${drivetrain}`),trimId:trim.id,make,model,modelYear,trim,drivetrain,attributes:[{...identity(`vca_hp_${index}`,`SPEC-HP-${index}`,"Horsepower"),kind:"specification",...(horsepower?{value:horsepower}:{}),unit:"hp",metadata:{},relationship:"standard",conditions:{}},{...identity(`vca_feature_${index}`,`FEATURE-${index}`,feature),kind:"feature",metadata:{},relationship:"standard",conditions:{}}]};}
+function specification(id:string,stableKey:string,name:string,value:string,unit:string|undefined,readiness:CatalogConfiguration["readiness"],metadata:Record<string,unknown>){return{id,stableKey,name,sourceSystem:"airtable",sourceRecordId:"source-reference",releaseId:"vcr_test",readiness,kind:"specification" as const,value,...(unit?{unit}:{}),metadata,relationship:"standard" as const,conditions:{}};}
