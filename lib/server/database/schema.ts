@@ -1690,6 +1690,65 @@ export const quoteLeaseTerms = pgTable("quote_lease_terms", {
   foreignKey({ columns: [table.organizationId, table.quoteId], foreignColumns: [dealQuotes.organizationId, dealQuotes.id], name: "quote_lease_terms_same_organization_quote_fk" }),
 ]);
 
+export const quoteProductScenarios = pgTable("quote_product_scenarios", {
+  id: text("id").primaryKey(), organizationId: text("organization_id").notNull(), quoteId: text("quote_id").notNull(),
+  stableKey: text("stable_key").notNull(), position: integer("position").notNull(), productKind: text("product_kind").notNull(),
+  inventoryUnitId: text("inventory_unit_id"), productReference: text("product_reference").notNull(), label: text("label").notNull(),
+  transactionMetadata: jsonb("transaction_metadata").$type<Record<string, unknown>>().default({}).notNull(),
+  sourceType: text("source_type").notNull(), sourceReference: text("source_reference"),
+  createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }), createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("quote_product_scenarios_org_id_unique").on(table.organizationId, table.id),
+  uniqueIndex("quote_product_scenarios_quote_stable_unique").on(table.organizationId, table.quoteId, table.stableKey),
+  uniqueIndex("quote_product_scenarios_quote_position_unique").on(table.organizationId, table.quoteId, table.position),
+  uniqueIndex("quote_product_scenarios_quote_id_unique").on(table.organizationId, table.quoteId, table.id),
+  foreignKey({ columns: [table.organizationId, table.quoteId], foreignColumns: [dealQuotes.organizationId, dealQuotes.id], name: "quote_product_scenarios_quote_fk" }),
+  foreignKey({ columns: [table.organizationId, table.inventoryUnitId], foreignColumns: [inventoryUnits.organizationId, inventoryUnits.id], name: "quote_product_scenarios_inventory_fk" }),
+  check("quote_product_scenarios_id_format", sql`${table.id} ~ '^qps_[a-z0-9_-]{6,64}$'`),
+  check("quote_product_scenarios_position", sql`${table.position} >= 0`),
+  check("quote_product_scenarios_product_kind", sql`${table.productKind} in ('vehicle','generic')`),
+]);
+
+export const quotePaymentScenarios = pgTable("quote_payment_scenarios", {
+  id: text("id").primaryKey(), organizationId: text("organization_id").notNull(), quoteId: text("quote_id").notNull(), productScenarioId: text("product_scenario_id").notNull(),
+  stableKey: text("stable_key").notNull(), position: integer("position").notNull(), mode: text("mode").notNull(), calculationStatus: text("calculation_status").notNull(),
+  termMonths: integer("term_months"), aprBasisPoints: integer("apr_basis_points"), cashDownCents: integer("cash_down_cents").default(0).notNull(),
+  amountFinancedCents: integer("amount_financed_cents"), paymentCents: integer("payment_cents"), totalPaymentCents: integer("total_payment_cents"), financeChargeCents: integer("finance_charge_cents"),
+  modeMetadata: jsonb("mode_metadata").$type<Record<string, unknown>>().default({}).notNull(), sourceType: text("source_type").notNull(),
+  sourceLabel: text("source_label").notNull(), sourceReference: text("source_reference"), calculationPolicyVersion: text("calculation_policy_version").notNull(),
+  roundingPolicyVersion: text("rounding_policy_version").notNull(), calculationFingerprint: text("calculation_fingerprint").notNull(),
+  createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }), createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("quote_payment_scenarios_org_id_unique").on(table.organizationId, table.id),
+  uniqueIndex("quote_payment_scenarios_product_stable_unique").on(table.organizationId, table.productScenarioId, table.stableKey),
+  uniqueIndex("quote_payment_scenarios_product_position_unique").on(table.organizationId, table.productScenarioId, table.position),
+  uniqueIndex("quote_payment_scenarios_fingerprint_idx").on(table.organizationId, table.quoteId, table.calculationFingerprint),
+  foreignKey({ columns: [table.organizationId, table.quoteId, table.productScenarioId], foreignColumns: [quoteProductScenarios.organizationId, quoteProductScenarios.quoteId, quoteProductScenarios.id], name: "quote_payment_scenarios_product_fk" }),
+  check("quote_payment_scenarios_id_format", sql`${table.id} ~ '^qpy_[a-z0-9_-]{6,64}$'`),
+  check("quote_payment_scenarios_mode", sql`${table.mode} in ('cash','finance','lease')`),
+  check("quote_payment_scenarios_status", sql`${table.calculationStatus} in ('complete','incomplete')`),
+  check("quote_payment_scenarios_fingerprint", sql`${table.calculationFingerprint} ~ '^[a-f0-9]{64}$'`),
+]);
+
+export const quoteTradeSnapshots = pgTable("quote_trade_snapshots", {
+  id: text("id").primaryKey(), organizationId: text("organization_id").notNull(), quoteId: text("quote_id").notNull(), productScenarioId: text("product_scenario_id").notNull(),
+  tradeAppraisalId: text("trade_appraisal_id").notNull(), position: integer("position").notNull(), appraisalVersion: integer("appraisal_version").notNull(),
+  appraisalRevisionAt: timestamp("appraisal_revision_at", { withTimezone: true }).notNull(), appraisalAllowanceCents: integer("appraisal_allowance_cents").notNull(),
+  quoteAllowanceCents: integer("quote_allowance_cents").notNull(), payoffCents: integer("payoff_cents").notNull(), equityCents: integer("equity_cents").notNull(),
+  quoteAdjustmentCents: integer("quote_adjustment_cents").default(0).notNull(), adjustmentReason: text("adjustment_reason"),
+  taxTreatmentMetadata: jsonb("tax_treatment_metadata").$type<Record<string, unknown>>().default({}).notNull(), sourceType: text("source_type").notNull(), sourceReference: text("source_reference"),
+  createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }), createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("quote_trade_snapshots_org_id_unique").on(table.organizationId, table.id),
+  uniqueIndex("quote_trade_snapshots_product_position_unique").on(table.organizationId, table.productScenarioId, table.position),
+  uniqueIndex("quote_trade_snapshots_product_appraisal_unique").on(table.organizationId, table.productScenarioId, table.tradeAppraisalId),
+  foreignKey({ columns: [table.organizationId, table.quoteId, table.productScenarioId], foreignColumns: [quoteProductScenarios.organizationId, quoteProductScenarios.quoteId, quoteProductScenarios.id], name: "quote_trade_snapshots_product_fk" }),
+  foreignKey({ columns: [table.organizationId, table.tradeAppraisalId], foreignColumns: [tradeAppraisals.organizationId, tradeAppraisals.id], name: "quote_trade_snapshots_appraisal_fk" }),
+  check("quote_trade_snapshots_id_format", sql`${table.id} ~ '^qts_[a-z0-9_-]{6,64}$'`),
+  check("quote_trade_snapshots_equity", sql`${table.equityCents} = ${table.quoteAllowanceCents} - ${table.payoffCents}`),
+  check("quote_trade_snapshots_adjustment", sql`${table.quoteAdjustmentCents} = ${table.quoteAllowanceCents} - ${table.appraisalAllowanceCents}`),
+]);
+
 export const incentivePrograms = pgTable("incentive_programs", {
   id: text("id").primaryKey(),
   organizationId: text("organization_id").notNull(),

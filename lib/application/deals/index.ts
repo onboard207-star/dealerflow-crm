@@ -12,3 +12,6 @@ export * from "./manage-pack-policy";
 export * from "./manage-handoff";
 export * from "./delivery-readiness";
 export * from "./manage-deal-documents";
+export * from "./quote-calculation-fingerprint";
+export * from "./quote-scenarios";
+export * from "./quote-calculation-vectors";
