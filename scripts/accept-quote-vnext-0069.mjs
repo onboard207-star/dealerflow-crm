@@ -86,8 +86,9 @@ try {
     await q(client,`INSERT INTO quote_profitability_snapshots(id,organization_id,location_id,quote_id,inventory_unit_id,inventory_cost_snapshot_id,pack_policy_id,vehicle_sell_cents,vehicle_cost_cents,pack_cents,front_gross_cents,backend_gross_cents,total_gross_cents,captured_by) VALUES('qpf_acceptance',$1,$2,'quo_acceptance_5',$3,'ics_acceptance','qpk_acceptance',3000000,2600000,50000,350000,120000,470000,$4)`,[org,base[4].location_id,base[4].inventory_unit_id,base[4].owner_user_id]);
     await q(client,`INSERT INTO deal_quote_approvals(id,organization_id,quote_id,status,request_reason,decision_reason,requested_by,decided_by,decided_at,request_idempotency_key,decision_idempotency_key) VALUES('qap_acceptance_approved',$1,'quo_acceptance_3','approved','Synthetic approval','Approved for acceptance',$2,$3,now(),'acceptance-approval-request','acceptance-approval-decision'),('qap_acceptance_declined',$1,'quo_acceptance_5','declined','Synthetic approval','Revise synthetic pencil',$2,$3,now(),'acceptance-decline-request','acceptance-decline-decision')`,[org,base[4].owner_user_id,base[5].owner_user_id]);
     await q(client,"COMMIT");
-    await q(client,"SELECT set_config('app.organization_id',$1,true)",[org]);
+    await q(client,"BEGIN"); await q(client,"SELECT set_config('app.organization_id',$1,true)",[org]);
     const pre=(await q(client,hashQuery)).rows;
+    await q(client,"COMMIT");
     const migration=await readFile("/app/drizzle/0069_quote_vnext_scenarios.sql","utf8");
     await q(client,"BEGIN"); await q(client,migration); await q(client,"COMMIT");
     const post=(await q(client,hashQuery)).rows;
