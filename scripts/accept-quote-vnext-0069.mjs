@@ -95,7 +95,11 @@ try {
     const scenario=(await q(client,"SELECT s.id,s.quote_id,q.deal_id FROM quote_product_scenarios s JOIN deal_quotes q ON q.organization_id=s.organization_id AND q.id=s.quote_id WHERE s.organization_id=$1 AND q.status='draft' ORDER BY s.id LIMIT 1",[org])).rows[0];
     if(!scenario) throw new Error("Backfill produced no representative product scenario");
     const immutableScenario=(await q(client,"SELECT s.id,s.quote_id FROM quote_product_scenarios s JOIN deal_quotes q ON q.organization_id=s.organization_id AND q.id=s.quote_id WHERE s.organization_id=$1 AND q.status IN ('presented','accepted') ORDER BY s.id LIMIT 1",[org])).rows[0];
-    if(!immutableScenario) throw new Error("Backfill produced no immutable representative scenario");
+    if(!immutableScenario) {
+      const visibleStatuses=(await q(client,"SELECT q.status::text status,count(*)::int count FROM deal_quotes q WHERE q.organization_id=$1 GROUP BY q.status::text ORDER BY q.status::text",[org])).rows;
+      const visibleProducts=(await q(client,"SELECT q.status::text status,count(*)::int count FROM quote_product_scenarios s JOIN deal_quotes q ON q.organization_id=s.organization_id AND q.id=s.quote_id WHERE s.organization_id=$1 GROUP BY q.status::text ORDER BY q.status::text",[org])).rows;
+      throw new Error(`Backfill produced no immutable representative scenario; visible quote statuses=${JSON.stringify(visibleStatuses)} products=${JSON.stringify(visibleProducts)}`);
+    }
     const crossWrite=await expectFailure(client,"cross-tenant write",`INSERT INTO quote_product_scenarios(id,organization_id,quote_id,stable_key,position,product_kind,product_reference,label,source_type) VALUES('qps_cross_write','org_other_acceptance',$1,'cross',9,'generic','x','x','application')`,[scenario.quote_id]);
     const invalidTenantForeignKey=await expectFailure(client,"invalid tenant foreign key",`INSERT INTO quote_product_scenarios(id,organization_id,quote_id,stable_key,position,product_kind,product_reference,label,source_type) VALUES('qps_invalid_fk',$1,'quo_missing_cross_tenant','invalid-fk',97,'generic','x','x','application')`,[org]);
     const immutableUpdate=await expectFailure(client,"immutable update",`UPDATE quote_product_scenarios SET label='changed' WHERE organization_id=$1 AND id=$2`,[org,immutableScenario.id]);
