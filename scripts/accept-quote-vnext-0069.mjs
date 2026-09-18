@@ -87,7 +87,7 @@ try {
     const counts2=(await q(client,`SELECT (SELECT count(*)::int FROM quote_product_scenarios) product,(SELECT count(*)::int FROM quote_payment_scenarios) payment,(SELECT count(*)::int FROM quote_trade_snapshots) trade`)).rows[0];
     const fp2=(await q(client,"SELECT id,calculation_fingerprint FROM quote_payment_scenarios ORDER BY id")).rows;
     if(JSON.stringify(counts1)!==JSON.stringify({...counts2,quotes:counts1.quotes,orphan_trades:counts1.orphan_trades})||JSON.stringify(fp1)!==JSON.stringify(fp2)) throw new Error("Replay/idempotency failure");
-    await q(client,"CREATE ROLE quote_vnext_acceptance_runtime NOLOGIN"); await q(client,"GRANT quote_vnext_acceptance_runtime TO CURRENT_USER"); await q(client,"GRANT USAGE ON SCHEMA public TO quote_vnext_acceptance_runtime"); await q(client,"GRANT SELECT,INSERT,UPDATE,DELETE ON quote_product_scenarios,quote_payment_scenarios,quote_trade_snapshots TO quote_vnext_acceptance_runtime");
+    await q(client,"DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='quote_vnext_acceptance_runtime') THEN CREATE ROLE quote_vnext_acceptance_runtime NOLOGIN; END IF; END $$"); await q(client,"GRANT quote_vnext_acceptance_runtime TO CURRENT_USER"); await q(client,"GRANT USAGE ON SCHEMA public TO quote_vnext_acceptance_runtime"); await q(client,"GRANT SELECT,INSERT,UPDATE,DELETE ON quote_product_scenarios,quote_payment_scenarios,quote_trade_snapshots TO quote_vnext_acceptance_runtime");
     await q(client,"BEGIN"); await q(client,"SET LOCAL ROLE quote_vnext_acceptance_runtime"); await q(client,"SELECT set_config('app.organization_id',$1,true)",[org]);
     const tenantVisible=Number((await q(client,"SELECT count(*) count FROM quote_product_scenarios")).rows[0].count);
     const crossRead=Number((await q(client,"SELECT count(*) count FROM quote_product_scenarios WHERE organization_id='org_other_acceptance'")).rows[0].count);
@@ -115,5 +115,5 @@ try {
   } finally { client.release(); }
 } finally {
   if(temp) await temp.end();
-  try { await admin.query("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname=$1 AND backend_type='client backend' AND pid<>pg_backend_pid()",[name]); await admin.query(`DROP DATABASE IF EXISTS ${name}`); } finally { await admin.end(); }
+  try { await admin.query("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname=$1 AND backend_type='client backend' AND pid<>pg_backend_pid()",[name]); await admin.query(`DROP DATABASE IF EXISTS ${name}`); await admin.query("REVOKE quote_vnext_acceptance_runtime FROM CURRENT_USER"); await admin.query("DROP ROLE IF EXISTS quote_vnext_acceptance_runtime"); } finally { await admin.end(); }
 }
