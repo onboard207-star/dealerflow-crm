@@ -1,3 +1,21 @@
+-- Migration backfills must read every tenant's legacy authority. The migration
+-- connection is the schema owner, so temporarily remove FORCE only from the
+-- source tables inside this transaction; FORCE is restored before commit (or
+-- automatically restored by transaction rollback). Application sessions never
+-- receive this migration context.
+ALTER TABLE "deal_quotes" NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE "deal_quote_lines" NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE "deal_quote_status_events" NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE "quote_commercial_terms" NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE "quote_finance_terms" NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE "quote_lease_terms" NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE "quote_incentive_applications" NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE "quote_backend_product_snapshots" NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE "quote_profitability_snapshots" NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE "deal_quote_approvals" NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE "deals" NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE "trade_appraisals" NO FORCE ROW LEVEL SECURITY;
+
 CREATE TABLE "quote_product_scenarios" (
   "id" text PRIMARY KEY NOT NULL,
   "organization_id" text NOT NULL,
@@ -283,3 +301,16 @@ ALTER TABLE "quote_trade_snapshots" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "quote_trade_snapshots" FORCE ROW LEVEL SECURITY;
 CREATE POLICY "quote_trade_snapshots_tenant_select" ON "quote_trade_snapshots" FOR SELECT USING (organization_id=current_setting('app.organization_id',true));
 CREATE POLICY "quote_trade_snapshots_tenant_insert" ON "quote_trade_snapshots" FOR INSERT WITH CHECK (organization_id=current_setting('app.organization_id',true));
+
+ALTER TABLE "deal_quotes" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "deal_quote_lines" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "deal_quote_status_events" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "quote_commercial_terms" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "quote_finance_terms" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "quote_lease_terms" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "quote_incentive_applications" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "quote_backend_product_snapshots" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "quote_profitability_snapshots" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "deal_quote_approvals" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "deals" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "trade_appraisals" FORCE ROW LEVEL SECURITY;
