@@ -116,5 +116,5 @@ try {
   } finally { client.release(); }
 } finally {
   if(temp) await temp.end();
-  try { await admin.query("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname=$1 AND backend_type='client backend' AND pid<>pg_backend_pid()",[name]); await admin.query(`DROP DATABASE IF EXISTS ${name}`); await admin.query("REVOKE quote_vnext_acceptance_runtime FROM CURRENT_USER"); await admin.query("DROP ROLE IF EXISTS quote_vnext_acceptance_runtime"); } finally { await admin.end(); }
+  try { await admin.query("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname=$1 AND backend_type='client backend' AND pid<>pg_backend_pid()",[name]); await admin.query(`DROP DATABASE IF EXISTS ${name}`); try { await admin.query("REVOKE quote_vnext_acceptance_runtime FROM CURRENT_USER"); } catch(error) { if(error.code!=="42704") throw error; } await admin.query("DROP ROLE IF EXISTS quote_vnext_acceptance_runtime"); } finally { await admin.end(); }
 }
