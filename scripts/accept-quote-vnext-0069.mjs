@@ -91,7 +91,9 @@ try {
     await q(client,"COMMIT");
     const migration=await readFile("/app/drizzle/0069_quote_vnext_scenarios.sql","utf8");
     await q(client,"BEGIN"); await q(client,migration); await q(client,"COMMIT");
+    await q(client,"BEGIN"); await q(client,"SELECT set_config('app.organization_id',$1,true)",[org]);
     const post=(await q(client,hashQuery)).rows;
+    await q(client,"COMMIT");
     if(JSON.stringify(pre)!==JSON.stringify(post)) throw new Error("Authority hash delta detected");
     const counts1=(await q(client,`SELECT (SELECT count(*)::int FROM quote_product_scenarios) product,(SELECT count(*)::int FROM quote_payment_scenarios) payment,(SELECT count(*)::int FROM quote_trade_snapshots) trade,(SELECT count(*)::int FROM deal_quotes) quotes,(SELECT count(*)::int FROM quote_trade_snapshots s LEFT JOIN trade_appraisals a ON a.organization_id=s.organization_id AND a.id=s.trade_appraisal_id WHERE a.id IS NULL) orphan_trades`)).rows[0];
     const replay=migration.slice(migration.indexOf('CREATE TEMP TABLE "quote_vnext_legacy_baseline"'),migration.indexOf('CREATE FUNCTION prevent_quote_vnext_child_rewrite'));
