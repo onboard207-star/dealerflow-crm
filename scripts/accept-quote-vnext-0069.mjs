@@ -95,10 +95,12 @@ try {
     const post=(await q(client,hashQuery)).rows;
     await q(client,"COMMIT");
     if(JSON.stringify(pre)!==JSON.stringify(post)) throw new Error("Authority hash delta detected");
+    await q(client,"BEGIN"); await q(client,"SELECT set_config('app.organization_id',$1,true)",[org]);
     const counts1=(await q(client,`SELECT (SELECT count(*)::int FROM quote_product_scenarios) product,(SELECT count(*)::int FROM quote_payment_scenarios) payment,(SELECT count(*)::int FROM quote_trade_snapshots) trade,(SELECT count(*)::int FROM deal_quotes) quotes,(SELECT count(*)::int FROM quote_trade_snapshots s LEFT JOIN trade_appraisals a ON a.organization_id=s.organization_id AND a.id=s.trade_appraisal_id WHERE a.id IS NULL) orphan_trades`)).rows[0];
     const replay=migration.slice(migration.indexOf('CREATE TEMP TABLE "quote_vnext_legacy_baseline"'),migration.indexOf('CREATE FUNCTION prevent_quote_vnext_child_rewrite'));
     const fp1=(await q(client,"SELECT id,calculation_fingerprint FROM quote_payment_scenarios ORDER BY id")).rows;
-    await q(client,"BEGIN"); await q(client,replay); await q(client,"COMMIT");
+    await q(client,replay); await q(client,"COMMIT");
+    await q(client,"BEGIN"); await q(client,"SELECT set_config('app.organization_id',$1,true)",[org]);
     const counts2=(await q(client,`SELECT (SELECT count(*)::int FROM quote_product_scenarios) product,(SELECT count(*)::int FROM quote_payment_scenarios) payment,(SELECT count(*)::int FROM quote_trade_snapshots) trade`)).rows[0];
     const fp2=(await q(client,"SELECT id,calculation_fingerprint FROM quote_payment_scenarios ORDER BY id")).rows;
     if(JSON.stringify(counts1)!==JSON.stringify({...counts2,quotes:counts1.quotes,orphan_trades:counts1.orphan_trades})||JSON.stringify(fp1)!==JSON.stringify(fp2)) throw new Error("Replay/idempotency failure");
