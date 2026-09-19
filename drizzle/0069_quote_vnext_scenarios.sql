@@ -4,17 +4,29 @@
 -- automatically restored by transaction rollback). Application sessions never
 -- receive this migration context.
 ALTER TABLE "deal_quotes" NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE "deal_quotes" DISABLE ROW LEVEL SECURITY;
 ALTER TABLE "deal_quote_lines" NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE "deal_quote_lines" DISABLE ROW LEVEL SECURITY;
 ALTER TABLE "deal_quote_status_events" NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE "deal_quote_status_events" DISABLE ROW LEVEL SECURITY;
 ALTER TABLE "quote_commercial_terms" NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE "quote_commercial_terms" DISABLE ROW LEVEL SECURITY;
 ALTER TABLE "quote_finance_terms" NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE "quote_finance_terms" DISABLE ROW LEVEL SECURITY;
 ALTER TABLE "quote_lease_terms" NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE "quote_lease_terms" DISABLE ROW LEVEL SECURITY;
 ALTER TABLE "quote_incentive_applications" NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE "quote_incentive_applications" DISABLE ROW LEVEL SECURITY;
 ALTER TABLE "quote_backend_product_snapshots" NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE "quote_backend_product_snapshots" DISABLE ROW LEVEL SECURITY;
 ALTER TABLE "quote_profitability_snapshots" NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE "quote_profitability_snapshots" DISABLE ROW LEVEL SECURITY;
 ALTER TABLE "deal_quote_approvals" NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE "deal_quote_approvals" DISABLE ROW LEVEL SECURITY;
 ALTER TABLE "deals" NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE "deals" DISABLE ROW LEVEL SECURITY;
 ALTER TABLE "trade_appraisals" NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE "trade_appraisals" DISABLE ROW LEVEL SECURITY;
 
 CREATE TABLE "quote_product_scenarios" (
   "id" text PRIMARY KEY NOT NULL,
@@ -303,14 +315,26 @@ CREATE POLICY "quote_trade_snapshots_tenant_select" ON "quote_trade_snapshots" F
 CREATE POLICY "quote_trade_snapshots_tenant_insert" ON "quote_trade_snapshots" FOR INSERT WITH CHECK (organization_id=current_setting('app.organization_id',true));
 
 ALTER TABLE "deal_quotes" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "deal_quotes" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "deal_quote_lines" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "deal_quote_lines" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "deal_quote_status_events" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "deal_quote_status_events" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "quote_commercial_terms" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "quote_commercial_terms" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "quote_finance_terms" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "quote_finance_terms" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "quote_lease_terms" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "quote_lease_terms" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "quote_incentive_applications" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "quote_incentive_applications" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "quote_backend_product_snapshots" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "quote_backend_product_snapshots" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "quote_profitability_snapshots" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "quote_profitability_snapshots" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "deal_quote_approvals" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "deal_quote_approvals" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "deals" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "deals" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "trade_appraisals" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "trade_appraisals" ENABLE ROW LEVEL SECURITY;
