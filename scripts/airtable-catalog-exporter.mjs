@@ -1,4 +1,5 @@
 import { writeFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 
 export const CATALOG_TABLES = [
   "🚘 OEM / Makes", "🚙 Models", "📅 Model Years", "🏷️ Trims", "🧩 Trim Configurations",
@@ -67,4 +68,4 @@ async function main() {
   process.stdout.write(JSON.stringify({ output, sourceRevision: snapshot.revision, tableCounts: Object.fromEntries(Object.entries(snapshot.tables).map(([name, rows]) => [name, rows.length])) }) + "\n");
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) main().catch((error) => { console.error(error.message); process.exitCode = 1; });
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) main().catch((error) => { console.error(error.message); process.exitCode = 1; });
