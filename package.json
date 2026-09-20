@@ -19,6 +19,7 @@
     "staging:finance-manager:provision": "node scripts/provision-staging-salesperson.mjs --role-key finance-manager",
     "staging:vehicle-intelligence-fixture": "node scripts/provision-staging-vehicle-intelligence-fixture.mjs",
     "vehicle-catalog:validate": "node scripts/vehicle-catalog-operation.mjs validate",
+    "vehicle-catalog:export": "node scripts/airtable-catalog-exporter.mjs",
     "vehicle-catalog:project:staging": "node scripts/vehicle-catalog-operation.mjs project",
     "tenant:seed-template": "node scripts/seed-dealership-template.mjs",
     "synthetic:seed": "node scripts/seed-synthetic-pilot.mjs --confirm SYNTHETIC-DEMO",
