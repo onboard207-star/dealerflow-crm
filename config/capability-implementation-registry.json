@@ -77,7 +77,7 @@
       "hardDependencies": ["CAP-PLT-001"],
       "softDependencies": ["CAP-INV-002"],
       "providerDependencies": [],
-      "blockers": ["A canonical vehicle configuration catalog is absent."],
+      "blockers": [],
       "lastVerified": "2026-08-30"
     },
     {
