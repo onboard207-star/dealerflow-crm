@@ -1,7 +1,8 @@
 import{beforeEach,describe,expect,it,vi}from"vitest";
 const project=vi.fn();
 vi.mock("@/lib/server/config",()=>({parseServerEnvironment:()=>({appEnvironment:"staging",jobSecret:"a-separate-job-secret-with-32-characters"})}));
-vi.mock("@/lib/server/jobs",()=>({authenticateJobRequest:(request:Request)=>request.headers.get("authorization")==="Bearer accepted"}));
+const {diagnostic}=vi.hoisted(()=>({diagnostic:vi.fn(()=>({authorizationHeaderPresent:false,bearerPrefixValid:false,suppliedTokenLength:0,expectedTokenLength:32,suppliedFingerprint:"000000000000",expectedFingerprint:"111111111111",fingerprintsMatch:false}))}));
+vi.mock("@/lib/server/jobs",()=>({authenticateJobRequest:(request:Request)=>request.headers.get("authorization")==="Bearer accepted",diagnoseJobRequest:diagnostic}));
 vi.mock("@/lib/server/database",()=>({getDatabasePool:()=>({})}));
 vi.mock("@/lib/server/vehicles",()=>({PostgresVehicleCatalogProjectionProvider:class{}}));
 vi.mock("@/lib/application/vehicle-catalog",async(importOriginal)=>{const actual=await importOriginal<typeof import("@/lib/application/vehicle-catalog")>();return{...actual,VehicleCatalogProjectionService:class{project=project;}};});
