@@ -10,6 +10,7 @@ describe("PostgresDealProvider", () => {
     expect(source).toContain("'purchased'::vehicle_interest_status");
     expect(source).toContain("'inactive'::vehicle_interest_status");
     expect(source).toContain("visit.appointment_id=$8");
+    expect(source).toContain("($8::text IS NULL AND visit.appointment_id IS NULL)");
     expect(source).toContain("JOIN membership_locations");
     expect(source).toContain("accepted_quote_version");
     expect(source).toContain("q.version=d.accepted_quote_version");
