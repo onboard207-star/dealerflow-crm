@@ -49,7 +49,7 @@ export function DeliveryHandoffControls({ organizationId, deal, delivery, canUpd
       <div className="flex items-start gap-3"><span className="grid size-11 shrink-0 place-items-center rounded-lg bg-muted"><CalendarCheck aria-hidden="true" className="size-5 text-muted-foreground" /></span><div><h2 id="delivery-handoff-heading" className="font-semibold tracking-tight">Delivery handoff</h2><p className="mt-1 text-sm text-muted-foreground">{delivery ? `${capitalize(delivery.status)} · ${formatDate(delivery.startsAt, delivery.timezone)}` : "Schedule and verify the physical customer handoff."}</p></div></div>
       <p aria-live="polite" className="mt-3 text-sm text-muted-foreground" role="status">{message}</p>
       {!canUpdate ? <p className="mt-3 rounded-lg border border-dashed bg-muted/30 p-3 text-sm text-muted-foreground">You can view this handoff but do not have permission to update it.</p> : null}
-      {!delivery && canUpdate ? <form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={schedule}>
+      {(!delivery || delivery.status === "cancelled") && canUpdate ? <form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={schedule}>
         <label className="text-sm font-medium">Delivery starts<input className={inputClass} name="startsAt" required type="datetime-local" /></label>
         <label className="text-sm font-medium">Delivery ends<input className={inputClass} name="endsAt" required type="datetime-local" /></label>
         <label className="text-sm font-medium sm:col-span-2">Handoff notes<input className={inputClass} maxLength={2000} name="notes" /></label>

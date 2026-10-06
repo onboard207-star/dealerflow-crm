@@ -91,7 +91,7 @@ export class CustomerWorkspaceReader {
         [organizationId, currentDealForQuote.id],
       )) as { rows: Array<{ id: string; vehicle_id: string; version: number; status: "draft" | "presented" | "accepted" | "rejected" | "expired" | "acquired"; allowance_cents: number; payoff_cents: number; equity_cents: number; vehicle_label: string }> } : { rows: [] };
       const deliveryResult = visibility.deals && currentDealForQuote ? (await client.query(
-        "SELECT id,status,starts_at,ends_at,timezone,completed_at FROM deal_deliveries WHERE organization_id=$1 AND deal_id=$2 LIMIT 1",
+        "SELECT id,status,starts_at,ends_at,timezone,completed_at FROM deal_deliveries WHERE organization_id=$1 AND deal_id=$2 ORDER BY created_at DESC LIMIT 1",
         [organizationId, currentDealForQuote.id],
       )) as { rows: Array<{ id: string; status: "scheduled" | "ready" | "completed" | "cancelled"; starts_at: Date; ends_at: Date; timezone: string; completed_at: Date | null }> } : { rows: [] };
       const appointmentResult = visibility.appointments ? (await client.query(
