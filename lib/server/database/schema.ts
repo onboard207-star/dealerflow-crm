@@ -874,7 +874,6 @@ export const deals = pgTable(
     check("deals_id_format", sql`${table.id} ~ '^dea_[a-z0-9_-]{6,64}$'`),
     check("deals_number_format", sql`${table.dealNumber} ~ '^DF-[A-Z0-9]{8}$'`),
     check("deals_price_nonnegative", sql`${table.agreedPriceCents} is null or ${table.agreedPriceCents} >= 0`),
-    check("deals_visit_requires_appointment", sql`${table.showroomVisitId} is null or ${table.appointmentId} is not null`),
     check("deals_quote_binding_complete", sql`(${table.acceptedQuoteId} is null) = (${table.acceptedQuoteVersion} is null)`),
     check("deals_quote_required_after_contract", sql`${table.status} not in ('contracted','delivered') or ${table.acceptedQuoteId} is not null`),
   ],

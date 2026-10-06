@@ -491,6 +491,13 @@
       "when": 1789657200000,
       "tag": "0069_quote_vnext_scenarios",
       "breakpoints": true
+    },
+    {
+      "idx": 70,
+      "version": "7",
+      "when": 1789743600000,
+      "tag": "0070_allow_appointmentless_showroom_deals",
+      "breakpoints": true
     }
   ]
 }
