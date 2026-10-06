@@ -217,7 +217,7 @@ export default async function DealQuoteWorkspacePage({ params, searchParams }: P
                       ) : null}
 
                       {quote.status === "presented" &&
-                      quote.approval?.status === "approved" &&
+                      (!quote.approval || quote.approval.status === "approved") &&
                       context.membership.capabilities.includes("quote.revise") ? (
                         <form
                           action={acceptQuoteVersionAction.bind(null, organizationId, dealId, quote.id)}
