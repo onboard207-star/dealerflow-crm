@@ -12,6 +12,8 @@ import { VehicleConfigurationMatchService } from "@/lib/application/vehicle-cata
 import { PostgresVehicleConfigurationMatchProvider, VehicleWorkspaceReader } from "@/lib/server/vehicles";
 import { inventoryMediaStorageAvailable } from "@/lib/server/vehicles/media-manager-factory";
 import { loadDirectoryContext } from "../../_lib/load-directory-context";
+import { withTenantDatabaseContext } from "@/lib/server/database";
+import { planListingRemovalAlert, type VehicleListing } from "@/lib/application/listings";
 import { matchVehicleConfigurationAction } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -38,6 +40,16 @@ export default async function VehicleWorkspacePage({ params, searchParams }: Pag
   );
 
   if (!record) notFound();
+
+  const listings = await withTenantDatabaseContext(context.pool, { userId: context.session.user.id, organizationId }, async (db) => {
+    const result = await db.query(
+      "SELECT id, inventory_unit_id, channel, status, management_mode, responsible_salesperson, listing_url FROM vehicle_listings WHERE organization_id=$1 AND inventory_unit_id=$2 ORDER BY channel",
+      [organizationId, inventoryUnitId],
+    );
+    const rows = (result as { rows: Array<VehicleListing & { inventory_unit_id: string; management_mode: VehicleListing["managementMode"]; responsible_salesperson: string | null; listing_url: string | null }> }).rows;
+    return rows.map((row) => ({ ...row, inventoryUnitId: row.inventory_unit_id, managementMode: row.management_mode, ...(row.responsible_salesperson ? { responsibleSalesperson: row.responsible_salesperson } : {}), ...(row.listing_url ? { listingUrl: row.listing_url } : {}) }));
+  });
+  const listingAlert = planListingRemovalAlert(inventoryUnitId, listings);
 
   const inventoryHref = `/organizations/${organizationId}/inventory`;
   const vehicleName = [record.vehicle.year, record.vehicle.make, record.vehicle.model, record.vehicle.trim]
@@ -121,6 +133,17 @@ export default async function VehicleWorkspacePage({ params, searchParams }: Pag
           <div className="space-y-6">
             <VerifiedVehicleMedia assets={record.media} management={canManageMedia ? { organizationId, inventoryUnitId } : undefined} />
             {canManageMedia ? <InventoryMediaUpload organizationId={organizationId} inventoryUnitId={inventoryUnitId} /> : null}
+
+            {listingAlert ? (
+              <section className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-5 shadow-soft sm:p-6" aria-labelledby="listing-alert-heading">
+                <h2 id="listing-alert-heading" className="text-lg font-semibold">Review active listings</h2>
+                <p className="mt-2 text-sm">{listingAlert.message}</p>
+                <ul className="mt-4 space-y-2 text-sm" role="list">
+                  {listingAlert.manualListings.map((listing) => <li key={listing.id} className="rounded-lg border bg-background/60 px-3 py-2"><span className="font-medium">{listing.channel}</span><span className="text-muted-foreground"> · Manual removal{listing.responsibleSalesperson ? ` · ${listing.responsibleSalesperson}` : ""}</span></li>)}
+                  {listingAlert.integrationListings.map((listing) => <li key={listing.id} className="rounded-lg border bg-background/60 px-3 py-2"><span className="font-medium">{listing.channel}</span><span className="text-muted-foreground"> · Authorized integration review required</span></li>)}
+                </ul>
+              </section>
+            ) : null}
 
             {catalogCandidates ? (
               <VehicleCatalogMatchControl
