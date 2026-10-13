@@ -15,6 +15,7 @@ import { loadDirectoryContext } from "../../_lib/load-directory-context";
 import { withTenantDatabaseContext } from "@/lib/server/database";
 import { planListingRemovalAlert, type VehicleListing } from "@/lib/application/listings";
 import { matchVehicleConfigurationAction } from "./actions";
+import { VehicleListingControls } from "@/components/inventory/VehicleListingControls";
 
 export const dynamic = "force-dynamic";
 
@@ -43,11 +44,11 @@ export default async function VehicleWorkspacePage({ params, searchParams }: Pag
 
   const listings = await withTenantDatabaseContext(context.pool, { userId: context.session.user.id, organizationId }, async (db) => {
     const result = await db.query(
-      "SELECT id, inventory_unit_id, channel, status, management_mode, responsible_salesperson, listing_url FROM vehicle_listings WHERE organization_id=$1 AND inventory_unit_id=$2 ORDER BY channel",
+      "SELECT id, inventory_unit_id, channel, status, management_mode, responsible_salesperson, listing_url, removal_task_status FROM vehicle_listings WHERE organization_id=$1 AND inventory_unit_id=$2 ORDER BY channel",
       [organizationId, inventoryUnitId],
     );
-    const rows = (result as { rows: Array<VehicleListing & { inventory_unit_id: string; management_mode: VehicleListing["managementMode"]; responsible_salesperson: string | null; listing_url: string | null }> }).rows;
-    return rows.map((row) => ({ ...row, inventoryUnitId: row.inventory_unit_id, managementMode: row.management_mode, ...(row.responsible_salesperson ? { responsibleSalesperson: row.responsible_salesperson } : {}), ...(row.listing_url ? { listingUrl: row.listing_url } : {}) }));
+    const rows = (result as { rows: Array<VehicleListing & { inventory_unit_id: string; management_mode: VehicleListing["managementMode"]; responsible_salesperson: string | null; listing_url: string | null; removal_task_status: VehicleListing["removalTaskStatus"] }> }).rows;
+    return rows.map((row) => ({ ...row, inventoryUnitId: row.inventory_unit_id, managementMode: row.management_mode, removalTaskStatus: row.removal_task_status, ...(row.responsible_salesperson ? { responsibleSalesperson: row.responsible_salesperson } : {}), ...(row.listing_url ? { listingUrl: row.listing_url } : {}) }));
   });
   const listingAlert = planListingRemovalAlert(inventoryUnitId, listings);
 
@@ -139,8 +140,7 @@ export default async function VehicleWorkspacePage({ params, searchParams }: Pag
                 <h2 id="listing-alert-heading" className="text-lg font-semibold">Review active listings</h2>
                 <p className="mt-2 text-sm">{listingAlert.message}</p>
                 <ul className="mt-4 space-y-2 text-sm" role="list">
-                  {listingAlert.manualListings.map((listing) => <li key={listing.id} className="rounded-lg border bg-background/60 px-3 py-2"><span className="font-medium">{listing.channel}</span><span className="text-muted-foreground"> · Manual removal{listing.responsibleSalesperson ? ` · ${listing.responsibleSalesperson}` : ""}</span></li>)}
-                  {listingAlert.integrationListings.map((listing) => <li key={listing.id} className="rounded-lg border bg-background/60 px-3 py-2"><span className="font-medium">{listing.channel}</span><span className="text-muted-foreground"> · Authorized integration review required</span></li>)}
+                  {[...listingAlert.manualListings, ...listingAlert.integrationListings].map((listing) => <li key={listing.id} className="rounded-lg border bg-background/60 px-3 py-2"><span className="font-medium">{listing.channel}</span><span className="text-muted-foreground"> · {listing.managementMode === "Manual" ? `Manual removal${listing.responsibleSalesperson ? ` · ${listing.responsibleSalesperson}` : ""}` : "Authorized integration review required"}</span><VehicleListingControls organizationId={organizationId} inventoryUnitId={inventoryUnitId} listingId={listing.id} channel={listing.channel} status={listing.status} removalTaskStatus={listing.removalTaskStatus ?? "Not Needed"} /></li>)}
                 </ul>
               </section>
             ) : null}

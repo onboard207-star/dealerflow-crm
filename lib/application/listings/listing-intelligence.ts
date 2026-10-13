@@ -17,6 +17,7 @@ export interface VehicleListing {
   managementMode: ListingManagementMode;
   responsibleSalesperson?: string;
   listingUrl?: string;
+  removalTaskStatus?: "Not Needed" | "Open" | "Completed";
 }
 
 export interface ListingRemovalTask {
